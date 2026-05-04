@@ -28,8 +28,8 @@
         .btn-main:active { transform: scale(0.96); opacity: 0.9; }
         .btn-main:disabled { opacity: 0.5; filter: grayscale(1); }
 
-        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
         
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
@@ -37,9 +37,9 @@
 <body class="flex flex-col min-h-screen items-center p-4">
 
     <!-- ÉCRAN CONNEXION -->
-    <div id="login-screen" class="w-full max-w-sm my-auto space-y-10 animate-in">
+    <div id="login-screen" class="w-full max-w-sm my-auto space-y-10 animate-pop">
         <div class="text-center">
-            <h1 class="text-6xl font-black tracking-tighter italic">CLUB<br><span class="text-pink-600">MATCH</span></h1>
+            <h1 class="text-6xl font-black tracking-tighter italic text-white">CLUB<br><span class="text-pink-600">MATCH</span></h1>
             <p class="text-gray-500 mt-4 font-medium tracking-widest uppercase text-xs">Événement Privé</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5">
@@ -50,15 +50,13 @@
     </div>
 
     <!-- APPLICATION PRINCIPALE -->
-    <div id="main-app" class="hidden w-full max-w-md space-y-6 animate-in">
+    <div id="main-app" class="hidden w-full max-w-md space-y-6 animate-pop">
         <header class="flex justify-between items-end py-4">
             <div>
                 <p class="text-gray-500 text-[10px] uppercase tracking-[0.2em] font-bold">Session active</p>
                 <h2 class="text-3xl font-black text-white">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
             </div>
-            <button onclick="toggleAdmin()" class="p-3 opacity-20 hover:opacity-100 transition-opacity">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88,40H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216a16,16,0,0,1,16,16V184A16,16,0,0,1,216,200Z"></path></svg>
-            </button>
+            <button onclick="toggleAdmin()" class="p-3 opacity-20 hover:opacity-100 transition-opacity">⚙️</button>
         </header>
 
         <!-- STATS -->
@@ -75,48 +73,39 @@
 
         <!-- ACTION FLASH -->
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-pink-500 to-transparent opacity-50"></div>
-            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Qui avez-vous flashé ?</h3>
+            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Saisir un numéro</h3>
             <input type="number" id="target-badge" placeholder="N°" 
-                   class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none transition-all placeholder:opacity-20">
-            <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl tracking-tighter">
-                FLASHER LE PROFIL
+                   class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none transition-all">
+            <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl">
+                FLASHER
             </button>
         </div>
 
-        <!-- LISTE DES MATCHES -->
+        <!-- LISTE DES MATCHES (Affiche les numéros avec qui on a matché) -->
         <div id="match-container" class="space-y-4 pt-4">
             <div class="flex items-center space-x-2 px-2">
                 <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vos connexions</span>
+                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vos matches avec :</span>
                 <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <div id="match-list" class="space-y-3">
-                <!-- Dynamique -->
+                <!-- Les numéros de badges matchés apparaîtront ici -->
             </div>
         </div>
     </div>
 
     <!-- PANEL ADMIN -->
     <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center backdrop-blur-xl">
-        <div class="w-full max-w-xs space-y-8">
-            <div class="space-y-2">
-                <h2 class="text-3xl font-black text-red-600 uppercase italic">Admin Panel</h2>
-                <p class="text-gray-500 text-sm">Gestion de la base de données</p>
-            </div>
-            <div class="space-y-3">
-                <button onclick="resetEvent()" class="w-full bg-red-600/20 border border-red-600/50 text-red-500 py-4 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all">RÉINITIALISER LA SOIRÉE</button>
-                <button onclick="toggleAdmin()" class="w-full py-4 text-gray-400 font-medium underline decoration-2 underline-offset-8">Fermer</button>
-            </div>
-        </div>
+        <h2 class="text-2xl font-black text-red-600 mb-8">ADMINISTRATION</h2>
+        <button onclick="resetEvent()" class="bg-red-600/20 border border-red-600 text-red-500 px-8 py-4 rounded-xl font-bold mb-4">RÉINITIALISER TOUT</button>
+        <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // --- CONFIGURATION ---
-        const ADMIN_PIN = "2026"; // Ton code d'accès
+        const ADMIN_PIN = "2026";
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
             authDomain: "club-match-d2d39.firebaseapp.com",
@@ -131,10 +120,9 @@
         const db = getDatabase(app);
         let currentBadge = localStorage.getItem('myBadge');
 
-        // --- FONCTIONS UTILISATEUR ---
         window.initUser = () => {
             const badge = document.getElementById('user-badge').value.trim();
-            if(!badge || badge.length > 4) return alert("Numéro de badge invalide");
+            if(!badge) return;
             currentBadge = badge;
             localStorage.setItem('myBadge', badge);
             showApp();
@@ -143,71 +131,65 @@
         window.submitLike = async () => {
             const target = document.getElementById('target-badge').value.trim();
             const btn = document.getElementById('btn-flash');
-
             if(!target || target === currentBadge) return;
 
             btn.disabled = true;
-            const originalText = btn.innerText;
-            btn.innerText = "CONNEXION...";
+            btn.innerText = "CHARGEMENT...";
 
             try {
+                // Enregistrement du Like
                 await set(ref(db, `likes/${currentBadge}/${target}`), true);
+                
+                // Vérification si l'autre nous a aussi liké
                 const check = await get(ref(db, `likes/${target}/${currentBadge}`));
                 
                 if(check.exists()) {
-                    alert("BOOM ! C'est un MATCH ! 🔥");
+                    // MODIFICATION ICI : On affiche le numéro du match dans l'alerte
+                    alert(`INCROYABLE ! Vous avez un MATCH avec le Badge #${target} ! 🔥`);
                 } else {
-                    alert("Flash enregistré !");
+                    alert("Flash envoyé !");
                 }
                 document.getElementById('target-badge').value = "";
             } catch (e) {
-                alert("Erreur réseau");
+                alert("Erreur");
             } finally {
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerText = "FLASHER";
             }
         };
 
-        // --- FONCTIONS ADMIN ---
         window.toggleAdmin = () => {
             const panel = document.getElementById('admin-panel');
-            if (!panel.classList.contains('hidden')) {
-                panel.classList.add('hidden');
-            } else {
-                const pass = prompt("Code Administrateur requis :");
-                if (pass === ADMIN_PIN) {
-                    panel.classList.remove('hidden');
-                } else if (pass != null) {
-                    alert("Code incorrect.");
-                }
-            }
+            if (!panel.classList.contains('hidden')) return panel.classList.add('hidden');
+            if (prompt("Code secret :") === ADMIN_PIN) panel.classList.remove('hidden');
         };
 
         window.resetEvent = async () => {
-            if(confirm("⚠️ ATTENTION : Cela va supprimer TOUS les likes et matches de TOUS les invités. Confirmer ?")) {
+            if(confirm("Tout effacer ?")) {
                 await remove(ref(db, 'likes/'));
                 localStorage.clear();
                 location.reload();
             }
         };
 
-        // --- MOTEUR TEMPS RÉEL ---
         function showApp() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('display-badge').innerText = currentBadge;
 
+            // Écoute en temps réel de tous les likes pour détecter les matches
             onValue(ref(db, `likes`), (snapshot) => {
                 const data = snapshot.val() || {};
                 let likesRecus = 0;
                 let matches = [];
 
-                // Analyse des relations
-                for (let source in data) {
-                    if (data[source][currentBadge]) {
+                for (let userWhoLiked in data) {
+                    // Si ce badge m'a liké
+                    if (data[userWhoLiked][currentBadge]) {
                         likesRecus++;
-                        if (data[currentBadge] && data[currentBadge][source]) {
-                            matches.push(source);
+                        // Si je l'ai aussi liké (c'est un match)
+                        if (data[currentBadge] && data[currentBadge][userWhoLiked]) {
+                            matches.push(userWhoLiked); // On stocke le numéro du badge matché
                         }
                     }
                 }
@@ -223,25 +205,22 @@
             list.innerHTML = "";
 
             if(matchesArray.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-600 py-10 text-xs italic">Continuez à flasher pour trouver des matches !</p>`;
+                list.innerHTML = `<p class="text-center text-gray-600 py-4 text-xs italic">Pas encore de match...</p>`;
                 return;
             }
 
+            // MODIFICATION ICI : Création dynamique des badges avec qui on a matché
             matchesArray.forEach(id => {
                 const item = document.createElement('div');
-                item.className = "glass p-5 rounded-2xl flex justify-between items-center animate-in";
+                item.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
                 item.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.8)]"></div>
-                        <span class="font-black text-xl">Badge #${id}</span>
-                    </div>
-                    <span class="text-pink-500 font-black text-xs tracking-tighter uppercase">Match 🔥</span>
+                    <span class="font-black text-xl italic">Badge #${id}</span>
+                    <span class="text-pink-500 font-black text-[10px] uppercase tracking-tighter">Matché ! 🔥</span>
                 `;
                 list.appendChild(item);
             });
         }
 
-        // Auto-login si badge déjà stocké
         if(currentBadge) showApp();
     </script>
 </body>
