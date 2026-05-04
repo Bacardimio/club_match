@@ -67,8 +67,15 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE (À remplir via le guide PDF)
-        const firebaseConfig = {
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
   authDomain: "club-match-d2d39.firebaseapp.com",
   databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
@@ -78,12 +85,10 @@
   appId: "1:975364560340:web:64fd827ced5c24b808f241",
   measurementId: "G-HGMDSDMVEB"
 };
-        
-        // Initialisation si config présente (mock sinon)
-        let db = null;
-        if(firebaseConfig.apiKey !== "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc") {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
         }
 
         let currentBadge = localStorage.getItem('myBadge');
