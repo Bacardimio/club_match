@@ -10,27 +10,31 @@
         body { 
             background: #0a0a0a; 
             color: white; 
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto; 
+            font-family: -apple-system, system-ui, sans-serif; 
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
         }
         .glass { 
             background: rgba(255, 255, 255, 0.03); 
             backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); 
         }
         .btn-main { 
             background: linear-gradient(135deg, var(--accent), #ff5e00); 
-            box-shadow: 0 10px 20px rgba(255, 0, 85, 0.2);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .btn-main:active { transform: scale(0.96); opacity: 0.9; }
-        .btn-main:disabled { opacity: 0.5; filter: grayscale(1); }
+        .btn-main:active { transform: scale(0.95); }
 
-        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        
+        /* L'ANIMATION POP CORRIGÉE */
+        .animate-pop { 
+            animation: pop 0.5s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards;
+            backface-visibility: hidden;
+        }
+
+        @keyframes pop {
+            0% { opacity: 0; transform: scale(0.7); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
@@ -40,63 +44,56 @@
     <div id="login-screen" class="w-full max-w-sm my-auto space-y-10 animate-pop">
         <div class="text-center">
             <h1 class="text-6xl font-black tracking-tighter italic text-white">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p class="text-gray-500 mt-4 font-medium tracking-widest uppercase text-xs">Événement Privé</p>
+            <p class="text-gray-500 mt-4 uppercase text-xs tracking-widest">Événement Privé</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" 
-                   class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none transition-all">
+                   class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none">
             <button onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest">Entrer</button>
         </div>
     </div>
 
     <!-- APPLICATION PRINCIPALE -->
-    <div id="main-app" class="hidden w-full max-w-md space-y-6 animate-pop">
+    <div id="main-app" class="hidden w-full max-w-md space-y-6">
         <header class="flex justify-between items-end py-4">
             <div>
-                <p class="text-gray-500 text-[10px] uppercase tracking-[0.2em] font-bold">Session active</p>
+                <p class="text-gray-500 text-[10px] uppercase font-bold">Session active</p>
                 <h2 class="text-3xl font-black text-white">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
             </div>
-            <button onclick="toggleAdmin()" class="p-3 opacity-20 hover:opacity-100 transition-opacity">⚙️</button>
+            <button onclick="toggleAdmin()" class="opacity-20 hover:opacity-100 transition-opacity">⚙️</button>
         </header>
 
-        <!-- STATS -->
         <div class="grid grid-cols-2 gap-4">
-            <div class="glass p-6 rounded-3xl text-center">
+            <div class="glass p-6 rounded-3xl text-center animate-pop" style="animation-delay: 0.1s">
                 <span class="block text-4xl font-black mb-1" id="stat-likes">0</span>
-                <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Likes reçus</span>
+                <span class="text-[10px] uppercase text-gray-500 font-bold">Likes reçus</span>
             </div>
-            <div class="glass p-6 rounded-3xl text-center border-pink-500/20">
+            <div class="glass p-6 rounded-3xl text-center border-pink-500/20 animate-pop" style="animation-delay: 0.2s">
                 <span class="block text-4xl font-black text-pink-500 mb-1" id="stat-matches">0</span>
-                <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Matches 🔥</span>
+                <span class="text-[10px] uppercase text-gray-500 font-bold">Matches 🔥</span>
             </div>
         </div>
 
-        <!-- ACTION FLASH -->
-        <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl relative overflow-hidden">
-            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Saisir un numéro</h3>
+        <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl animate-pop" style="animation-delay: 0.3s">
+            <h3 class="text-center text-xs font-bold text-gray-400 uppercase">Saisir un numéro</h3>
             <input type="number" id="target-badge" placeholder="N°" 
-                   class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none transition-all">
-            <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl">
-                FLASHER
-            </button>
+                   class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none">
+            <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl">FLASHER</button>
         </div>
 
-        <!-- LISTE DES MATCHES (Affiche les numéros avec qui on a matché) -->
         <div id="match-container" class="space-y-4 pt-4">
             <div class="flex items-center space-x-2 px-2">
                 <div class="h-px flex-1 bg-white/10"></div>
                 <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vos matches avec :</span>
                 <div class="h-px flex-1 bg-white/10"></div>
             </div>
-            <div id="match-list" class="space-y-3">
-                <!-- Les numéros de badges matchés apparaîtront ici -->
-            </div>
+            <div id="match-list" class="space-y-3"></div>
         </div>
     </div>
 
     <!-- PANEL ADMIN -->
     <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center backdrop-blur-xl">
-        <h2 class="text-2xl font-black text-red-600 mb-8">ADMINISTRATION</h2>
+        <h2 class="text-2xl font-black text-red-600 mb-8 font-black uppercase italic">Admin Panel</h2>
         <button onclick="resetEvent()" class="bg-red-600/20 border border-red-600 text-red-500 px-8 py-4 rounded-xl font-bold mb-4">RÉINITIALISER TOUT</button>
         <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
     </div>
@@ -132,36 +129,21 @@
             const target = document.getElementById('target-badge').value.trim();
             const btn = document.getElementById('btn-flash');
             if(!target || target === currentBadge) return;
-
             btn.disabled = true;
-            btn.innerText = "CHARGEMENT...";
-
             try {
-                // Enregistrement du Like
                 await set(ref(db, `likes/${currentBadge}/${target}`), true);
-                
-                // Vérification si l'autre nous a aussi liké
                 const check = await get(ref(db, `likes/${target}/${currentBadge}`));
-                
-                if(check.exists()) {
-                    // MODIFICATION ICI : On affiche le numéro du match dans l'alerte
-                    alert(`INCROYABLE ! Vous avez un MATCH avec le Badge #${target} ! 🔥`);
-                } else {
-                    alert("Flash envoyé !");
-                }
+                if(check.exists()) alert(`MATCH avec #${target} ! 🔥`);
+                else alert("Flash envoyé !");
                 document.getElementById('target-badge').value = "";
-            } catch (e) {
-                alert("Erreur");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "FLASHER";
-            }
+            } catch (e) { alert("Erreur"); }
+            finally { btn.disabled = false; }
         };
 
         window.toggleAdmin = () => {
             const panel = document.getElementById('admin-panel');
             if (!panel.classList.contains('hidden')) return panel.classList.add('hidden');
-            if (prompt("Code secret :") === ADMIN_PIN) panel.classList.remove('hidden');
+            if (prompt("Code :") === ADMIN_PIN) panel.classList.remove('hidden');
         };
 
         window.resetEvent = async () => {
@@ -173,24 +155,27 @@
         };
 
         function showApp() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
+            const login = document.getElementById('login-screen');
+            const main = document.getElementById('main-app');
+            
+            login.classList.add('hidden');
+            main.classList.remove('hidden');
+            
+            // FORCER LE RE-DÉCLENCHEMENT DE L'ANIMATION
+            main.classList.remove('animate-pop');
+            void main.offsetWidth; // Force le reflow
+            main.classList.add('animate-pop');
+
             document.getElementById('display-badge').innerText = currentBadge;
 
-            // Écoute en temps réel de tous les likes pour détecter les matches
             onValue(ref(db, `likes`), (snapshot) => {
                 const data = snapshot.val() || {};
                 let likesRecus = 0;
                 let matches = [];
-
-                for (let userWhoLiked in data) {
-                    // Si ce badge m'a liké
-                    if (data[userWhoLiked][currentBadge]) {
+                for (let user in data) {
+                    if (data[user][currentBadge]) {
                         likesRecus++;
-                        // Si je l'ai aussi liké (c'est un match)
-                        if (data[currentBadge] && data[currentBadge][userWhoLiked]) {
-                            matches.push(userWhoLiked); // On stocke le numéro du badge matché
-                        }
+                        if (data[currentBadge] && data[currentBadge][user]) matches.push(user);
                     }
                 }
                 updateUI(likesRecus, matches);
@@ -200,22 +185,19 @@
         function updateUI(likes, matchesArray) {
             document.getElementById('stat-likes').innerText = likes;
             document.getElementById('stat-matches').innerText = matchesArray.length;
-            
             const list = document.getElementById('match-list');
             list.innerHTML = "";
-
             if(matchesArray.length === 0) {
                 list.innerHTML = `<p class="text-center text-gray-600 py-4 text-xs italic">Pas encore de match...</p>`;
                 return;
             }
-
-            // MODIFICATION ICI : Création dynamique des badges avec qui on a matché
             matchesArray.forEach(id => {
                 const item = document.createElement('div');
+                // L'animation pop est appliquée sur chaque nouvel élément
                 item.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
                 item.innerHTML = `
                     <span class="font-black text-xl italic">Badge #${id}</span>
-                    <span class="text-pink-500 font-black text-[10px] uppercase tracking-tighter">Matché ! 🔥</span>
+                    <span class="text-pink-500 font-black text-[10px] uppercase">Matché ! 🔥</span>
                 `;
                 list.appendChild(item);
             });
