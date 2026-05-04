@@ -13,7 +13,6 @@
         .btn-main:active { transform: scale(0.95); }
         .btn-main:disabled { opacity: 0.5; filter: grayscale(1); }
 
-        /* Animation Pop Corrigée */
         .animate-pop { 
             animation: pop 0.5s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards;
             backface-visibility: hidden;
@@ -31,13 +30,13 @@
     <div id="login-screen" class="w-full max-w-sm my-auto space-y-10 animate-pop">
         <div class="text-center">
             <h1 class="text-6xl font-black tracking-tighter italic">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p class="text-gray-500 mt-4 uppercase text-[10px] tracking-[0.3em] font-bold">Vérification de badge</p>
+            <p class="text-gray-500 mt-4 uppercase text-[10px] tracking-[0.3em] font-bold italic">Synchronisation en temps réel</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" 
                    class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none transition-all">
             <button id="btn-login" onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest">Rejoindre</button>
-            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Ce badge est déjà utilisé par un autre appareil.</p>
+            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Ce badge est déjà utilisé ailleurs.</p>
         </div>
     </div>
 
@@ -45,7 +44,7 @@
     <div id="main-app" class="hidden w-full max-w-md space-y-6">
         <header class="flex justify-between items-end py-4">
             <div>
-                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">En ligne</p>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Session active</p>
                 <h2 class="text-3xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
             </div>
             <button onclick="toggleAdmin()" class="opacity-20 hover:opacity-100 transition-opacity p-2">⚙️</button>
@@ -82,13 +81,16 @@
     <!-- PANEL ADMIN -->
     <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center backdrop-blur-xl">
         <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">Administration</h2>
-        <button onclick="resetEvent()" class="bg-red-600/20 border border-red-600 text-red-500 px-8 py-4 rounded-xl font-bold mb-4 w-full max-w-xs">RESET TOUTE LA SOIRÉE</button>
-        <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
+        <button onclick="triggerGlobalReset()" class="bg-red-600 border border-red-400 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">
+            RÉINITIALISATION GÉNÉRALE<br>
+            <span class="text-[10px] font-normal opacity-80 uppercase tracking-tighter">Déconnecte TOUS les téléphones</span>
+        </button>
+        <button onclick="toggleAdmin()" class="mt-4 underline text-gray-500">Annuler / Fermer</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const ADMIN_PIN = "2026";
         const firebaseConfig = {
@@ -104,16 +106,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Gestion de l'identifiant unique de l'appareil
-        let deviceId = localStorage.getItem('deviceId');
-        if (!deviceId) {
-            deviceId = 'dev-' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('deviceId', deviceId);
-        }
+        let deviceId = localStorage.getItem('deviceId') || ('dev-' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem('deviceId', deviceId);
 
         let currentBadge = localStorage.getItem('myBadge');
 
-        // FONCTION DE CONNEXION AVEC ANTI-DOUBLON
+        // --- 1. ÉCOUTEUR DE RESET GLOBAL ---
+        // Cet écouteur tourne en arrière-plan dès le chargement de la page
+        onValue(ref(db, 'resetSignal'), (snapshot) => {
+            const serverResetTime = snapshot.val();
+            const lastLocalReset = localStorage.getItem('lastProcessedReset');
+
+            if (serverResetTime && serverResetTime.toString() !== lastLocalReset) {
+                // Si un nouveau signal est détecté
+                localStorage.clear();
+                localStorage.setItem('deviceId', deviceId); // On garde l'ID de l'appareil
+                localStorage.setItem('lastProcessedReset', serverResetTime.toString());
+                location.reload(); // Force le retour au login pour tout le monde
+            }
+        });
+
         window.initUser = async () => {
             const badgeInput = document.getElementById('user-badge');
             const errorMsg = document.getElementById('login-error');
@@ -121,7 +133,6 @@
             const badge = badgeInput.value.trim();
 
             if(!badge) return;
-            
             btn.disabled = true;
             errorMsg.classList.add('hidden');
 
@@ -129,26 +140,16 @@
                 const userRef = ref(db, `users/${badge}`);
                 const snapshot = await get(userRef);
 
-                if (snapshot.exists()) {
-                    const registeredId = snapshot.val();
-                    if (registeredId !== deviceId) {
-                        // Le badge appartient à quelqu'un d'autre
-                        errorMsg.classList.remove('hidden');
-                        btn.disabled = false;
-                        return;
-                    }
+                if (snapshot.exists() && snapshot.val() !== deviceId) {
+                    errorMsg.classList.remove('hidden');
+                    btn.disabled = false;
                 } else {
-                    // Nouveau badge, on l'attribue à cet appareil
                     await set(userRef, deviceId);
+                    currentBadge = badge;
+                    localStorage.setItem('myBadge', badge);
+                    showApp();
                 }
-
-                currentBadge = badge;
-                localStorage.setItem('myBadge', badge);
-                showApp();
-            } catch (e) {
-                alert("Erreur de connexion");
-                btn.disabled = false;
-            }
+            } catch (e) { btn.disabled = false; }
         };
 
         window.submitLike = async () => {
@@ -172,25 +173,28 @@
             if (prompt("Code secret :") === ADMIN_PIN) panel.classList.remove('hidden');
         };
 
-        window.resetEvent = async () => {
-            if(confirm("Action radicale : Supprimer TOUS les utilisateurs, likes et matches ?")) {
-                await remove(ref(db, '/')); // Efface tout (likes + users)
-                localStorage.clear();
-                location.reload();
+        // --- 2. FONCTION DE RESET GLOBAL (ADMIN) ---
+        window.triggerGlobalReset = async () => {
+            if(confirm("Êtes-vous certain ? Tous les téléphones seront déconnectés et les données effacées.")) {
+                try {
+                    // On efface les données
+                    await remove(ref(db, 'users'));
+                    await remove(ref(db, 'likes'));
+                    
+                    // On envoie le signal de reset avec un timestamp unique
+                    const newResetTime = Date.now();
+                    await set(ref(db, 'resetSignal'), newResetTime);
+                    
+                    alert("Signal de réinitialisation envoyé !");
+                } catch (e) {
+                    alert("Erreur lors du reset");
+                }
             }
         };
 
         function showApp() {
-            const login = document.getElementById('login-screen');
-            const main = document.getElementById('main-app');
-            login.classList.add('hidden');
-            main.classList.remove('hidden');
-            
-            // Animation de transition
-            main.classList.remove('animate-pop');
-            void main.offsetWidth;
-            main.classList.add('animate-pop');
-
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('display-badge').innerText = currentBadge;
 
             onValue(ref(db, `likes`), (snapshot) => {
@@ -213,16 +217,13 @@
             const list = document.getElementById('match-list');
             list.innerHTML = "";
             if(matchesArray.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-600 py-4 text-[10px] italic">Aucun match pour le moment...</p>`;
+                list.innerHTML = `<p class="text-center text-gray-600 py-4 text-[10px] italic font-bold">Aucune connexion pour le moment</p>`;
                 return;
             }
             matchesArray.forEach(id => {
                 const item = document.createElement('div');
                 item.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
-                item.innerHTML = `
-                    <span class="font-black text-xl italic">Badge #${id}</span>
-                    <span class="text-pink-500 font-black text-[10px] uppercase">Matché ! 🔥</span>
-                `;
+                item.innerHTML = `<span class="font-black text-xl">#${id}</span><span class="text-pink-500 font-black text-[10px] uppercase">Match ! 🔥</span>`;
                 list.appendChild(item);
             });
         }
