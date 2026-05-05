@@ -23,8 +23,16 @@
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
+    <!-- ÉCRAN ÉVÉNEMENT CLOS / NON DÉMARRÉ (Nouveau) -->
+    <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
+        <h1 class="text-4xl font-black mb-4 uppercase italic">Accès <span class="text-pink-600">Restreint</span></h1>
+        <div class="glass p-8 rounded-[2.5rem]">
+            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm">Cet événement n'est pas accessible pour le moment.</p>
+        </div>
+    </div>
+
     <!-- ÉCRAN CONNEXION -->
-    <div id="login-screen" class="w-full max-w-sm my-auto space-y-10 animate-pop text-center">
+    <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
             <h1 class="text-6xl font-black tracking-tighter italic uppercase">CLUB<br><span class="text-pink-600">MATCH</span></h1>
             <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">Événement Standard</p>
@@ -100,7 +108,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // CONFIGURATION À REMPLACER PAR LA TIENNE
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
             authDomain: "club-match-d2d39.firebaseapp.com",
@@ -114,21 +121,48 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- LOGIQUE MULTI-CLIENT ---
         const urlParams = new URLSearchParams(window.location.search);
         const eventID = urlParams.get('event') || 'default';
-        document.getElementById('event-name-display').innerText = `Événement : ${eventID}`;
-
-        const basePath = `events/${eventID}`; // Toutes les données seront sous events/NomDeLEvent
-        // ----------------------------
-
-        let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
-        localStorage.setItem(`deviceId_${eventID}`, deviceId);
+        const basePath = `events/${eventID}`;
 
         let currentBadge = localStorage.getItem(`myBadge_${eventID}`);
         let activeChatRoom = null;
+        let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // SIGNAL RESET POUR CET EVENT
+        // --- NOUVEAU : VÉRIFICATION DU CRÉNEAU HORAIRE ---
+        onValue(ref(db, `${basePath}/config`), (snapshot) => {
+            const config = snapshot.val();
+            const now = Date.now();
+
+            if (config) {
+                const isStarted = now >= config.startTime;
+                const isFinished = now >= config.endTime;
+
+                if (!isStarted) {
+                    showClosedScreen("L'événement n'a pas encore commencé.");
+                } else if (isFinished || config.active === false) {
+                    showClosedScreen("Cet événement est terminé. Merci de votre visite !");
+                } else {
+                    // C'est ouvert ! On cache l'écran clos et on montre soit login soit app
+                    document.getElementById('closed-screen').classList.add('hidden');
+                    if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
+                }
+            } else {
+                // Si aucune config n'est définie, on laisse l'accès libre par défaut ou on bloque
+                if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
+            }
+        });
+
+        function showClosedScreen(msg) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('closed-screen').classList.remove('hidden');
+            document.getElementById('closed-message').innerText = msg;
+        }
+        // -----------------------------------------------
+
+        // SIGNAL RESET
         onValue(ref(db, `${basePath}/resetSignal`), (snapshot) => {
             const serverResetTime = snapshot.val();
             const lastLocalReset = localStorage.getItem(`lastReset_${eventID}`);
@@ -155,6 +189,7 @@
             }
         };
 
+        // ... (Le reste de vos fonctions submitLike, openChat, sendMessage reste identique) ...
         window.submitLike = async () => {
             const target = document.getElementById('target-badge').value.trim();
             if(!target || target === currentBadge) return;
@@ -170,7 +205,6 @@
             document.getElementById('chat-target-badge').innerText = targetBadge;
             activeChatRoom = [currentBadge, targetBadge].sort().join('-');
             chatWindow.classList.remove('hidden');
-
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
             onValue(chatRef, (snapshot) => {
                 messageContainer.innerHTML = "";
@@ -220,6 +254,7 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('display-badge').innerText = currentBadge;
+            document.getElementById('event-name-display').innerText = `Événement : ${eventID}`;
 
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
                 const data = snapshot.val() || {};
@@ -244,8 +279,6 @@
                 });
             });
         }
-
-        if(currentBadge) showApp();
     </script>
 </body>
 </html>
