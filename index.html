@@ -208,10 +208,8 @@
             document.getElementById('chat-target-badge').innerText = targetBadge;
             document.getElementById('chat-window').classList.remove('hidden');
             
-            // 1. On marque comme lu immédiatement
             localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
             
-            // 2. On cache manuellement le rond rouge pour un feedback instantané
             const dot = document.getElementById(`dot-${targetBadge}`);
             if(dot) dot.classList.add('hidden');
 
@@ -228,7 +226,6 @@
                         container.appendChild(div);
                     });
                     container.scrollTop = container.scrollHeight;
-                    // Mise à jour continue de la lecture
                     localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
                 }
             });
@@ -282,20 +279,18 @@
                     card.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
                             <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
-                            <span class="font-black text-xl italic text-white">Message de #${id}</span>
+                            <span class="font-black text-xl italic text-white">Chat avec #${id}</span>
                         </div>
                         <button onclick="removeLike('${id}', 'match')" class="text-[10px] font-bold text-gray-500 uppercase">Supprimer</button>
                     `;
                     matchList.appendChild(card);
 
-                    // Gestion du rond rouge en temps réel
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
                         const msgs = mSnap.val();
                         if (msgs) {
                             const lastMsg = Object.values(msgs).pop();
                             const lastRead = localStorage.getItem(`lastRead_${eventID}_${roomID}`) || 0;
                             const dot = document.getElementById(`dot-${id}`);
-                            // On affiche le rond SEULEMENT si le dernier message n'est pas de nous ET s'il est plus récent que la lecture
                             if (dot && lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
                                 dot.classList.remove('hidden');
                             }
