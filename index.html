@@ -58,7 +58,7 @@
             <button onclick="toggleAdmin()" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-2xl">⚙️</button>
         </header>
 
-        <!-- STATISTIQUES (Version 3 colonnes) -->
+        <!-- STATISTIQUES -->
         <div class="grid grid-cols-3 gap-2">
             <div class="glass py-4 rounded-2xl text-center">
                 <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
@@ -83,7 +83,6 @@
 
         <!-- LISTES -->
         <div class="space-y-8 pb-10">
-            <!-- SECTION MATCHES -->
             <div id="match-section" class="space-y-4">
                 <div class="flex items-center space-x-2 px-2">
                     <div class="h-px flex-1 bg-white/10"></div>
@@ -93,7 +92,6 @@
                 <div id="match-list" class="space-y-3"></div>
             </div>
 
-            <!-- SECTION LIKES ENVOYÉS -->
             <div id="sent-likes-section" class="space-y-4">
                 <div class="flex items-center space-x-2 px-2">
                     <div class="h-px flex-1 bg-white/10"></div>
@@ -162,10 +160,8 @@
             if (config) {
                 if (config.active === false || (config.endTime && now > config.endTime)) {
                     showUI('closed-screen');
-                    document.getElementById('closed-message').innerText = "Cet événement est terminé.";
                 } else if (config.startTime && now < config.startTime) {
                     showUI('closed-screen');
-                    document.getElementById('closed-message').innerText = "L'événement n'a pas encore commencé.";
                 } else {
                     if (currentBadge) showApp(); else showUI('login-screen');
                 }
@@ -200,7 +196,6 @@
             targetInput.value = "";
         };
 
-        // Supprimer un Like ou un Match
         window.removeLike = async (targetId, type = 'match') => {
             const msg = type === 'match' ? `Supprimer le match avec #${targetId} ?` : `Annuler le like pour #${targetId} ?`;
             if (confirm(msg)) {
@@ -212,7 +207,13 @@
             activeChatRoom = [currentBadge, targetBadge].sort().join('-');
             document.getElementById('chat-target-badge').innerText = targetBadge;
             document.getElementById('chat-window').classList.remove('hidden');
+            
+            // 1. On marque comme lu immédiatement
             localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
+            
+            // 2. On cache manuellement le rond rouge pour un feedback instantané
+            const dot = document.getElementById(`dot-${targetBadge}`);
+            if(dot) dot.classList.add('hidden');
 
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
             onValue(chatRef, (snapshot) => {
@@ -227,6 +228,7 @@
                         container.appendChild(div);
                     });
                     container.scrollTop = container.scrollHeight;
+                    // Mise à jour continue de la lecture
                     localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
                 }
             });
@@ -259,7 +261,6 @@
                 let likesRecus = 0;
                 let likesEnvoyes = data[currentBadge] ? Object.keys(data[currentBadge]) : [];
 
-                // Analyse globale pour les reçus et matches
                 for (let user in data) {
                     if (data[user][currentBadge]) {
                         likesRecus++;
@@ -271,9 +272,9 @@
                 document.getElementById('stat-likes-envoyes').innerText = likesEnvoyes.length;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
-                // Rendu Liste Matches
                 const matchList = document.getElementById('match-list');
                 matchList.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-4 text-xs italic">Aucun match...</p>`;
+                
                 matches.forEach(id => {
                     const roomID = [currentBadge, id].sort().join('-');
                     const card = document.createElement('div');
@@ -281,32 +282,33 @@
                     card.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
                             <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
-                            <span class="font-black text-xl italic text-white">#${id}</span>
+                            <span class="font-black text-xl italic text-white">Message de #${id}</span>
                         </div>
                         <button onclick="removeLike('${id}', 'match')" class="text-[10px] font-bold text-gray-500 uppercase">Supprimer</button>
                     `;
                     matchList.appendChild(card);
 
-                    // Notif messages
-                    const lastRead = localStorage.getItem(`lastRead_${eventID}_${roomID}`) || 0;
+                    // Gestion du rond rouge en temps réel
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
                         const msgs = mSnap.val();
                         if (msgs) {
                             const lastMsg = Object.values(msgs).pop();
+                            const lastRead = localStorage.getItem(`lastRead_${eventID}_${roomID}`) || 0;
                             const dot = document.getElementById(`dot-${id}`);
-                            if (dot && lastMsg.sender !== currentBadge && lastMsg.time > lastRead) dot.classList.remove('hidden');
+                            // On affiche le rond SEULEMENT si le dernier message n'est pas de nous ET s'il est plus récent que la lecture
+                            if (dot && lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
+                                dot.classList.remove('hidden');
+                            }
                         }
-                    }, { onlyOnce: false });
+                    });
                 });
 
-                // Rendu Liste Likes Envoyés
                 const sentList = document.getElementById('sent-likes-list');
                 sentList.innerHTML = likesEnvoyes.length ? "" : `<p class="col-span-2 text-center text-gray-600 py-4 text-xs italic">Aucun like envoyé...</p>`;
                 likesEnvoyes.forEach(id => {
-                    // Si ce n'est pas déjà un match, on l'affiche ici
                     if (!matches.includes(id)) {
                         const card = document.createElement('div');
-                        card.className = "glass p-3 rounded-xl flex justify-between items-center animate-pop border border-white/5";
+                        card.className = "glass p-3 rounded-xl flex justify-between items-center border border-white/5";
                         card.innerHTML = `
                             <span class="font-bold text-white text-sm">#${id}</span>
                             <button onclick="removeLike('${id}', 'like')" class="text-[9px] text-pink-500/50 hover:text-pink-500 font-bold uppercase">Annuler</button>
