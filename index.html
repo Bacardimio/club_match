@@ -15,10 +15,12 @@
         .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
         @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
 
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
         .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .notification-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
@@ -27,21 +29,21 @@
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
         <h1 class="text-4xl font-black mb-4 uppercase italic">Accès <span class="text-pink-600">Restreint</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
-            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm">Cet événement n'est pas accessible pour le moment.</p>
+            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm">Cet événement n'est pas accessible.</p>
         </div>
     </div>
 
     <!-- ÉCRAN CONNEXION -->
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
-            <h1 class="text-6xl font-black tracking-tighter italic uppercase">CLUB<br><span class="text-pink-600">MATCH</span></h1>
+            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white">CLUB<br><span class="text-pink-600">MATCH</span></h1>
             <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">Chargement...</p>
         </div>
         
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" 
                    class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
-            <button id="btn-login" onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
+            <button onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
             <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
         </div>
     </div>
@@ -56,14 +58,19 @@
             <button onclick="toggleAdmin()" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-2xl">⚙️</button>
         </header>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="glass p-6 rounded-3xl text-center">
-                <span class="block text-4xl font-black mb-1 text-white" id="stat-likes">0</span>
-                <span class="text-[10px] uppercase text-gray-500 font-bold">Likes reçus</span>
+        <!-- STATISTIQUES (Version 3 colonnes) -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="glass py-4 rounded-2xl text-center">
+                <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Reçus</span>
             </div>
-            <div class="glass p-6 rounded-3xl text-center border-pink-500/20">
-                <span class="block text-4xl font-black text-pink-500 mb-1" id="stat-matches">0</span>
-                <span class="text-[10px] uppercase text-gray-500 font-bold">Matches 🔥</span>
+            <div class="glass py-4 rounded-2xl text-center border-pink-500/20">
+                <span class="block text-2xl font-black text-pink-500" id="stat-matches">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Matches 🔥</span>
+            </div>
+            <div class="glass py-4 rounded-2xl text-center">
+                <span class="block text-2xl font-black text-white" id="stat-likes-envoyes">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Envoyés</span>
             </div>
         </div>
 
@@ -71,16 +78,30 @@
             <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Flasher un numéro</h3>
             <input type="number" id="target-badge" placeholder="N°" 
                    class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none text-white">
-            <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white">FLASHER</button>
+            <button onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white">FLASHER</button>
         </div>
 
-        <div id="match-list-container" class="space-y-4 pt-4">
-            <div class="flex items-center space-x-2 px-2">
-                <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tes Matches</span>
-                <div class="h-px flex-1 bg-white/10"></div>
+        <!-- LISTES -->
+        <div class="space-y-8 pb-10">
+            <!-- SECTION MATCHES -->
+            <div id="match-section" class="space-y-4">
+                <div class="flex items-center space-x-2 px-2">
+                    <div class="h-px flex-1 bg-white/10"></div>
+                    <span class="text-[10px] font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
+                    <div class="h-px flex-1 bg-white/10"></div>
+                </div>
+                <div id="match-list" class="space-y-3"></div>
             </div>
-            <div id="match-list" class="space-y-3"></div>
+
+            <!-- SECTION LIKES ENVOYÉS -->
+            <div id="sent-likes-section" class="space-y-4">
+                <div class="flex items-center space-x-2 px-2">
+                    <div class="h-px flex-1 bg-white/10"></div>
+                    <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tes Likes Envoyés</span>
+                    <div class="h-px flex-1 bg-white/10"></div>
+                </div>
+                <div id="sent-likes-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
         </div>
     </div>
 
@@ -99,8 +120,8 @@
 
     <!-- PANEL ADMIN -->
     <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center">
-        <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">ADMINISTRATION EVENT</h2>
-        <button onclick="triggerGlobalReset()" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">RÉINITIALISER TOUT L'ÉVÉNEMENT</button>
+        <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">ADMINISTRATION</h2>
+        <button onclick="triggerGlobalReset()" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">RÉINITIALISER L'ÉVÉNEMENT</button>
         <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
     </div>
 
@@ -108,7 +129,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // CONFIGURATION FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
             authDomain: "club-match-d2d39.firebaseapp.com",
@@ -131,52 +151,35 @@
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // --- GESTION DES ÉCRANS ---
-        function hideAllScreens() {
-            ['closed-screen', 'login-screen', 'main-app', 'admin-panel'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
+        function showUI(id) {
+            ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
         }
 
-        // --- VÉRIFICATION ÉTAT ÉVÉNEMENT ---
         onValue(ref(db, `${basePath}/config`), (snapshot) => {
             const config = snapshot.val();
             const now = Date.now();
-
             if (config) {
-                const isStarted = now >= config.startTime;
-                const isFinished = now >= config.endTime;
-
-                if (config.active === false || isFinished) {
-                    showClosedScreen("Cet événement est terminé. À bientôt !");
-                } else if (!isStarted) {
-                    showClosedScreen("L'événement n'a pas encore commencé.");
+                if (config.active === false || (config.endTime && now > config.endTime)) {
+                    showUI('closed-screen');
+                    document.getElementById('closed-message').innerText = "Cet événement est terminé.";
+                } else if (config.startTime && now < config.startTime) {
+                    showUI('closed-screen');
+                    document.getElementById('closed-message').innerText = "L'événement n'a pas encore commencé.";
                 } else {
-                    document.getElementById('closed-screen').classList.add('hidden');
-                    if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
+                    if (currentBadge) showApp(); else showUI('login-screen');
                 }
             } else {
-                // Pas de config = Accès libre
-                if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
+                if (currentBadge) showApp(); else showUI('login-screen');
             }
             document.getElementById('event-name-display').innerText = `ÉVÉNEMENT : ${eventID.toUpperCase()}`;
         });
 
-        function showClosedScreen(msg) {
-            hideAllScreens();
-            document.getElementById('closed-screen').classList.remove('hidden');
-            document.getElementById('closed-message').innerText = msg;
-        }
-
-        // --- LOGIQUE UTILISATEUR ---
         window.initUser = async () => {
-            const badgeInput = document.getElementById('user-badge');
-            const badge = badgeInput.value.trim();
+            const badge = document.getElementById('user-badge').value.trim();
             if(!badge) return;
-
             const userRef = ref(db, `${basePath}/users/${badge}`);
             const snapshot = await get(userRef);
-            
             if (snapshot.exists() && snapshot.val() !== deviceId) {
                 document.getElementById('login-error').classList.remove('hidden');
             } else {
@@ -191,38 +194,40 @@
             const targetInput = document.getElementById('target-badge');
             const target = targetInput.value.trim();
             if(!target || target === currentBadge) return;
-
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
-            
-            // Vérifier si match immédiat
-            const checkMatch = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
-            if(checkMatch.exists()) {
-                alert("C'EST UN MATCH ! 🔥");
-            }
+            const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
+            if(check.exists()) alert("MATCH ! 🔥");
             targetInput.value = "";
         };
 
-        // --- CHAT ---
+        // Supprimer un Like ou un Match
+        window.removeLike = async (targetId, type = 'match') => {
+            const msg = type === 'match' ? `Supprimer le match avec #${targetId} ?` : `Annuler le like pour #${targetId} ?`;
+            if (confirm(msg)) {
+                await remove(ref(db, `${basePath}/likes/${currentBadge}/${targetId}`));
+            }
+        };
+
         window.openChat = (targetBadge) => {
-            const chatWindow = document.getElementById('chat-window');
-            const messageContainer = document.getElementById('chat-messages');
-            document.getElementById('chat-target-badge').innerText = targetBadge;
-            
             activeChatRoom = [currentBadge, targetBadge].sort().join('-');
-            chatWindow.classList.remove('hidden');
-            
+            document.getElementById('chat-target-badge').innerText = targetBadge;
+            document.getElementById('chat-window').classList.remove('hidden');
+            localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
+
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
             onValue(chatRef, (snapshot) => {
-                messageContainer.innerHTML = "";
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = "";
                 const data = snapshot.val();
                 if (data) {
                     Object.values(data).forEach(msg => {
                         const div = document.createElement('div');
                         div.className = `msg ${msg.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
                         div.innerText = msg.text;
-                        messageContainer.appendChild(div);
+                        container.appendChild(div);
                     });
-                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                    container.scrollTop = container.scrollHeight;
+                    localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
                 }
             });
         };
@@ -230,96 +235,113 @@
         window.closeChat = () => {
             if(activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
             document.getElementById('chat-window').classList.add('hidden');
+            activeChatRoom = null;
         };
 
         window.sendMessage = async () => {
             const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if(!text) return;
-
+            if(!input.value.trim() || !activeChatRoom) return;
             await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
                 sender: currentBadge,
-                text: text,
+                text: input.value.trim(),
                 time: serverTimestamp()
             });
             input.value = "";
         };
 
-        // --- ADMIN & RESET ---
+        function showApp() {
+            showUI('main-app');
+            document.getElementById('display-badge').innerText = currentBadge;
+
+            onValue(ref(db, `${basePath}/likes`), (snapshot) => {
+                const data = snapshot.val() || {};
+                let matches = [];
+                let likesRecus = 0;
+                let likesEnvoyes = data[currentBadge] ? Object.keys(data[currentBadge]) : [];
+
+                // Analyse globale pour les reçus et matches
+                for (let user in data) {
+                    if (data[user][currentBadge]) {
+                        likesRecus++;
+                        if (data[currentBadge] && data[currentBadge][user]) matches.push(user);
+                    }
+                }
+
+                document.getElementById('stat-likes-recus').innerText = likesRecus;
+                document.getElementById('stat-likes-envoyes').innerText = likesEnvoyes.length;
+                document.getElementById('stat-matches').innerText = matches.length;
+                
+                // Rendu Liste Matches
+                const matchList = document.getElementById('match-list');
+                matchList.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-4 text-xs italic">Aucun match...</p>`;
+                matches.forEach(id => {
+                    const roomID = [currentBadge, id].sort().join('-');
+                    const card = document.createElement('div');
+                    card.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
+                            <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
+                            <span class="font-black text-xl italic text-white">#${id}</span>
+                        </div>
+                        <button onclick="removeLike('${id}', 'match')" class="text-[10px] font-bold text-gray-500 uppercase">Supprimer</button>
+                    `;
+                    matchList.appendChild(card);
+
+                    // Notif messages
+                    const lastRead = localStorage.getItem(`lastRead_${eventID}_${roomID}`) || 0;
+                    onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
+                        const msgs = mSnap.val();
+                        if (msgs) {
+                            const lastMsg = Object.values(msgs).pop();
+                            const dot = document.getElementById(`dot-${id}`);
+                            if (dot && lastMsg.sender !== currentBadge && lastMsg.time > lastRead) dot.classList.remove('hidden');
+                        }
+                    }, { onlyOnce: false });
+                });
+
+                // Rendu Liste Likes Envoyés
+                const sentList = document.getElementById('sent-likes-list');
+                sentList.innerHTML = likesEnvoyes.length ? "" : `<p class="col-span-2 text-center text-gray-600 py-4 text-xs italic">Aucun like envoyé...</p>`;
+                likesEnvoyes.forEach(id => {
+                    // Si ce n'est pas déjà un match, on l'affiche ici
+                    if (!matches.includes(id)) {
+                        const card = document.createElement('div');
+                        card.className = "glass p-3 rounded-xl flex justify-between items-center animate-pop border border-white/5";
+                        card.innerHTML = `
+                            <span class="font-bold text-white text-sm">#${id}</span>
+                            <button onclick="removeLike('${id}', 'like')" class="text-[9px] text-pink-500/50 hover:text-pink-500 font-bold uppercase">Annuler</button>
+                        `;
+                        sentList.appendChild(card);
+                    }
+                });
+            });
+        }
+
         window.toggleAdmin = () => {
-            const panel = document.getElementById('admin-panel');
-            if (!panel.classList.contains('hidden')) {
-                panel.classList.add('hidden');
-            } else {
-                if (prompt("Code Admin :") === "2026") panel.classList.remove('hidden');
-            }
+            if (prompt("Code Admin :") === "2026") document.getElementById('admin-panel').classList.toggle('hidden');
         };
 
         window.triggerGlobalReset = async () => {
-            if(confirm(`ATTENTION : Supprimer TOUTES les données de l'événement ${eventID} ?`)) {
+            if(confirm("Tout supprimer ?")) {
                 await remove(ref(db, basePath));
                 await set(ref(db, `${basePath}/resetSignal`), Date.now());
                 location.reload();
             }
         };
 
-        // Écouter le signal de reset
-        onValue(ref(db, `${basePath}/resetSignal`), (snapshot) => {
-            const serverResetTime = snapshot.val();
-            const lastLocalReset = localStorage.getItem(`lastReset_${eventID}`);
-            if (serverResetTime && serverResetTime.toString() !== lastLocalReset) {
+        onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
+            const sig = snap.val();
+            if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
                 localStorage.removeItem(`myBadge_${eventID}`);
-                localStorage.setItem(`lastReset_${eventID}`, serverResetTime.toString());
+                localStorage.setItem(`lastReset_${eventID}`, sig.toString());
                 location.reload();
             }
         });
 
-        // --- MISE À JOUR APP ---
-        function showApp() {
-            hideAllScreens();
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('display-badge').innerText = currentBadge;
-
-            // Stats et Matches en temps réel
-            onValue(ref(db, `${basePath}/likes`), (snapshot) => {
-                const data = snapshot.val() || {};
-                let likesRecus = 0; 
-                let matches = [];
-
-                // Calculer qui m'a liké et les matches
-                for (let user in data) {
-                    if (data[user][currentBadge]) {
-                        likesRecus++;
-                        if (data[currentBadge] && data[currentBadge][user]) {
-                            matches.push(user);
-                        }
-                    }
-                }
-
-                document.getElementById('stat-likes').innerText = likesRecus;
-                document.getElementById('stat-matches').innerText = matches.length;
-                
-                const list = document.getElementById('match-list');
-                list.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-8 text-xs italic">Aucun match pour le moment...</p>`;
-                
-                matches.forEach(id => {
-                    const item = document.createElement('div');
-                    item.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500 cursor-pointer active:scale-95 transition-transform";
-                    item.innerHTML = `
-                        <span class="font-black text-xl italic text-white">#${id}</span>
-                        <span class="text-pink-500 font-black text-[10px] uppercase">Discuter 💬</span>
-                    `;
-                    item.onclick = () => window.openChat(id);
-                    list.appendChild(item);
-                });
-            });
-        }
-
-        // Support de la touche "Entrée"
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                if (!document.getElementById('login-screen').classList.contains('hidden')) window.initUser();
-                else if (!document.getElementById('chat-window').classList.contains('hidden')) window.sendMessage();
+                if (!document.getElementById('chat-window').classList.contains('hidden')) window.sendMessage();
+                else if (!document.getElementById('login-screen').classList.contains('hidden')) window.initUser();
             }
         });
     </script>
