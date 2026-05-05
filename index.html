@@ -23,7 +23,7 @@
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
-    <!-- ÉCRAN ÉVÉNEMENT CLOS / NON DÉMARRÉ (Nouveau) -->
+    <!-- ÉCRAN ÉVÉNEMENT CLOS -->
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
         <h1 class="text-4xl font-black mb-4 uppercase italic">Accès <span class="text-pink-600">Restreint</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
@@ -35,14 +35,14 @@
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
             <h1 class="text-6xl font-black tracking-tighter italic uppercase">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">Événement Standard</p>
+            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">Chargement...</p>
         </div>
         
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" 
                    class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
             <button id="btn-login" onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
-            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé pour cet événement.</p>
+            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
         </div>
     </div>
 
@@ -68,7 +68,7 @@
         </div>
 
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
-            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-widest text-white">Flasher un numéro</h3>
+            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Flasher un numéro</h3>
             <input type="number" id="target-badge" placeholder="N°" 
                    class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none text-white">
             <button id="btn-flash" onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white">FLASHER</button>
@@ -100,7 +100,7 @@
     <!-- PANEL ADMIN -->
     <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center">
         <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">ADMINISTRATION EVENT</h2>
-        <button onclick="triggerGlobalReset()" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">RÉINITIALISER CET ÉVÉNEMENT</button>
+        <button onclick="triggerGlobalReset()" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">RÉINITIALISER TOUT L'ÉVÉNEMENT</button>
         <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
     </div>
 
@@ -108,6 +108,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
+        // CONFIGURATION FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
             authDomain: "club-match-d2d39.firebaseapp.com",
@@ -130,7 +131,14 @@
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // --- NOUVEAU : VÉRIFICATION DU CRÉNEAU HORAIRE ---
+        // --- GESTION DES ÉCRANS ---
+        function hideAllScreens() {
+            ['closed-screen', 'login-screen', 'main-app', 'admin-panel'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        // --- VÉRIFICATION ÉTAT ÉVÉNEMENT ---
         onValue(ref(db, `${basePath}/config`), (snapshot) => {
             const config = snapshot.val();
             const now = Date.now();
@@ -139,43 +147,33 @@
                 const isStarted = now >= config.startTime;
                 const isFinished = now >= config.endTime;
 
-                if (!isStarted) {
+                if (config.active === false || isFinished) {
+                    showClosedScreen("Cet événement est terminé. À bientôt !");
+                } else if (!isStarted) {
                     showClosedScreen("L'événement n'a pas encore commencé.");
-                } else if (isFinished || config.active === false) {
-                    showClosedScreen("Cet événement est terminé. Merci de votre visite !");
                 } else {
-                    // C'est ouvert ! On cache l'écran clos et on montre soit login soit app
                     document.getElementById('closed-screen').classList.add('hidden');
                     if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
                 }
             } else {
-                // Si aucune config n'est définie, on laisse l'accès libre par défaut ou on bloque
+                // Pas de config = Accès libre
                 if (currentBadge) showApp(); else document.getElementById('login-screen').classList.remove('hidden');
             }
+            document.getElementById('event-name-display').innerText = `ÉVÉNEMENT : ${eventID.toUpperCase()}`;
         });
 
         function showClosedScreen(msg) {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.add('hidden');
+            hideAllScreens();
             document.getElementById('closed-screen').classList.remove('hidden');
             document.getElementById('closed-message').innerText = msg;
         }
-        // -----------------------------------------------
 
-        // SIGNAL RESET
-        onValue(ref(db, `${basePath}/resetSignal`), (snapshot) => {
-            const serverResetTime = snapshot.val();
-            const lastLocalReset = localStorage.getItem(`lastReset_${eventID}`);
-            if (serverResetTime && serverResetTime.toString() !== lastLocalReset) {
-                localStorage.removeItem(`myBadge_${eventID}`);
-                localStorage.setItem(`lastReset_${eventID}`, serverResetTime.toString());
-                location.reload();
-            }
-        });
-
+        // --- LOGIQUE UTILISATEUR ---
         window.initUser = async () => {
-            const badge = document.getElementById('user-badge').value.trim();
+            const badgeInput = document.getElementById('user-badge');
+            const badge = badgeInput.value.trim();
             if(!badge) return;
+
             const userRef = ref(db, `${basePath}/users/${badge}`);
             const snapshot = await get(userRef);
             
@@ -189,22 +187,30 @@
             }
         };
 
-        // ... (Le reste de vos fonctions submitLike, openChat, sendMessage reste identique) ...
         window.submitLike = async () => {
-            const target = document.getElementById('target-badge').value.trim();
+            const targetInput = document.getElementById('target-badge');
+            const target = targetInput.value.trim();
             if(!target || target === currentBadge) return;
+
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
-            const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
-            if(check.exists()) alert("MATCH ! 🔥");
-            document.getElementById('target-badge').value = "";
+            
+            // Vérifier si match immédiat
+            const checkMatch = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
+            if(checkMatch.exists()) {
+                alert("C'EST UN MATCH ! 🔥");
+            }
+            targetInput.value = "";
         };
 
+        // --- CHAT ---
         window.openChat = (targetBadge) => {
             const chatWindow = document.getElementById('chat-window');
             const messageContainer = document.getElementById('chat-messages');
             document.getElementById('chat-target-badge').innerText = targetBadge;
+            
             activeChatRoom = [currentBadge, targetBadge].sort().join('-');
             chatWindow.classList.remove('hidden');
+            
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
             onValue(chatRef, (snapshot) => {
                 messageContainer.innerHTML = "";
@@ -228,57 +234,94 @@
 
         window.sendMessage = async () => {
             const input = document.getElementById('chat-input');
-            if(!input.value.trim()) return;
+            const text = input.value.trim();
+            if(!text) return;
+
             await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
                 sender: currentBadge,
-                text: input.value.trim(),
+                text: text,
                 time: serverTimestamp()
             });
             input.value = "";
         };
 
+        // --- ADMIN & RESET ---
         window.toggleAdmin = () => {
             const panel = document.getElementById('admin-panel');
-            if (!panel.classList.contains('hidden')) return panel.classList.add('hidden');
-            if (prompt("Code Admin :") === "2026") panel.classList.remove('hidden');
-        };
-
-        window.triggerGlobalReset = async () => {
-            if(confirm(`Supprimer TOUTES les données de l'événement ${eventID} ?`)) {
-                await remove(ref(db, basePath));
-                await set(ref(db, `${basePath}/resetSignal`), Date.now());
+            if (!panel.classList.contains('hidden')) {
+                panel.classList.add('hidden');
+            } else {
+                if (prompt("Code Admin :") === "2026") panel.classList.remove('hidden');
             }
         };
 
+        window.triggerGlobalReset = async () => {
+            if(confirm(`ATTENTION : Supprimer TOUTES les données de l'événement ${eventID} ?`)) {
+                await remove(ref(db, basePath));
+                await set(ref(db, `${basePath}/resetSignal`), Date.now());
+                location.reload();
+            }
+        };
+
+        // Écouter le signal de reset
+        onValue(ref(db, `${basePath}/resetSignal`), (snapshot) => {
+            const serverResetTime = snapshot.val();
+            const lastLocalReset = localStorage.getItem(`lastReset_${eventID}`);
+            if (serverResetTime && serverResetTime.toString() !== lastLocalReset) {
+                localStorage.removeItem(`myBadge_${eventID}`);
+                localStorage.setItem(`lastReset_${eventID}`, serverResetTime.toString());
+                location.reload();
+            }
+        });
+
+        // --- MISE À JOUR APP ---
         function showApp() {
-            document.getElementById('login-screen').classList.add('hidden');
+            hideAllScreens();
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('display-badge').innerText = currentBadge;
-            document.getElementById('event-name-display').innerText = `Événement : ${eventID}`;
 
+            // Stats et Matches en temps réel
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
                 const data = snapshot.val() || {};
-                let likesRecus = 0; let matches = [];
+                let likesRecus = 0; 
+                let matches = [];
+
+                // Calculer qui m'a liké et les matches
                 for (let user in data) {
                     if (data[user][currentBadge]) {
                         likesRecus++;
-                        if (data[currentBadge] && data[currentBadge][user]) matches.push(user);
+                        if (data[currentBadge] && data[currentBadge][user]) {
+                            matches.push(user);
+                        }
                     }
                 }
+
                 document.getElementById('stat-likes').innerText = likesRecus;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
                 const list = document.getElementById('match-list');
-                list.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-4 text-[10px] italic">Aucun match...</p>`;
+                list.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-8 text-xs italic">Aucun match pour le moment...</p>`;
+                
                 matches.forEach(id => {
                     const item = document.createElement('div');
-                    item.onclick = () => openChat(id);
                     item.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500 cursor-pointer active:scale-95 transition-transform";
-                    item.innerHTML = `<span class="font-black text-xl italic text-white">#${id}</span><span class="text-pink-500 font-black text-[10px] uppercase">Discuter 💬</span>`;
+                    item.innerHTML = `
+                        <span class="font-black text-xl italic text-white">#${id}</span>
+                        <span class="text-pink-500 font-black text-[10px] uppercase">Discuter 💬</span>
+                    `;
+                    item.onclick = () => window.openChat(id);
                     list.appendChild(item);
                 });
             });
         }
+
+        // Support de la touche "Entrée"
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('login-screen').classList.contains('hidden')) window.initUser();
+                else if (!document.getElementById('chat-window').classList.contains('hidden')) window.sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
