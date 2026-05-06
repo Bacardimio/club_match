@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Club Match Pro - Multi-Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --accent: #ff0055; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-main:active { transform: scale(0.95); }
+        
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
+        @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
+        .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+        .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .notification-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center p-4">
+
+    <!-- ÉCRAN ÉVÉNEMENT CLOS -->
+    <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
+        <h1 class="text-4xl font-black mb-4 uppercase italic">Accès <span class="text-pink-600">Restreint</span></h1>
+        <div class="glass p-8 rounded-[2.5rem]">
+            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm">Cet événement n'est pas accessible.</p>
+        </div>
+    </div>
+
+    <!-- ÉCRAN CONNEXION -->
+    <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
+        <div>
+            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white">CLUB<br><span class="text-pink-600">MATCH</span></h1>
+            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">Chargement...</p>
+        </div>
+        
+        <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
+            <input type="number" id="user-badge" placeholder="N° DE BADGE" 
+                   class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
+            <button onclick="initUser()" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
+            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
+        </div>
+    </div>
+
+    <!-- APPLICATION PRINCIPALE -->
+    <div id="main-app" class="hidden w-full max-w-md space-y-6">
+        <header class="flex justify-between items-end py-4">
+            <div>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
+                <h2 class="text-3xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+            </div>
+            <button onclick="toggleAdmin()" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-2xl">⚙️</button>
+        </header>
+
+        <!-- STATISTIQUES -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="glass py-4 rounded-2xl text-center">
+                <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Reçus</span>
+            </div>
+            <div class="glass py-4 rounded-2xl text-center border-pink-500/20">
+                <span class="block text-2xl font-black text-pink-500" id="stat-matches">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Matches 🔥</span>
+            </div>
+            <div class="glass py-4 rounded-2xl text-center">
+                <span class="block text-2xl font-black text-white" id="stat-likes-envoyes">0</span>
+                <span class="text-[8px] uppercase text-gray-500 font-bold">Envoyés</span>
+            </div>
+        </div>
+
+        <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
+            <h3 class="text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Flasher un numéro</h3>
+            <input type="number" id="target-badge" placeholder="N°" 
+                   class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none text-white">
+            <button onclick="submitLike()" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white">FLASHER</button>
+        </div>
+
+        <!-- LISTES -->
+        <div class="space-y-8 pb-10">
+            <div id="match-section" class="space-y-4">
+                <div class="flex items-center space-x-2 px-2">
+                    <div class="h-px flex-1 bg-white/10"></div>
+                    <span class="text-[10px] font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
+                    <div class="h-px flex-1 bg-white/10"></div>
+                </div>
+                <div id="match-list" class="space-y-3"></div>
+            </div>
+
+            <div id="sent-likes-section" class="space-y-4">
+                <div class="flex items-center space-x-2 px-2">
+                    <div class="h-px flex-1 bg-white/10"></div>
+                    <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tes Likes Envoyés</span>
+                    <div class="h-px flex-1 bg-white/10"></div>
+                </div>
+                <div id="sent-likes-list" class="grid grid-cols-2 gap-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT (MODALE) -->
+    <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
+        <header class="p-6 border-b border-white/10 flex items-center space-x-4 bg-black/50 backdrop-blur-md">
+            <button onclick="closeChat()" class="text-2xl text-white opacity-50">←</button>
+            <h3 class="flex-1 text-xl font-black italic text-white">Conversation #<span id="chat-target-badge">--</span></h3>
+        </header>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
+        <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
+            <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
+            <button onclick="sendMessage()" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
+        </div>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center">
+        <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">ADMINISTRATION</h2>
+        <button onclick="triggerGlobalReset()" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95 transition-transform">RÉINITIALISER L'ÉVÉNEMENT</button>
+        <button onclick="toggleAdmin()" class="underline text-gray-500">Fermer</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+            authDomain: "club-match-d2d39.firebaseapp.com",
+            databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "club-match-d2d39",
+            storageBucket: "club-match-d2d39.firebasestorage.app",
+            messagingSenderId: "975364560340",
+            appId: "1:975364560340:web:64fd827ced5c24b808f241"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventID = urlParams.get('event') || 'default';
+        const basePath = `events/${eventID}`;
+
+        let currentBadge = localStorage.getItem(`myBadge_${eventID}`);
+        let activeChatRoom = null;
+        let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem(`deviceId_${eventID}`, deviceId);
+
+        function showUI(id) {
+            ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        onValue(ref(db, `${basePath}/config`), (snapshot) => {
+            const config = snapshot.val();
+            const now = Date.now();
+            if (config) {
+                if (config.active === false || (config.endTime && now > config.endTime)) {
+                    showUI('closed-screen');
+                } else if (config.startTime && now < config.startTime) {
+                    showUI('closed-screen');
+                } else {
+                    if (currentBadge) showApp(); else showUI('login-screen');
+                }
+            } else {
+                if (currentBadge) showApp(); else showUI('login-screen');
+            }
+            document.getElementById('event-name-display').innerText = `ÉVÉNEMENT : ${eventID.toUpperCase()}`;
+        });
+
+        window.initUser = async () => {
+            const badge = document.getElementById('user-badge').value.trim();
+            if(!badge) return;
+            const userRef = ref(db, `${basePath}/users/${badge}`);
+            const snapshot = await get(userRef);
+            if (snapshot.exists() && snapshot.val() !== deviceId) {
+                document.getElementById('login-error').classList.remove('hidden');
+            } else {
+                await set(userRef, deviceId);
+                currentBadge = badge;
+                localStorage.setItem(`myBadge_${eventID}`, badge);
+                showApp();
+            }
+        };
+
+        window.submitLike = async () => {
+            const targetInput = document.getElementById('target-badge');
+            const target = targetInput.value.trim();
+            if(!target || target === currentBadge) return;
+            await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
+            const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
+            if(check.exists()) alert("MATCH ! 🔥");
+            targetInput.value = "";
+        };
+
+        window.removeLike = async (targetId, type = 'match') => {
+            const msg = type === 'match' ? `Supprimer le match avec #${targetId} ?` : `Annuler le like pour #${targetId} ?`;
+            if (confirm(msg)) {
+                await remove(ref(db, `${basePath}/likes/${currentBadge}/${targetId}`));
+            }
+        };
+
+        window.openChat = (targetBadge) => {
+            activeChatRoom = [currentBadge, targetBadge].sort().join('-');
+            document.getElementById('chat-target-badge').innerText = targetBadge;
+            document.getElementById('chat-window').classList.remove('hidden');
+            
+            localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
+            
+            const dot = document.getElementById(`dot-${targetBadge}`);
+            if(dot) dot.classList.add('hidden');
+
+            const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
+            onValue(chatRef, (snapshot) => {
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = "";
+                const data = snapshot.val();
+                if (data) {
+                    Object.values(data).forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = `msg ${msg.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
+                        div.innerText = msg.text;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                    localStorage.setItem(`lastRead_${eventID}_${activeChatRoom}`, Date.now());
+                }
+            });
+        };
+
+        window.closeChat = () => {
+            if(activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
+            document.getElementById('chat-window').classList.add('hidden');
+            activeChatRoom = null;
+        };
+
+        window.sendMessage = async () => {
+            const input = document.getElementById('chat-input');
+            if(!input.value.trim() || !activeChatRoom) return;
+            await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
+                sender: currentBadge,
+                text: input.value.trim(),
+                time: serverTimestamp()
+            });
+            input.value = "";
+        };
+
+        function showApp() {
+            showUI('main-app');
+            document.getElementById('display-badge').innerText = currentBadge;
+
+            onValue(ref(db, `${basePath}/likes`), (snapshot) => {
+                const data = snapshot.val() || {};
+                let matches = [];
+                let likesRecus = 0;
+                let likesEnvoyes = data[currentBadge] ? Object.keys(data[currentBadge]) : [];
+
+                for (let user in data) {
+                    if (data[user][currentBadge]) {
+                        likesRecus++;
+                        if (data[currentBadge] && data[currentBadge][user]) matches.push(user);
+                    }
+                }
+
+                document.getElementById('stat-likes-recus').innerText = likesRecus;
+                document.getElementById('stat-likes-envoyes').innerText = likesEnvoyes.length;
+                document.getElementById('stat-matches').innerText = matches.length;
+                
+                const matchList = document.getElementById('match-list');
+                matchList.innerHTML = matches.length ? "" : `<p class="text-center text-gray-600 py-4 text-xs italic">Aucun match...</p>`;
+                
+                matches.forEach(id => {
+                    const roomID = [currentBadge, id].sort().join('-');
+                    const card = document.createElement('div');
+                    card.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
+                            <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
+                            <span class="font-black text-xl italic text-white">Chat avec #${id}</span>
+                        </div>
+                        <button onclick="removeLike('${id}', 'match')" class="text-[10px] font-bold text-gray-500 uppercase">Supprimer</button>
+                    `;
+                    matchList.appendChild(card);
+
+                    onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
+                        const msgs = mSnap.val();
+                        if (msgs) {
+                            const lastMsg = Object.values(msgs).pop();
+                            const lastRead = localStorage.getItem(`lastRead_${eventID}_${roomID}`) || 0;
+                            const dot = document.getElementById(`dot-${id}`);
+                            if (dot && lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
+                                dot.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+
+                const sentList = document.getElementById('sent-likes-list');
+                sentList.innerHTML = likesEnvoyes.length ? "" : `<p class="col-span-2 text-center text-gray-600 py-4 text-xs italic">Aucun like envoyé...</p>`;
+                likesEnvoyes.forEach(id => {
+                    if (!matches.includes(id)) {
+                        const card = document.createElement('div');
+                        card.className = "glass p-3 rounded-xl flex justify-between items-center border border-white/5";
+                        card.innerHTML = `
+                            <span class="font-bold text-white text-sm">#${id}</span>
+                            <button onclick="removeLike('${id}', 'like')" class="text-[9px] text-pink-500/50 hover:text-pink-500 font-bold uppercase">Annuler</button>
+                        `;
+                        sentList.appendChild(card);
+                    }
+                });
+            });
+        }
+
+        window.toggleAdmin = () => {
+            if (prompt("Code Admin :") === "2026") document.getElementById('admin-panel').classList.toggle('hidden');
+        };
+
+        window.triggerGlobalReset = async () => {
+            if(confirm("Tout supprimer ?")) {
+                await remove(ref(db, basePath));
+                await set(ref(db, `${basePath}/resetSignal`), Date.now());
+                location.reload();
+            }
+        };
+
+        onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
+            const sig = snap.val();
+            if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
+                localStorage.removeItem(`myBadge_${eventID}`);
+                localStorage.setItem(`lastReset_${eventID}`, sig.toString());
+                location.reload();
+            }
+        });
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('chat-window').classList.contains('hidden')) window.sendMessage();
+                else if (!document.getElementById('login-screen').classList.contains('hidden')) window.initUser();
+            }
+        });
+    </script>
+</body>
+</html>
