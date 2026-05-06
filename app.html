@@ -18,6 +18,7 @@
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .notification-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
+        .btn-delete { @apply text-gray-500 hover:text-red-500 transition-colors p-2 text-xl font-bold; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
@@ -73,13 +74,24 @@
             <button id="btn-like-trigger" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white uppercase tracking-widest">Flasher</button>
         </div>
 
-        <div id="match-section" class="space-y-4 pb-10">
+        <!-- SECTION MATCHES -->
+        <div id="match-section" class="space-y-4">
             <div class="flex items-center space-x-2 px-2">
                 <div class="h-px flex-1 bg-white/10"></div>
                 <span class="text-[10px] font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
                 <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <div id="match-list" class="space-y-3"></div>
+        </div>
+
+        <!-- NOUVELLE SECTION : LIKES ENVOYÉS -->
+        <div id="likes-sent-section" class="space-y-4 pb-10">
+            <div class="flex items-center space-x-2 px-2">
+                <div class="h-px flex-1 bg-white/10"></div>
+                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Tes Flashs Envoyés</span>
+                <div class="h-px flex-1 bg-white/10"></div>
+            </div>
+            <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
         </div>
     </div>
 
@@ -134,7 +146,16 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // --- GESTION DE LA CONFIGURATION ET DU RESET ---
+        // --- GESTION SUPPRESSION ---
+        async function deleteLike(target) {
+            if(confirm(`Supprimer le like/match avec #${target} ?`)) {
+                await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
+                // Note: Le match disparaîtra automatiquement car la condition "mutuelle" ne sera plus remplie
+            }
+        }
+        window.deleteLike = deleteLike; // Rendre accessible globalement
+
+        // --- CONFIG ---
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             document.getElementById('event-name-display').innerText = eventID.toUpperCase();
@@ -145,7 +166,6 @@
             }
         });
 
-        // Signal de Reset Global (déconnecte tout le monde sur cet event)
         onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
             const sig = snap.val();
             if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
@@ -193,6 +213,7 @@
                 let likesRecus = 0;
                 let myLikes = data[currentBadge] || {};
 
+                // Calcul stats et matches
                 for (let user in data) {
                     if (data[user][currentBadge]) {
                         likesRecus++;
@@ -204,6 +225,7 @@
                 document.getElementById('stat-likes-envoyes').innerText = Object.keys(myLikes).length;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
+                // Rendu des Matches
                 const list = document.getElementById('match-list');
                 list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
 
@@ -212,25 +234,41 @@
                     const div = document.createElement('div');
                     div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
                     div.innerHTML = `
-                        <div class="flex items-center space-x-3 cursor-pointer flex-1" id="chat-to-${id}">
+                        <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
                             <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
                             <span class="font-black italic text-white text-xl">Chat avec #${id}</span>
                         </div>
+                        <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-2 font-bold text-xl">×</button>
                     `;
                     list.appendChild(div);
-                    document.getElementById(`chat-to-${id}`).onclick = () => openChat(id);
 
-                    // Notifications par badge
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
                         const msgs = mSnap.val();
                         if (msgs && activeChatRoom !== roomID) {
                             const lastMsg = Object.values(msgs).pop();
                             const lastRead = localStorage.getItem(`read_${eventID}_${roomID}`) || 0;
                             if (lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
-                                document.getElementById(`dot-${id}`).classList.remove('hidden');
+                                const dot = document.getElementById(`dot-${id}`);
+                                if(dot) dot.classList.remove('hidden');
                             }
                         }
                     });
+                });
+
+                // Rendu des Likes Envoyés (Flashs)
+                const sentList = document.getElementById('likes-sent-list');
+                const myLikesArray = Object.keys(myLikes);
+                sentList.innerHTML = myLikesArray.length ? "" : "<p class='text-center text-gray-700 text-[10px] uppercase'>Aucun flash envoyé</p>";
+                
+                myLikesArray.forEach(id => {
+                    if (matches.includes(id)) return; // On ne l'affiche pas ici si c'est déjà un match
+                    const div = document.createElement('div');
+                    div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
+                    div.innerHTML = `
+                        <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">Flash envoyé à #${id}</span>
+                        <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>
+                    `;
+                    sentList.appendChild(div);
                 });
             });
         }
@@ -258,6 +296,7 @@
                 }
             });
         }
+        window.openChat = openChat;
 
         document.getElementById('close-chat-trigger').onclick = () => {
             if(activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
@@ -287,14 +326,14 @@
 
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Attention : Cela va supprimer TOUTES les données de cet événement uniquement (badges, matches, messages). Confirmer ?")) {
-                await remove(ref(db, basePath)); // Supprime uniquement l'événement actuel
-                await set(ref(db, `${basePath}/resetSignal`), Date.now()); // Envoie le signal de déco aux autres
+                await remove(ref(db, basePath)); 
+                await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
                 alert("Événement réinitialisé.");
                 location.reload();
             }
         };
 
-        // Gestion touche Entrée
+        // Touche Entrée
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
