@@ -3,79 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Match Pro - SaaS</title>
+    <title>Club Match Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --accent: #ff0055; }
-        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s ease; }
-        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; }
+        .btn-main { background: linear-gradient(135deg, #ff0055, #ff5e00); }
     </style>
 </head>
-<body class="bg-[#0a0a0a] text-white">
-
-    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-        <span class="text-2xl font-black italic uppercase">CLUB<span class="text-pink-600">MATCH</span> PRO</span>
-        <a href="#pricing" class="btn-main px-6 py-2 rounded-xl font-bold text-sm">Acheter</a>
-    </header>
-
-    <section class="max-w-7xl mx-auto px-6 pt-20 pb-32 text-center space-y-8">
-        <h1 class="text-6xl md:text-8xl font-black italic uppercase leading-tight">
-            Le Networking <br><span class="text-pink-600">réinventé</span>
-        </h1>
-        <p class="text-gray-400 text-xl max-w-2xl mx-auto">La Web App de rencontre professionnelle et sociale pour vos événements.</p>
-        
-        <div class="flex flex-col sm:flex-row justify-center gap-4">
-            <a href="#pricing" class="btn-main px-10 py-5 rounded-2xl font-black text-xl uppercase tracking-wider">Lancer mon événement</a>
-            <a href="/app.html?event=default" class="glass px-10 py-5 rounded-2xl font-black text-xl uppercase hover:bg-white/5">Tester la démo</a>
-        </div>
-    </section>
-
-    <section id="pricing" class="max-w-5xl mx-auto px-6 py-20">
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="glass p-10 rounded-[3rem] border-white/10 space-y-6">
-                <h3 class="text-3xl font-black uppercase italic">Single</h3>
-                <p class="text-5xl font-black">49€<span class="text-sm text-gray-500">/soir</span></p>
-                <button onclick="openModal('single', 49)" class="w-full py-4 bg-white/10 rounded-2xl font-bold uppercase">Choisir</button>
-            </div>
-            <div class="glass p-10 rounded-[3rem] border-pink-500/30 space-y-6 bg-pink-500/5">
-                <h3 class="text-3xl font-black uppercase italic text-pink-500">Agence</h3>
-                <p class="text-5xl font-black">199€<span class="text-sm text-gray-500">/an</span></p>
-                <button onclick="openModal('agency', 199)" class="w-full btn-main py-4 rounded-2xl font-bold uppercase">Devenir Pro</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- MODAL COMMANDE -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-        <div class="glass max-w-md w-full p-10 rounded-[3rem] space-y-6 relative">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500">✕</button>
-            <h3 class="text-2xl font-black uppercase text-center italic">Ma commande</h3>
-            <form onsubmit="handleOrder(event)" class="space-y-4">
-                <input type="text" id="event-name" required placeholder="Nom de l'événement (ex: gala-2026)" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none focus:border-pink-500">
-                <input type="email" required placeholder="Votre Email" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none">
-                <div class="p-4 bg-white/5 rounded-xl flex justify-between">
-                    <span>Total:</span>
-                    <span id="price-tag" class="font-black text-pink-500">0€</span>
-                </div>
-                <button class="w-full btn-main py-4 rounded-xl font-black uppercase">Payer & Activer</button>
-            </form>
-        </div>
+<body class="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+    <h1 class="text-6xl font-black italic uppercase mb-4">CLUB<span class="text-pink-600">MATCH</span> PRO</h1>
+    <p class="text-gray-400 mb-10 max-w-md">La solution de networking par badge pour vos soirées.</p>
+    
+    <div class="space-y-4 w-full max-w-xs">
+        <a href="/app.html?event=default" class="block w-full btn-main py-5 rounded-2xl font-black uppercase tracking-widest">Tester la Démo</a>
+        <p class="text-[10px] text-gray-600 uppercase">Licence unique : 49€ / Soirée</p>
     </div>
-
-    <script>
-        function openModal(plan, price) {
-            document.getElementById('price-tag').innerText = price + '€';
-            document.getElementById('modal').classList.remove('hidden');
-        }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function handleOrder(e) {
-            e.preventDefault();
-            const slug = document.getElementById('event-name').value.toLowerCase().replace(/\s+/g, '-');
-            alert("Activation en cours... Redirection vers votre app !");
-            window.location.href = `/app.html?event=${slug}`;
-        }
-    </script>
 </body>
 </html>
