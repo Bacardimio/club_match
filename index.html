@@ -3,305 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Match Pro - Créez des Connexions Inoubliables</title>
+    <title>Club Match Pro - SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --accent: #ff0055; }
-        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-        .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255, 0, 85, 0.2); }
-        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s ease; }
         .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
-        .text-gradient { background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="bg-[#0a0a0a] text-white antialiased">
+<body class="bg-[#0a0a0a] text-white">
 
-    <!-- NAVBAR -->
-    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-50">
-        <div class="flex items-center space-x-2">
-            <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
-        </div>
-        <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-400">
-            <a href="#features" class="hover:text-white transition-colors">Fonctionnalités</a>
-            <a href="#pricing" class="hover:text-white transition-colors">Tarifs</a>
-            <a href="#integration" class="hover:text-white transition-colors">Technologie</a>
-        </nav>
-        <div>
-            <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Acheter une Licence</a>
-        </div>
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+        <span class="text-2xl font-black italic uppercase">CLUB<span class="text-pink-600">MATCH</span> PRO</span>
+        <a href="#pricing" class="btn-main px-6 py-2 rounded-xl font-bold text-sm">Acheter</a>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="relative max-w-7xl mx-auto px-6 pt-16 pb-24 text-center space-y-8 overflow-hidden">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] height-[500px] bg-pink-600/10 blur-[120px] rounded-full -z-10"></div>
-        
-        <span class="inline-block bg-pink-500/10 border border-pink-500/20 text-pink-500 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full">
-            Solution Événementielle SaaS de Référence
-        </span>
-        
-        <h1 class="text-5xl md:text-7xl font-black tracking-tight uppercase italic max-w-4xl mx-auto leading-tight">
-            Transformez chaque événement en une <span class="text-accent-gradient">machine à connexions</span>
+    <section class="max-w-7xl mx-auto px-6 pt-20 pb-32 text-center space-y-8">
+        <h1 class="text-6xl md:text-8xl font-black italic uppercase leading-tight">
+            Le Networking <br><span class="text-pink-600">réinventé</span>
         </h1>
+        <p class="text-gray-400 text-xl max-w-2xl mx-auto">La Web App de rencontre professionnelle et sociale pour vos événements.</p>
         
-        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed">
-            Offrez à vos participants une Web App ultra-rapide et immersive. Pas de téléchargement requis. Un simple numéro de badge, et le networking commence.
-        </p>
-
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-            <a href="#pricing" class="w-full sm:w-auto btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider text-center">
-                Lancer un Événement
-            </a>
-            <a href="#features" class="w-full sm:w-auto glass hover:bg-white/5 transition-colors px-8 py-4 rounded-2xl font-bold text-lg text-center">
-                Voir les fonctionnalités
-            </a>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="#pricing" class="btn-main px-10 py-5 rounded-2xl font-black text-xl uppercase tracking-wider">Lancer mon événement</a>
+            <a href="/app.html?event=default" class="glass px-10 py-5 rounded-2xl font-black text-xl uppercase hover:bg-white/5">Tester la démo</a>
         </div>
+    </section>
 
-        <!-- MOCKUP PRÉVIEW -->
-        <div class="pt-16 max-w-4xl mx-auto relative">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10"></div>
-            <div class="glass p-4 rounded-[3rem] shadow-2xl border-white/5">
-                <div class="bg-[#111] rounded-[2.5rem] p-6 md:p-12 text-left space-y-8">
-                    <!-- Top App bar simulation -->
-                    <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Aperçu de l'interface Client</p>
-                            <h3 class="text-xl font-black italic">Badge <span class="text-pink-500">#42</span></h3>
-                        </div>
-                        <div class="flex space-x-2">
-                            <span class="w-3 height-3 bg-red-500 rounded-full inline-block"></span>
-                            <span class="w-3 height-3 bg-yellow-500 rounded-full inline-block"></span>
-                            <span class="w-3 height-3 bg-green-500 rounded-full inline-block"></span>
-                        </div>
-                    </div>
-                    <!-- App grid stats simulation -->
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="bg-white/5 py-4 rounded-2xl"><span class="block text-xl font-black">12</span><span class="text-[9px] uppercase text-gray-500">Reçus</span></div>
-                        <div class="bg-pink-500/10 border border-pink-500/20 py-4 rounded-2xl"><span class="block text-xl font-black text-pink-500">4 🔥</span><span class="text-[9px] uppercase text-gray-500">Matches</span></div>
-                        <div class="bg-white/5 py-4 rounded-2xl"><span class="block text-xl font-black">8</span><span class="text-[9px] uppercase text-gray-500">Envoyés</span></div>
-                    </div>
-                </div>
+    <section id="pricing" class="max-w-5xl mx-auto px-6 py-20">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="glass p-10 rounded-[3rem] border-white/10 space-y-6">
+                <h3 class="text-3xl font-black uppercase italic">Single</h3>
+                <p class="text-5xl font-black">49€<span class="text-sm text-gray-500">/soir</span></p>
+                <button onclick="openModal('single', 49)" class="w-full py-4 bg-white/10 rounded-2xl font-bold uppercase">Choisir</button>
+            </div>
+            <div class="glass p-10 rounded-[3rem] border-pink-500/30 space-y-6 bg-pink-500/5">
+                <h3 class="text-3xl font-black uppercase italic text-pink-500">Agence</h3>
+                <p class="text-5xl font-black">199€<span class="text-sm text-gray-500">/an</span></p>
+                <button onclick="openModal('agency', 199)" class="w-full btn-main py-4 rounded-2xl font-bold uppercase">Devenir Pro</button>
             </div>
         </div>
     </section>
 
-    <!-- FEATURES SECTION -->
-    <section id="features" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
-        <div class="text-center space-y-4">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Une Expérience Utilisateur <span class="text-pink-500">Flawless</span></h2>
-            <p class="text-gray-400 max-w-2xl mx-auto">Tout a été pensé pour maximiser l'engagement des participants de façon intuitive, fluide et sécurisée.</p>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⚡</div>
-                <h3 class="text-xl font-bold uppercase italic">Zéro Téléchargement</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Vos utilisateurs scannent un QR code à l'entrée de l'événement et accèdent instantanément à l'application depuis leur navigateur mobile.</p>
-            </div>
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🔥</div>
-                <h3 class="text-xl font-bold uppercase italic">Flash & Match Réseau</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Les participants entrent simplement le numéro de badge de la personne qu'ils souhaitent rencontrer. Si le sentiment est réciproque, c'est un Match !</p>
-            </div>
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💬</div>
-                <h3 class="text-xl font-bold uppercase italic">Messagerie Temps Réel</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Une fois le match validé, les deux participants débloquent un salon de discussion privé et instantané propulsé par Firebase pour fixer un point de rendez-vous.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- COMMENT ÇA MARCHE (ADMIN / COMMERCIALIZATION FLOW) -->
-    <section class="bg-white/[0.01] border-y border-white/5 py-24">
-        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-6">
-                <span class="text-pink-500 font-bold uppercase text-xs tracking-widest">Côté Organisateur</span>
-                <h2 class="text-3xl md:text-5xl font-black uppercase italic">Déployez un événement en moins de 2 minutes</h2>
-                <p class="text-gray-400 text-sm leading-relaxed">
-                    Notre plateforme SaaS automatise entièrement l'infrastructure. Lorsque vous achetez une licence d'événement, notre système génère un identifiant unique relié à votre base de données dédiée.
-                </p>
-                <ul class="space-y-3 text-sm text-gray-300">
-                    <li class="flex items-center space-x-3">
-                        <span class="text-pink-500 font-bold">✔</span>
-                        <span>Isolation complète des données par clé d'événement</span>
-                    </li>
-                    <li class="flex items-center space-x-3">
-                        <span class="text-pink-500 font-bold">✔</span>
-                        <span>Panneau d'administration sécurisé inclus par défaut</span>
-                    </li>
-                    <li class="flex items-center space-x-3">
-                        <span class="text-pink-500 font-bold">✔</span>
-                        <span>Bouton de réinitialisation globale d'un clic pour l'organisation</span>
-                    </li>
-                </ul>
-            </div>
-            <div class="glass p-8 rounded-3xl space-y-6">
-                <h4 class="font-bold uppercase tracking-wider text-xs text-gray-400">Simulation d'intégration URL</h4>
-                <div class="bg-black/50 p-4 rounded-xl font-mono text-xs text-pink-400 border border-white/5 overflow-x-auto">
-                    https://clubmatch.pro/app.html?event=<span class="text-white font-bold">gala-essec-2026</span>
+    <!-- MODAL COMMANDE -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+        <div class="glass max-w-md w-full p-10 rounded-[3rem] space-y-6 relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500">✕</button>
+            <h3 class="text-2xl font-black uppercase text-center italic">Ma commande</h3>
+            <form onsubmit="handleOrder(event)" class="space-y-4">
+                <input type="text" id="event-name" required placeholder="Nom de l'événement (ex: gala-2026)" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none focus:border-pink-500">
+                <input type="email" required placeholder="Votre Email" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none">
+                <div class="p-4 bg-white/5 rounded-xl flex justify-between">
+                    <span>Total:</span>
+                    <span id="price-tag" class="font-black text-pink-500">0€</span>
                 </div>
-                <p class="text-xs text-gray-500">
-                    Il vous suffit de modifier le paramètre de requête <span class="font-mono text-white">?event=</span> dans l'URL transmise à vos clients pour segmenter hermétiquement chaque soirée ou conférence.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- TARIFS & FORMULAIRE DE COMMANDE INTEGRÉ -->
-    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
-        <div class="text-center space-y-4">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Choisissez votre <span class="text-pink-500">Licence</span></h2>
-            <p class="text-gray-400 max-w-2xl mx-auto">Paiement unique, aucun abonnement caché. Facturation automatisée instantanée.</p>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
-            <!-- Offre Unique -->
-            <div class="glass p-8 rounded-[2.5rem] flex flex-col justify-between space-y-8 border-white/10 hover:border-white/20 transition-all">
-                <div class="space-y-4">
-                    <h3 class="text-2xl font-black uppercase italic text-white">Événement Unique</h3>
-                    <p class="text-gray-400 text-sm">Idéal pour tester l'application sur une soirée, un gala étudiant ou un séminaire d'entreprise ponctuel.</p>
-                    <div class="pt-4">
-                        <span class="text-5xl font-black tracking-tight">49€</span>
-                        <span class="text-gray-500 text-sm">/ événement</span>
-                    </div>
-                    <ul class="space-y-2 text-xs text-gray-400 pt-4">
-                        <li>• 1 Identifiant d'événement unique (`?event=...`)</li>
-                        <li>• Jusqu'à 500 participants actifs simultanés</li>
-                        <li>• Infrastructure Firebase RealtimeDatabase incluse</li>
-                        <li>• Support standard 24/7 par email</li>
-                        <li>• Facture PDF conforme générée automatiquement</li>
-                    </ul>
-                </div>
-                <button onclick="openOrderModal('single', 49)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all uppercase tracking-wider text-sm">
-                    Commander ce Pack
-                </button>
-            </div>
-
-            <!-- Offre Agence (Premium) -->
-            <div class="glass-premium p-8 rounded-[2.5rem] flex flex-col justify-between space-y-8 relative overflow-hidden group">
-                <div class="absolute top-0 right-0 bg-pink-600 text-white font-black text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
-                    POPULAIRE
-                </div>
-                <div class="space-y-4">
-                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Pack Agence Pro</h3>
-                    <p class="text-gray-400 text-sm">Pour les agences événementielles et professionnels organisant des événements réguliers tout au long de l'année.</p>
-                    <div class="pt-4">
-                        <span class="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-pink-500">199€</span>
-                        <span class="text-gray-500 text-sm">/ an (Illimité)</span>
-                    </div>
-                    <ul class="space-y-2 text-xs text-gray-300 pt-4">
-                        <li>• Événements simultanés et créations <span class="text-pink-400 font-bold">illimitées</span></li>
-                        <li>• Nombre de participants par événement <span class="text-pink-400 font-bold">illimité</span></li>
-                        <li>• Tableau de bord d'administration globalisé</li>
-                        <li>• Personnalisation mineure du CSS possible</li>
-                        <li>• Facturation centralisée & Support prioritaire</li>
-                    </ul>
-                </div>
-                <button onclick="openOrderModal('agency', 199)" class="w-full btn-main text-white font-black py-4 rounded-xl uppercase tracking-wider text-sm shadow-xl">
-                    Passer Pro maintenant
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- FORMULAIRE / MODAL DE COMMANDE (AFFECTÉ À STRIPE / FIREBASE) -->
-    <div id="order-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="glass max-w-md w-full p-8 rounded-[2.5rem] space-y-6 relative animate-pop border-white/10">
-            <button onclick="closeOrderModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white text-xl">✕</button>
-            
-            <div class="text-center space-y-2">
-                <h3 class="text-2xl font-black uppercase italic">Finaliser ma commande</h3>
-                <p class="text-xs text-gray-400">Vos informations serviront à générer votre base de données et votre facture PDF.</p>
-            </div>
-
-            <!-- FORMULAIRE CLIENT DE SAISIE AVANT STRIPE -->
-            <form id="checkout-form" class="space-y-4" onsubmit="handleCheckout(event)">
-                <input type="hidden" id="selected-plan">
-                
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom Complet / Entreprise</label>
-                    <input type="text" id="client-name" required placeholder="Ex: Jean Dupont / Agence Événementielle X" 
-                           class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-pink-500 outline-none text-white">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Adresse Email de Facturation</label>
-                    <input type="email" id="client-email" required placeholder="jean@entreprise.com" 
-                           class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-pink-500 outline-none text-white">
-                </div>
-
-                <div id="event-slug-container">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom de votre premier événement</label>
-                    <input type="text" id="client-event-slug" placeholder="Ex: gala-essec-2026 (sans espaces)" 
-                           class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-pink-500 outline-none text-white">
-                </div>
-
-                <div class="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-400">Total à payer :</span>
-                    <span id="modal-price-display" class="text-2xl font-black text-pink-500">0€</span>
-                </div>
-
-                <button type="submit" class="w-full btn-main py-4 rounded-xl font-black text-white uppercase tracking-widest text-sm shadow-xl">
-                    Procéder au Paiement Sécurisé
-                </button>
-                
-                <p class="text-[10px] text-center text-gray-500">
-                    🔒 Paiement sécurisé et propulsé par Stripe. Facture générée automatiquement et envoyée par email à la confirmation.
-                </p>
+                <button class="w-full btn-main py-4 rounded-xl font-black uppercase">Payer & Activer</button>
             </form>
         </div>
     </div>
 
-    <!-- TECH ARCHITECTURE INFORMATION SECTION -->
-    <section id="integration" class="max-w-5xl mx-auto px-6 py-12 text-center text-xs text-gray-600 space-y-4 border-t border-white/5">
-        <p class="uppercase tracking-widest font-bold text-gray-500">Architecture Technique du Produit</p>
-        <p class="max-w-2xl mx-auto leading-relaxed">
-            Cette page promotionnelle est conçue pour être hébergée sur <span class="text-gray-400 font-bold">Vercel</span>. Les requêtes de paiement transitent par l'API Serverless de Stripe. Une fois le paiement validé par Webhook Stripe, le client et ses variables d'événement sont instantanément créés et stockés au sein de votre instance <span class="text-gray-400 font-bold">Firebase Realtime Database</span> pour assurer une activation instantanée sans intervention humaine.
-        </p>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5">
-        <p>© 2026 Club Match Pro. Tous droits réservés. Hébergé sur Vercel. Propulsé par Stripe & Firebase.</p>
-    </footer>
-
-    <!-- INTERACTIVE JAVASCRIPT FOR LANDING PAGE INTERACTION -->
     <script>
-        function openOrderModal(plan, price) {
-            document.getElementById('selected-plan').value = plan;
-            document.getElementById('modal-price-display').innerText = price + '€';
-            
-            const eventSlugInput = document.getElementById('event-slug-container');
-            if(plan === 'agency') {
-                eventSlugInput.style.display = 'none'; // Pas besoin de slug unique pour le pack annuel illimité initialement
-            } else {
-                eventSlugInput.style.display = 'block';
-            }
-            
-            document.getElementById('order-modal').classList.remove('hidden');
+        function openModal(plan, price) {
+            document.getElementById('price-tag').innerText = price + '€';
+            document.getElementById('modal').classList.remove('hidden');
         }
-
-        function closeOrderModal() {
-            document.getElementById('order-modal').classList.add('hidden');
-        }
-
-        function handleCheckout(e) {
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function handleOrder(e) {
             e.preventDefault();
-            
-            const plan = document.getElementById('selected-plan').value;
-            const name = document.getElementById('client-name').value;
-            const email = document.getElementById('client-email').value;
-            const eventSlug = document.getElementById('client-event-slug').value;
-
-            // CONFIGURATION STRIPE STRATEGY :
-            // Remplacer l'URL ci-dessous par votre lien de paiement Stripe direct (Stripe Payment Link) 
-            // ou par l'appel à votre fonction Serverless Vercel (/api/checkout) pour ouvrir une session Stripe Checkout.
-            
-            alert(`Redirection vers Stripe Checkout...\n\nPlan sélectionné : ${plan}\nClient : ${name}\nEmail : ${email}\nID Événement demandé : ${eventSlug || 'Compte Agence Illimité'}`);
-            
-            // Exemple de redirection vers votre lien de paiement Stripe :
-            // window.location.href = "https://buy.stripe.com/votre_id_de_lien_stripe?prefilled_email=" + encodeURIComponent(email);
+            const slug = document.getElementById('event-name').value.toLowerCase().replace(/\s+/g, '-');
+            alert("Activation en cours... Redirection vers votre app !");
+            window.location.href = `/app.html?event=${slug}`;
         }
     </script>
 </body>
