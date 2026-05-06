@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Club Match App</title>
+    <title>Club Match Pro - App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --accent: #ff0055; }
@@ -16,16 +16,17 @@
         .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
         .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .notification-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
-    <!-- ECRANS DE STATUT -->
+    <!-- ÉCRANS DE STATUT -->
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
         <h1 class="text-4xl font-black mb-4 uppercase italic">Club <span class="text-pink-600">Match</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
-            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm">Vérification de l'événement...</p>
+            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
         </div>
     </div>
 
@@ -37,8 +38,8 @@
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
-            <button id="btn-login" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
-            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé.</p>
+            <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
+            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
         </div>
     </div>
 
@@ -49,7 +50,7 @@
                 <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
                 <h2 class="text-3xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
             </div>
-            <button id="btn-admin" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-2xl">⚙️</button>
+            <button id="admin-trigger" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-2xl">⚙️</button>
         </header>
 
         <div class="grid grid-cols-3 gap-2">
@@ -57,7 +58,7 @@
                 <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
                 <span class="text-[8px] uppercase text-gray-500 font-bold">Reçus</span>
             </div>
-            <div class="glass py-4 rounded-2xl text-center">
+            <div class="glass py-4 rounded-2xl text-center border-pink-500/20">
                 <span class="block text-2xl font-black text-pink-500" id="stat-matches">0</span>
                 <span class="text-[8px] uppercase text-gray-500 font-bold">Matches 🔥</span>
             </div>
@@ -69,23 +70,37 @@
 
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="target-badge" placeholder="N°" class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none text-white">
-            <button id="btn-like" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white">FLASHER</button>
+            <button id="btn-like-trigger" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white uppercase tracking-widest">Flasher</button>
         </div>
 
-        <div id="match-list" class="space-y-3"></div>
+        <div id="match-section" class="space-y-4 pb-10">
+            <div class="flex items-center space-x-2 px-2">
+                <div class="h-px flex-1 bg-white/10"></div>
+                <span class="text-[10px] font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
+                <div class="h-px flex-1 bg-white/10"></div>
+            </div>
+            <div id="match-list" class="space-y-3"></div>
+        </div>
     </div>
 
     <!-- MODALE CHAT -->
     <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
         <header class="p-6 border-b border-white/10 flex items-center space-x-4 bg-black/50 backdrop-blur-md">
-            <button id="btn-close-chat" class="text-2xl text-white opacity-50">←</button>
+            <button id="close-chat-trigger" class="text-2xl text-white opacity-50">←</button>
             <h3 class="flex-1 text-xl font-black italic text-white">Chat #<span id="chat-target-badge">--</span></h3>
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
             <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
-            <button id="btn-send-msg" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
+            <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
         </div>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-10 flex flex-col items-center justify-center text-center">
+        <h2 class="text-2xl font-black text-red-600 mb-8 uppercase italic">ADMINISTRATION</h2>
+        <button id="reset-event-trigger" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black mb-4 w-full max-w-xs shadow-xl active:scale-95">RÉINITIALISER L'ÉVÉNEMENT</button>
+        <button id="close-admin-trigger" class="underline text-gray-500">Fermer</button>
     </div>
 
     <script type="module">
@@ -104,6 +119,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
         const urlParams = new URLSearchParams(window.location.search);
         const eventID = urlParams.get('event') || 'default';
         const basePath = `events/${eventID}`;
@@ -118,19 +134,29 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // INIT & CONFIG
+        // --- GESTION DE LA CONFIGURATION ET DU RESET ---
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
-            if (config && config.active) {
-                document.getElementById('event-name-display').innerText = config.eventName || eventID.toUpperCase();
-                if (currentBadge) loadApp(); else showUI('login-screen');
-            } else {
+            document.getElementById('event-name-display').innerText = eventID.toUpperCase();
+            if (config && config.active === false) {
                 showUI('closed-screen');
+            } else {
+                if (currentBadge) loadApp(); else showUI('login-screen');
             }
         });
 
-        // LOGIN
-        document.getElementById('btn-login').onclick = async () => {
+        // Signal de Reset Global (déconnecte tout le monde sur cet event)
+        onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
+            const sig = snap.val();
+            if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
+                localStorage.removeItem(`myBadge_${eventID}`);
+                localStorage.setItem(`lastReset_${eventID}`, sig.toString());
+                location.reload();
+            }
+        });
+
+        // --- LOGIN ---
+        document.getElementById('btn-login-trigger').onclick = async () => {
             const badge = document.getElementById('user-badge').value.trim();
             if(!badge) return;
             const userRef = ref(db, `${basePath}/users/${badge}`);
@@ -145,20 +171,22 @@
             }
         };
 
-        // LIKE
-        document.getElementById('btn-like').onclick = async () => {
-            const target = document.getElementById('target-badge').value.trim();
+        // --- LIKE / FLASH ---
+        document.getElementById('btn-like-trigger').onclick = async () => {
+            const targetInput = document.getElementById('target-badge');
+            const target = targetInput.value.trim();
             if(!target || target === currentBadge) return;
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
             const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
             if(check.exists()) alert("MATCH ! 🔥");
-            document.getElementById('target-badge').value = "";
+            targetInput.value = "";
         };
 
-        // CHARGEMENT APP
+        // --- FONCTION PRINCIPALE ---
         function loadApp() {
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
+
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
                 const data = snapshot.val() || {};
                 let matches = [];
@@ -177,36 +205,43 @@
                 document.getElementById('stat-matches').innerText = matches.length;
                 
                 const list = document.getElementById('match-list');
-                list.innerHTML = "";
+                list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
+
                 matches.forEach(id => {
                     const roomID = [currentBadge, id].sort().join('-');
                     const div = document.createElement('div');
                     div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
-                    div.innerHTML = `<div class="flex items-center space-x-3 cursor-pointer flex-1" id="trigger-${id}">
-                        <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
-                        <span class="font-black italic text-white">Chat avec #${id}</span>
-                    </div>`;
+                    div.innerHTML = `
+                        <div class="flex items-center space-x-3 cursor-pointer flex-1" id="chat-to-${id}">
+                            <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
+                            <span class="font-black italic text-white text-xl">Chat avec #${id}</span>
+                        </div>
+                    `;
                     list.appendChild(div);
-                    document.getElementById(`trigger-${id}`).onclick = () => openChat(id);
+                    document.getElementById(`chat-to-${id}`).onclick = () => openChat(id);
 
+                    // Notifications par badge
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
                         const msgs = mSnap.val();
                         if (msgs && activeChatRoom !== roomID) {
                             const lastMsg = Object.values(msgs).pop();
                             const lastRead = localStorage.getItem(`read_${eventID}_${roomID}`) || 0;
-                            if (lastMsg.sender !== currentBadge && lastMsg.time > lastRead) document.getElementById(`dot-${id}`).classList.remove('hidden');
+                            if (lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
+                                document.getElementById(`dot-${id}`).classList.remove('hidden');
+                            }
                         }
                     });
                 });
             });
         }
 
-        // CHAT
+        // --- CHAT ---
         function openChat(target) {
             activeChatRoom = [currentBadge, target].sort().join('-');
             document.getElementById('chat-target-badge').innerText = target;
             document.getElementById('chat-window').classList.remove('hidden');
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
+            
             onValue(chatRef, (snap) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = "";
@@ -224,13 +259,13 @@
             });
         }
 
-        document.getElementById('btn-close-chat').onclick = () => {
+        document.getElementById('close-chat-trigger').onclick = () => {
             if(activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
             document.getElementById('chat-window').classList.add('hidden');
             activeChatRoom = null;
         };
 
-        document.getElementById('btn-send-msg').onclick = async () => {
+        document.getElementById('send-msg-trigger').onclick = async () => {
             const input = document.getElementById('chat-input');
             if(!input.value.trim() || !activeChatRoom) return;
             await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
@@ -241,17 +276,31 @@
             input.value = "";
         };
 
-        // ADMIN (CORRECTION ICI)
-        document.getElementById('btn-admin').onclick = async () => {
-            if (prompt("Code Admin :") === "2026") {
-                if(confirm("⚠ Voulez-vous réinitialiser UNIQUEMENT cet événement ?")) {
-                    // Cible uniquement le basePath de l'event
-                    await remove(ref(db, basePath));
-                    alert("Événement réinitialisé.");
-                    location.reload();
-                }
+        // --- ADMINISTRATION ---
+        document.getElementById('admin-trigger').onclick = () => {
+            if (prompt("Code Admin :") === "2026") document.getElementById('admin-panel').classList.remove('hidden');
+        };
+
+        document.getElementById('close-admin-trigger').onclick = () => {
+            document.getElementById('admin-panel').classList.add('hidden');
+        };
+
+        document.getElementById('reset-event-trigger').onclick = async () => {
+            if (confirm("⚠ Attention : Cela va supprimer TOUTES les données de cet événement uniquement (badges, matches, messages). Confirmer ?")) {
+                await remove(ref(db, basePath)); // Supprime uniquement l'événement actuel
+                await set(ref(db, `${basePath}/resetSignal`), Date.now()); // Envoie le signal de déco aux autres
+                alert("Événement réinitialisé.");
+                location.reload();
             }
         };
+
+        // Gestion touche Entrée
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
+                else if (!document.getElementById('login-screen').classList.contains('hidden')) document.getElementById('btn-login-trigger').click();
+            }
+        });
     </script>
 </body>
 </html>
