@@ -1,0 +1,27 @@
+{
+  "name": "club-match",
+  "version": "1.0.0",
+  "description": "Club Match Pro - Event networking application",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bacardimio/club_match.git"
+  },
+  "keywords": [
+    "networking",
+    "events",
+    "matching"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bacardimio/club_match/issues"
+  },
+  "homepage": "https://github.com/Bacardimio/club_match#readme",
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
+  }
+}
