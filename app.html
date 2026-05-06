@@ -105,21 +105,22 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+        
         const firebaseConfig = {
-            apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
-            authDomain: "club-match-d2d39.firebaseapp.com",
-            databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "club-match-d2d39",
-            storageBucket: "club-match-d2d39.firebasestorage.app",
-            messagingSenderId: "975364560340",
-            appId: "1:975364560340:web:64fd827ced5c24b808f241"
-        };
+              apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+              authDomain: "club-match-d2d39.firebaseapp.com",
+              databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+              projectId: "club-match-d2d39",
+              storageBucket: "club-match-d2d39.firebasestorage.app",
+              messagingSenderId: "975364560340",
+              appId: "1:975364560340:web:64fd827ced5c24b808f241",
+              measurementId: "G-HGMDSDMVEB"
+            };
 
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const analytics = getAnalytics(app);
         const urlParams = new URLSearchParams(window.location.search);
         const eventID = urlParams.get('event') || 'default';
         const basePath = `events/${eventID}`;
