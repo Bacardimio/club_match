@@ -99,6 +99,9 @@
             <h3 class="flex-1 text-xl font-black italic text-white">Chat #<span id="chat-target-badge">--</span></h3>
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
+        <div class="px-6 py-2">
+            <p id="chat-limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte pour ce match !</p>
+        </div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
             <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
             <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
@@ -151,7 +154,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -174,6 +177,7 @@
         let activeChatRoom = null;
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
         let currentLikesSentCount = 0;
+        let currentChatMessagesSent = 0; // Compteur local pour le chat ouvert
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
@@ -223,6 +227,7 @@
             }
         };
 
+        // --- LOGIQUE FLASH AVEC VÉRIFICATION EXISTENCE ---
         document.getElementById('btn-like-trigger').onclick = async () => {
             const targetInput = document.getElementById('target-badge');
             const target = targetInput.value.trim();
@@ -238,6 +243,7 @@
                 return;
             }
 
+            // Vérifier si le badge cible existe
             const userRef = ref(db, `${basePath}/users/${target}`);
             const userSnap = await get(userRef);
 
@@ -256,12 +262,11 @@
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
 
-            // --- NOUVEAUTÉ : Surveillance de l'annulation du badge ---
+            // Surveillance annulation badge
             onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
                 if (!snapshot.exists()) {
-                    // Si l'admin a supprimé le badge de la DB
                     localStorage.removeItem(`myBadge_${eventID}`);
-                    location.reload(); // Renvoie à l'écran login
+                    location.reload();
                 }
             });
 
@@ -291,7 +296,6 @@
                     div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
                     div.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
-                            <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
                             <span class="font-black italic text-white text-xl">Chat avec #${id}</span>
                         </div>
                         <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-2 font-bold text-xl">×</button>
@@ -320,11 +324,8 @@
         async function updateAdminStats() {
             const usersSnap = await get(ref(db, `${basePath}/users`));
             const likesSnap = await get(ref(db, `${basePath}/likes`));
-            
             const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
-            let totalLikes = 0;
-            let totalMatches = 0;
-            
+            let totalLikes = 0; let totalMatches = 0;
             if (likesSnap.exists()) {
                 const data = likesSnap.val();
                 const processedMatches = new Set();
@@ -333,29 +334,33 @@
                         totalLikes++;
                         const pair = [userA, userB].sort().join('-');
                         if (data[userB] && data[userB][userA] && !processedMatches.has(pair)) {
-                            totalMatches++;
-                            processedMatches.add(pair);
+                            totalMatches++; processedMatches.add(pair);
                         }
                     }
                 }
             }
-            
             document.getElementById('admin-total-users').innerText = totalUsers;
             document.getElementById('admin-total-likes').innerText = totalLikes;
             document.getElementById('admin-total-matches').innerText = totalMatches;
         }
 
+        // --- LOGIQUE CHAT AVEC LIMITE DE 10 MESSAGES ---
         function openChat(target) {
             activeChatRoom = [currentBadge, target].sort().join('-');
             document.getElementById('chat-target-badge').innerText = target;
             document.getElementById('chat-window').classList.remove('hidden');
+            document.getElementById('chat-limit-warning').classList.add('hidden');
+            
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
             onValue(chatRef, (snap) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = "";
                 const data = snap.val();
+                currentChatMessagesSent = 0;
+
                 if (data) {
                     Object.values(data).forEach(m => {
+                        if(m.sender === currentBadge) currentChatMessagesSent++; // Compter mes messages
                         const d = document.createElement('div');
                         d.className = `msg ${m.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
                         d.innerText = m.text;
@@ -367,14 +372,19 @@
         }
         window.openChat = openChat;
 
-        document.getElementById('close-chat-trigger').onclick = () => {
-            document.getElementById('chat-window').classList.add('hidden');
-            activeChatRoom = null;
-        };
-
         document.getElementById('send-msg-trigger').onclick = async () => {
             const input = document.getElementById('chat-input');
+            const warning = document.getElementById('chat-limit-warning');
+            
             if(!input.value.trim() || !activeChatRoom) return;
+
+            // VÉRIFICATION DE LA LIMITE (10 messages par utilisateur)
+            if (currentChatMessagesSent >= 10) {
+                warning.classList.remove('hidden');
+                setTimeout(() => warning.classList.add('hidden'), 4000);
+                return;
+            }
+
             await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
                 sender: currentBadge,
                 text: input.value.trim(),
@@ -383,6 +393,12 @@
             input.value = "";
         };
 
+        document.getElementById('close-chat-trigger').onclick = () => {
+            document.getElementById('chat-window').classList.add('hidden');
+            activeChatRoom = null;
+        };
+
+        // Admin Actions
         document.getElementById('admin-trigger').onclick = () => {
             if (prompt("Code Admin :") === "2026") {
                 updateAdminStats();
