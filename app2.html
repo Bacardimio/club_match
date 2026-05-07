@@ -17,7 +17,6 @@
         .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        /* Point de notification VERT */
         .notification-dot { width: 10px; height: 10px; background-color: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; }
     </style>
 </head>
@@ -101,7 +100,7 @@
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
         <div class="px-6 py-2">
-            <p id="chat-limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte pour ce match !</p>
+            <p id="chat-limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
         </div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
             <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
@@ -110,31 +109,28 @@
     </div>
 
     <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
-        <div class="w-full max-w-sm mx-auto space-y-8 py-10">
-            <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
-            <div class="glass rounded-3xl overflow-hidden border-white/10">
+        <div class="w-full max-w-sm mx-auto space-y-8 py-10 text-center">
+            <h2 class="text-3xl font-black text-red-500 uppercase italic tracking-tighter">Administration</h2>
+            <button id="close-admin-trigger" class="text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Retour</button>
+            
+            <div class="glass rounded-3xl overflow-hidden border-white/10 mb-6">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-                        <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
-                    </thead>
                     <tbody class="divide-y divide-white/5">
-                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-white text-lg">0</td></tr>
-                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-white text-lg">0</td></tr>
-                        <tr class="bg-pink-500/5"><td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
+                        <tr><td class="px-6 py-4 text-gray-300">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black">0</td></tr>
+                        <tr><td class="px-6 py-4 text-pink-500">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black">0</td></tr>
                     </tbody>
                 </table>
             </div>
+
             <div class="glass p-6 rounded-3xl space-y-4">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Annuler un badge utilisateur</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Réinitialiser Badge</p>
                 <div class="flex space-x-2">
-                    <input type="number" id="admin-delete-badge-input" placeholder="N°" class="flex-1 bg-white/10 border-none rounded-xl p-4 text-center text-xl font-bold text-white outline-none">
-                    <button id="btn-admin-delete-user" class="bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-6 rounded-xl font-bold transition-all underline">OK</button>
+                    <input type="number" id="admin-delete-badge-input" placeholder="N°" class="flex-1 bg-white/10 border-none rounded-xl p-4 text-center text-white outline-none">
+                    <button id="btn-admin-delete-user" class="bg-red-600 text-white px-6 rounded-xl font-bold">OK</button>
                 </div>
             </div>
-            <div class="space-y-4 pt-4">
-                <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl active:scale-95 uppercase tracking-widest">Réinitialiser l'événement</button>
-                <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Retour à l'app</button>
-            </div>
+            
+            <button id="reset-event-trigger" class="bg-red-900 text-white py-5 rounded-2xl font-black w-full mt-10 uppercase text-xs">Supprimer Tout l'Événement</button>
         </div>
     </div>
 
@@ -162,8 +158,8 @@
         let currentBadge = localStorage.getItem(`myBadge_${eventID}`);
         let activeChatRoom = null;
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
-        let currentLikesSentCount = 0;
         let currentChatMessagesSent = 0;
+        let isSending = false; // Verrou anti-doublon
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
@@ -173,28 +169,13 @@
         }
 
         async function deleteLike(target) {
-            if(confirm(`Supprimer le like/match avec #${target} ?`)) {
+            if(confirm(`Supprimer #${target} ?`)) {
                 await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
             }
         }
         window.deleteLike = deleteLike;
 
-        onValue(ref(db, `${basePath}/config`), (snap) => {
-            const config = snap.val();
-            document.getElementById('event-name-display').innerText = eventID.toUpperCase();
-            if (config && config.active === false) showUI('closed-screen');
-            else if (currentBadge) loadApp(); else showUI('login-screen');
-        });
-
-        onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
-            const sig = snap.val();
-            if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
-                localStorage.removeItem(`myBadge_${eventID}`);
-                localStorage.setItem(`lastReset_${eventID}`, sig.toString());
-                location.reload();
-            }
-        });
-
+        // LOGIN
         document.getElementById('btn-login-trigger').onclick = async () => {
             const badge = document.getElementById('user-badge').value.trim();
             if(!badge) return;
@@ -210,30 +191,11 @@
             }
         };
 
-        document.getElementById('btn-like-trigger').onclick = async () => {
-            const targetInput = document.getElementById('target-badge');
-            const target = targetInput.value.trim();
-            if(!target || target === currentBadge) return;
-            if (currentLikesSentCount >= 5) {
-                document.getElementById('limit-warning').classList.remove('hidden');
-                setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 3000);
-                return;
-            }
-            const userSnap = await get(ref(db, `${basePath}/users/${target}`));
-            if (!userSnap.exists()) {
-                document.getElementById('target-error').classList.remove('hidden');
-                return;
-            }
-            await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
-            const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
-            if(check.exists()) alert("MATCH ! 🔥");
-            targetInput.value = "";
-        };
-
         function loadApp() {
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
 
+            // Surveillance Admin delete
             onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
                 if (!snapshot.exists()) {
                     localStorage.removeItem(`myBadge_${eventID}`);
@@ -241,13 +203,13 @@
                 }
             });
 
+            // Refresh Matches & Stats
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
                 const data = snapshot.val() || {};
                 let matches = [];
                 let likesRecus = 0;
                 let myLikes = data[currentBadge] || {};
-                currentLikesSentCount = Object.keys(myLikes).length;
-
+                
                 for (let user in data) {
                     if (data[user][currentBadge]) {
                         likesRecus++;
@@ -256,31 +218,31 @@
                 }
 
                 document.getElementById('stat-likes-recus').innerText = likesRecus;
-                document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
+                document.getElementById('stat-likes-envoyes').innerText = Object.keys(myLikes).length;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
                 const list = document.getElementById('match-list');
-                list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
-
+                list.innerHTML = "";
                 matches.forEach(id => {
                     const roomID = [currentBadge, id].sort().join('-');
                     const div = document.createElement('div');
-                    div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+                    div.className = "glass p-4 rounded-2xl flex justify-between items-center border-l-4 border-pink-500";
                     div.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
                             <div id="dot-${id}" class="hidden notification-dot animate-pulse"></div>
                             <span class="font-black italic text-white text-xl">Chat avec #${id}</span>
                         </div>
-                        <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-2 font-bold text-xl">×</button>
+                        <button onclick="deleteLike('${id}')" class="text-gray-500 px-2 text-xl">×</button>
                     `;
                     list.appendChild(div);
 
-                    // Écouteur pour le point VERT (nouveau message)
+                    // Notification Point Vert
+                    off(ref(db, `${basePath}/messages/${roomID}`)); // Nettoyage
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
                         const msgs = snap.val();
                         if (msgs && activeChatRoom !== roomID) {
                             const lastMsg = Object.values(msgs).pop();
-                            if (lastMsg.sender !== currentBadge && lastMsg.seen !== true) {
+                            if (lastMsg.sender !== currentBadge && !lastMsg.seen) {
                                 document.getElementById(`dot-${id}`)?.classList.remove('hidden');
                             }
                         }
@@ -288,55 +250,28 @@
                 });
 
                 const sentList = document.getElementById('likes-sent-list');
-                sentList.innerHTML = Object.keys(myLikes).length ? "" : "<p class='text-center text-gray-700 text-[10px] uppercase'>Aucun flash envoyé</p>";
+                sentList.innerHTML = "";
                 Object.keys(myLikes).forEach(id => {
                     if (matches.includes(id)) return;
                     const div = document.createElement('div');
                     div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
-                    div.innerHTML = `<span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">Flash envoyé à #${id}</span>
-                                     <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>`;
+                    div.innerHTML = `<span class="text-gray-300 text-sm italic">#${id} flashé</span>
+                                     <button onclick="deleteLike('${id}')" class="text-gray-600">×</button>`;
                     sentList.appendChild(div);
                 });
-                updateAdminStats();
             });
         }
 
-        async function updateAdminStats() {
-            const usersSnap = await get(ref(db, `${basePath}/users`));
-            const likesSnap = await get(ref(db, `${basePath}/likes`));
-            const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
-            let totalLikes = 0; let totalMatches = 0;
-            if (likesSnap.exists()) {
-                const data = likesSnap.val();
-                const processedMatches = new Set();
-                for (const userA in data) {
-                    for (const userB in data[userA]) {
-                        totalLikes++;
-                        const pair = [userA, userB].sort().join('-');
-                        if (data[userB] && data[userB][userA] && !processedMatches.has(pair)) {
-                            totalMatches++; processedMatches.add(pair);
-                        }
-                    }
-                }
-            }
-            document.getElementById('admin-total-users').innerText = totalUsers;
-            document.getElementById('admin-total-likes').innerText = totalLikes;
-            document.getElementById('admin-total-matches').innerText = totalMatches;
-        }
-
+        // CHAT LOGIC
         function openChat(target) {
-            // Empêche les doublons en détachant l'ancien écouteur si existant
-            if (activeChatRoom) {
-                off(ref(db, `${basePath}/messages/${activeChatRoom}`));
-            }
-
+            if (activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
+            
             activeChatRoom = [currentBadge, target].sort().join('-');
             document.getElementById('chat-target-badge').innerText = target;
             document.getElementById('chat-window').classList.remove('hidden');
             document.getElementById(`dot-${target}`)?.classList.add('hidden');
             
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
-            
             onValue(chatRef, (snap) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = "";
@@ -346,9 +281,8 @@
                     Object.keys(data).forEach(key => {
                         const m = data[key];
                         if(m.sender === currentBadge) currentChatMessagesSent++;
-                        else if (m.seen !== true) {
-                            update(ref(db, `${basePath}/messages/${activeChatRoom}/${key}`), { seen: true });
-                        }
+                        else if (!m.seen) update(ref(db, `${basePath}/messages/${activeChatRoom}/${key}`), { seen: true });
+                        
                         const d = document.createElement('div');
                         d.className = `msg ${m.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
                         d.innerText = m.text;
@@ -360,65 +294,76 @@
         }
         window.openChat = openChat;
 
-        document.getElementById('send-msg-trigger').onclick = async () => {
+        async function sendMessage() {
             const input = document.getElementById('chat-input');
-            if(!input.value.trim() || !activeChatRoom) return;
+            const text = input.value.trim();
+            if(!text || !activeChatRoom || isSending) return;
+
             if (currentChatMessagesSent >= 10) {
                 document.getElementById('chat-limit-warning').classList.remove('hidden');
-                setTimeout(() => document.getElementById('chat-limit-warning').classList.add('hidden'), 4000);
                 return;
             }
-            await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
-                sender: currentBadge,
-                text: input.value.trim(),
-                time: serverTimestamp(),
-                seen: false
-            });
-            input.value = "";
-        };
+
+            isSending = true; // Bloque l'envoi
+            input.value = ""; // Vide immédiatement le champ pour feedback visuel
+
+            try {
+                await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
+                    sender: currentBadge,
+                    text: text,
+                    time: serverTimestamp(),
+                    seen: false
+                });
+            } catch (e) {
+                console.error(e);
+            } finally {
+                isSending = false; // Débloque
+            }
+        }
+
+        document.getElementById('send-msg-trigger').onclick = sendMessage;
 
         document.getElementById('close-chat-trigger').onclick = () => {
-            if (activeChatRoom) {
-                off(ref(db, `${basePath}/messages/${activeChatRoom}`));
-            }
+            if (activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
             document.getElementById('chat-window').classList.add('hidden');
             activeChatRoom = null;
         };
 
+        // ADMIN
         document.getElementById('admin-trigger').onclick = () => {
-            if (prompt("Code Admin :") === "2026") {
-                updateAdminStats();
-                document.getElementById('admin-panel').classList.remove('hidden');
-            }
+            if (prompt("Code :") === "2026") document.getElementById('admin-panel').classList.remove('hidden');
         };
-
-        document.getElementById('close-admin-trigger').onclick = () => {
-            document.getElementById('admin-panel').classList.add('hidden');
-        };
+        document.getElementById('close-admin-trigger').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
 
         document.getElementById('btn-admin-delete-user').onclick = async () => {
-            const badge = document.getElementById('admin-delete-badge-input').value.trim();
-            if(!badge) return;
-            if (confirm(`Réinitialiser le badge #${badge} ?`)) {
-                await remove(ref(db, `${basePath}/users/${badge}`));
-                updateAdminStats();
-            }
+            const b = document.getElementById('admin-delete-badge-input').value.trim();
+            if(b) await remove(ref(db, `${basePath}/users/${b}`));
         };
 
-        document.getElementById('reset-event-trigger').onclick = async () => {
-            if (confirm("⚠ Supprimer TOUTES les données ?")) {
-                await remove(ref(db, basePath)); 
-                await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
-                location.reload();
-            }
+        // FLASH
+        document.getElementById('btn-like-trigger').onclick = async () => {
+            const t = document.getElementById('target-badge').value.trim();
+            if(!t || t === currentBadge) return;
+            const snap = await get(ref(db, `${basePath}/users/${t}`));
+            if (snap.exists()) await set(ref(db, `${basePath}/likes/${currentBadge}/${t}`), true);
+            document.getElementById('target-badge').value = "";
         };
 
+        // ENTER KEY
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
+                if (!document.getElementById('chat-window').classList.contains('hidden')) sendMessage();
                 else if (!document.getElementById('login-screen').classList.contains('hidden')) document.getElementById('btn-login-trigger').click();
                 else if (!document.getElementById('main-app').classList.contains('hidden')) document.getElementById('btn-like-trigger').click();
             }
+        });
+
+        // Config Init
+        onValue(ref(db, `${basePath}/config`), (snap) => {
+            const config = snap.val();
+            document.getElementById('event-name-display').innerText = eventID.toUpperCase();
+            if (config?.active === false) showUI('closed-screen');
+            else if (currentBadge) loadApp(); else showUI('login-screen');
         });
     </script>
 </body>
