@@ -1,0 +1,57 @@
+CONDITIONS GÉNÉRALES DE VENTE ET D'UTILISATION (MODE SaaS)
+Date de dernière mise à jour : [Date du jour]
+
+ARTICLE 1. MENTIONS LÉGALES ET ÉDITEUR
+La Web-App [Nom de l'App] (ci-après « le Service ») est éditée par [Votre Nom et Prénom], exerçant sous le régime de la micro-entreprise, domicilié au [Votre Adresse], immatriculé au SIREN [Votre Numéro SIREN].
+Contact : [Votre Email].
+
+ARTICLE 2. OBJET ET CHAMP D'APPLICATION
+Les présentes CGV/CGU régissent l'accès et l'utilisation du Service. Le Service est exclusivement réservé à un usage professionnel. La souscription au Service implique l'acceptation sans réserve des présentes conditions.
+
+ARTICLE 3. CONDITIONS FINANCIÈRES
+Tarifs : Les prix sont indiqués en Euros. Conformément à l'article 293 B du Code Général des Impôts, la TVA est non applicable ("TVA non applicable, art. 293 B du CGI").
+
+Paiement : Le règlement s'effectue par carte bancaire via le prestataire sécurisé Stripe.
+
+Retard : Tout retard de paiement entraîne l'application d'une indemnité forfaitaire pour frais de recouvrement de 40 € et des pénalités de retard.
+
+ARTICLE 4. ACCÈS ET DISPONIBILITÉ DU RÉSEAU
+Accès : Le Service est accessible via le réseau internet. Le Client reconnaît que l'Éditeur ne fournit pas la connexion internet.
+
+Décharge de responsabilité (Réseau) : L'Éditeur ne saurait être tenu responsable des lenteurs, coupures ou indisponibilités du Service dues à :
+
+La qualité de la connexion internet du Client (Wi-Fi instable, débit insuffisant, panne de l'opérateur du Client).
+
+L’encombrement général du réseau internet.
+
+Une mauvaise configuration du matériel ou du navigateur du Client.
+
+ARTICLE 5. RESPONSABILITÉ ET EXCLUSIONS
+L'Éditeur est soumis à une obligation de moyens.
+
+Utilisation malveillante : Le Client est seul responsable de l'usage du Service. L'Éditeur décline toute responsabilité en cas d'utilisation illicite, frauduleuse ou malveillante du Service par le Client (ex: injection de données corrompues, spamming, tentatives de hacking).
+
+Identifiants : Le Client assure seul la confidentialité de ses accès. Toute opération effectuée avec ses identifiants est réputée faite par lui. L'Éditeur ne répond pas des dommages résultant d'un vol ou d'une perte d'identifiants du fait de la négligence du Client.
+
+Dommages indirects : L'Éditeur ne pourra être tenu pour responsable des dommages indirects : perte de bénéfice, perte de données, préjudice commercial ou atteinte à l'image.
+
+Plafond de responsabilité : Si la responsabilité de l'Éditeur était engagée, l'indemnisation totale serait strictement limitée au montant des sommes versées par le Client à l'Éditeur au cours des six (6) derniers mois.
+
+ARTICLE 6. PROPRIÉTÉ INTELLECTUELLE
+L'Éditeur détient l'intégralité des droits de propriété intellectuelle sur la Web-App. Le Client bénéficie d'un droit d'usage personnel, non exclusif et non cessible. Toute tentative de rétro-ingénierie, copie ou extraction de la base de données est strictement interdite.
+
+ARTICLE 7. PROTECTION DES DONNÉES (RGPD)
+Données personnelles : L'Éditeur collecte uniquement les données nécessaires à la gestion du compte (Nom, Prénom, Email).
+
+Sous-traitance : Les données sont hébergées en Union Européenne chez [Nom de l'hébergeur].
+
+Aucune donnée sensible : Le Client s'engage à ne pas stocker de données de santé, bancaires ou sensibles via le Service.
+
+ARTICLE 8. MAINTENANCE ET ÉVOLUTIONS
+L'Éditeur se réserve le droit d'interrompre momentanément l'accès pour maintenance. L'Éditeur s'efforcera de prévenir le Client 24h à l'avance mais ne pourra être tenu responsable des préjudices liés à ces interruptions nécessaires au bon fonctionnement du Service.
+
+ARTICLE 9. RÉSILIATION
+L'abonnement est sans engagement de durée, sauf mention contraire. Le Client peut résilier via son espace personnel. Tout mois commencé est dû.
+
+ARTICLE 10. LOI APPLICABLE ET LITIGES
+Les présentes conditions sont soumises au droit français. En cas de litige entre professionnels, la compétence exclusive est attribuée aux tribunaux de [Votre Ville].
