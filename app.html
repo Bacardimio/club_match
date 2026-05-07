@@ -18,7 +18,6 @@
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .notification-dot { width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
-        .btn-delete { @apply text-gray-500 hover:text-red-500 transition-colors p-2 text-xl font-bold; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
@@ -105,19 +104,46 @@
         </div>
     </div>
 
-    <div id="admin-panel" class="hidden fixed inset-0 bg-black/98 z-50 p-6 flex flex-col items-center justify-center">
-        <div class="w-full max-w-sm space-y-8">
-            <h2 class="text-2xl font-black text-red-600 text-center uppercase italic">ADMINISTRATION</h2>
+    <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
+        <div class="w-full max-w-sm mx-auto space-y-8 py-10">
+            <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
             
-            <div class="glass p-6 rounded-3xl space-y-4">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Annuler un utilisateur</p>
-                <input type="number" id="admin-delete-badge-input" placeholder="N° de badge" class="w-full bg-white/10 border-none rounded-xl p-4 text-center text-xl font-bold text-white outline-none">
-                <button id="btn-admin-delete-user" class="w-full bg-white/10 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-colors">Réinitialiser ce badge</button>
+            <div class="glass rounded-3xl overflow-hidden border-white/10">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4">Indicateur</th>
+                            <th class="px-6 py-4 text-right">Valeur</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td>
+                            <td id="admin-total-users" class="px-6 py-4 text-right font-black text-white text-lg">0</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td>
+                            <td id="admin-total-likes" class="px-6 py-4 text-right font-black text-white text-lg">0</td>
+                        </tr>
+                        <tr class="bg-pink-500/5">
+                            <td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td>
+                            <td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <div class="space-y-4">
-                <button id="reset-event-trigger" class="bg-red-600 text-white px-8 py-5 rounded-2xl font-black w-full shadow-xl active:scale-95">RÉINITIALISER TOUT L'ÉVÉNEMENT</button>
-                <button id="close-admin-trigger" class="block w-full text-center underline text-gray-500">Fermer</button>
+            <div class="glass p-6 rounded-3xl space-y-4">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Annuler un badge utilisateur</p>
+                <div class="flex space-x-2">
+                    <input type="number" id="admin-delete-badge-input" placeholder="N°" class="flex-1 bg-white/10 border-none rounded-xl p-4 text-center text-xl font-bold text-white outline-none">
+                    <button id="btn-admin-delete-user" class="bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-6 rounded-xl font-bold transition-all underline">OK</button>
+                </div>
+            </div>
+
+            <div class="space-y-4 pt-4">
+                <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl active:scale-95 uppercase tracking-widest">Réinitialiser l'événement</button>
+                <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Retour à l'app</button>
             </div>
         </div>
     </div>
@@ -146,7 +172,7 @@
         let currentBadge = localStorage.getItem(`myBadge_${eventID}`);
         let activeChatRoom = null;
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
-        let currentLikesSentCount = 0; // Pour la limite de 5
+        let currentLikesSentCount = 0;
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
@@ -155,7 +181,6 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // --- GESTION SUPPRESSION ---
         async function deleteLike(target) {
             if(confirm(`Supprimer le like/match avec #${target} ?`)) {
                 await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
@@ -163,7 +188,6 @@
         }
         window.deleteLike = deleteLike;
 
-        // --- CONFIG ---
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             document.getElementById('event-name-display').innerText = eventID.toUpperCase();
@@ -183,7 +207,6 @@
             }
         });
 
-        // --- LOGIN ---
         document.getElementById('btn-login-trigger').onclick = async () => {
             const badge = document.getElementById('user-badge').value.trim();
             if(!badge) return;
@@ -199,27 +222,21 @@
             }
         };
 
-        // --- LIKE / FLASH (AVEC LIMITE DE 5) ---
         document.getElementById('btn-like-trigger').onclick = async () => {
             const targetInput = document.getElementById('target-badge');
             const target = targetInput.value.trim();
-            
             if(!target || target === currentBadge) return;
-
-            // Vérifier la limite avant d'envoyer
             if (currentLikesSentCount >= 5) {
                 document.getElementById('limit-warning').classList.remove('hidden');
                 setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 3000);
                 return;
             }
-
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
             const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
             if(check.exists()) alert("MATCH ! 🔥");
             targetInput.value = "";
         };
 
-        // --- FONCTION PRINCIPALE ---
         function loadApp() {
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
@@ -229,10 +246,8 @@
                 let matches = [];
                 let likesRecus = 0;
                 let myLikes = data[currentBadge] || {};
-                
                 currentLikesSentCount = Object.keys(myLikes).length;
 
-                // Calcul stats et matches
                 for (let user in data) {
                     if (data[user][currentBadge]) {
                         likesRecus++;
@@ -244,12 +259,10 @@
                 document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
-                // Rendu des Matches
                 const list = document.getElementById('match-list');
                 list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
 
                 matches.forEach(id => {
-                    const roomID = [currentBadge, id].sort().join('-');
                     const div = document.createElement('div');
                     div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
                     div.innerHTML = `
@@ -260,25 +273,11 @@
                         <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-2 font-bold text-xl">×</button>
                     `;
                     list.appendChild(div);
-
-                    onValue(ref(db, `${basePath}/messages/${roomID}`), (mSnap) => {
-                        const msgs = mSnap.val();
-                        if (msgs && activeChatRoom !== roomID) {
-                            const lastMsg = Object.values(msgs).pop();
-                            const lastRead = localStorage.getItem(`read_${eventID}_${roomID}`) || 0;
-                            if (lastMsg.sender !== currentBadge && lastMsg.time > lastRead) {
-                                const dot = document.getElementById(`dot-${id}`);
-                                if(dot) dot.classList.remove('hidden');
-                            }
-                        }
-                    });
                 });
 
-                // Rendu des Flashs Envoyés
                 const sentList = document.getElementById('likes-sent-list');
                 const myLikesArray = Object.keys(myLikes);
                 sentList.innerHTML = myLikesArray.length ? "" : "<p class='text-center text-gray-700 text-[10px] uppercase'>Aucun flash envoyé</p>";
-                
                 myLikesArray.forEach(id => {
                     if (matches.includes(id)) return;
                     const div = document.createElement('div');
@@ -289,7 +288,38 @@
                     `;
                     sentList.appendChild(div);
                 });
+
+                // MAJ Stats Administrateur si ouvert
+                updateAdminStats();
             });
+        }
+
+        async function updateAdminStats() {
+            const usersSnap = await get(ref(db, `${basePath}/users`));
+            const likesSnap = await get(ref(db, `${basePath}/likes`));
+            
+            const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
+            let totalLikes = 0;
+            let totalMatches = 0;
+            
+            if (likesSnap.exists()) {
+                const data = likesSnap.val();
+                const processedMatches = new Set();
+                for (const userA in data) {
+                    for (const userB in data[userA]) {
+                        totalLikes++;
+                        const pair = [userA, userB].sort().join('-');
+                        if (data[userB] && data[userB][userA] && !processedMatches.has(pair)) {
+                            totalMatches++;
+                            processedMatches.add(pair);
+                        }
+                    }
+                }
+            }
+            
+            document.getElementById('admin-total-users').innerText = totalUsers;
+            document.getElementById('admin-total-likes').innerText = totalLikes;
+            document.getElementById('admin-total-matches').innerText = totalMatches;
         }
 
         // --- CHAT ---
@@ -298,7 +328,6 @@
             document.getElementById('chat-target-badge').innerText = target;
             document.getElementById('chat-window').classList.remove('hidden');
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
-            
             onValue(chatRef, (snap) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = "";
@@ -311,14 +340,12 @@
                         container.appendChild(d);
                     });
                     container.scrollTop = container.scrollHeight;
-                    localStorage.setItem(`read_${eventID}_${activeChatRoom}`, Date.now());
                 }
             });
         }
         window.openChat = openChat;
 
         document.getElementById('close-chat-trigger').onclick = () => {
-            if(activeChatRoom) off(ref(db, `${basePath}/messages/${activeChatRoom}`));
             document.getElementById('chat-window').classList.add('hidden');
             activeChatRoom = null;
         };
@@ -336,39 +363,35 @@
 
         // --- ADMINISTRATION ---
         document.getElementById('admin-trigger').onclick = () => {
-            if (prompt("Code Admin :") === "2026") document.getElementById('admin-panel').classList.remove('hidden');
+            if (prompt("Code Admin :") === "2026") {
+                updateAdminStats();
+                document.getElementById('admin-panel').classList.remove('hidden');
+            }
         };
 
         document.getElementById('close-admin-trigger').onclick = () => {
             document.getElementById('admin-panel').classList.add('hidden');
         };
 
-        // Supprimer un utilisateur spécifique (pour corriger une erreur)
         document.getElementById('btn-admin-delete-user').onclick = async () => {
-            const badgeToDelete = document.getElementById('admin-delete-badge-input').value.trim();
-            if(!badgeToDelete) return;
-
-            if (confirm(`Voulez-vous vraiment supprimer le badge #${badgeToDelete} ? L'utilisateur pourra se reconnecter sur un autre appareil.`)) {
-                try {
-                    await remove(ref(db, `${basePath}/users/${badgeToDelete}`));
-                    alert(`Badge #${badgeToDelete} supprimé avec succès.`);
-                    document.getElementById('admin-delete-badge-input').value = "";
-                } catch (e) {
-                    alert("Erreur lors de la suppression.");
-                }
+            const badge = document.getElementById('admin-delete-badge-input').value.trim();
+            if(!badge) return;
+            if (confirm(`Réinitialiser le badge #${badge} ?`)) {
+                await remove(ref(db, `${basePath}/users/${badge}`));
+                alert(`Badge #${badge} libéré.`);
+                document.getElementById('admin-delete-badge-input').value = "";
+                updateAdminStats();
             }
         };
 
         document.getElementById('reset-event-trigger').onclick = async () => {
-            if (confirm("⚠ Attention : Cela va supprimer TOUTES les données de cet événement uniquement. Confirmer ?")) {
+            if (confirm("⚠ Supprimer TOUTES les données ?")) {
                 await remove(ref(db, basePath)); 
                 await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
-                alert("Événement réinitialisé.");
                 location.reload();
             }
         };
 
-        // Touche Entrée
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
