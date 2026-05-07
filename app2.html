@@ -70,6 +70,7 @@
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="target-badge" placeholder="N°" class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black focus:border-pink-500 outline-none text-white">
             <button id="btn-like-trigger" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white uppercase tracking-widest">Flasher</button>
+            <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic">Ce badge n'est pas enregistré !</p>
             <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 5 flashs atteinte !</p>
         </div>
 
@@ -150,7 +151,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -222,15 +223,34 @@
             }
         };
 
+        // --- LOGIQUE FLASH (MODIFIÉE) ---
         document.getElementById('btn-like-trigger').onclick = async () => {
             const targetInput = document.getElementById('target-badge');
             const target = targetInput.value.trim();
+            const errorText = document.getElementById('target-error');
+            const limitText = document.getElementById('limit-warning');
+
+            // Cacher les erreurs précédentes
+            errorText.classList.add('hidden');
+            
             if(!target || target === currentBadge) return;
+
             if (currentLikesSentCount >= 5) {
-                document.getElementById('limit-warning').classList.remove('hidden');
-                setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 3000);
+                limitText.classList.remove('hidden');
+                setTimeout(() => limitText.classList.add('hidden'), 3000);
                 return;
             }
+
+            // VÉRIFICATION : Est-ce que le badge cible existe dans Firebase ?
+            const userRef = ref(db, `${basePath}/users/${target}`);
+            const userSnap = await get(userRef);
+
+            if (!userSnap.exists()) {
+                errorText.classList.remove('hidden'); // On affiche l'erreur si le badge n'existe pas
+                return;
+            }
+
+            // Si le badge existe, on procède au Like
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
             const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
             if(check.exists()) alert("MATCH ! 🔥");
@@ -289,7 +309,6 @@
                     sentList.appendChild(div);
                 });
 
-                // MAJ Stats Administrateur si ouvert
                 updateAdminStats();
             });
         }
@@ -322,7 +341,6 @@
             document.getElementById('admin-total-matches').innerText = totalMatches;
         }
 
-        // --- CHAT ---
         function openChat(target) {
             activeChatRoom = [currentBadge, target].sort().join('-');
             document.getElementById('chat-target-badge').innerText = target;
@@ -361,7 +379,6 @@
             input.value = "";
         };
 
-        // --- ADMINISTRATION ---
         document.getElementById('admin-trigger').onclick = () => {
             if (prompt("Code Admin :") === "2026") {
                 updateAdminStats();
@@ -396,6 +413,7 @@
             if (e.key === 'Enter') {
                 if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
                 else if (!document.getElementById('login-screen').classList.contains('hidden')) document.getElementById('btn-login-trigger').click();
+                else if (!document.getElementById('main-app').classList.contains('hidden')) document.getElementById('btn-like-trigger').click();
             }
         });
     </script>
