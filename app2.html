@@ -11,6 +11,9 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
         .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.2s; }
         .btn-main:active { transform: scale(0.95); }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
+        .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+        .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
     </style>
 </head>
@@ -60,40 +63,47 @@
         <div class="glass p-8 rounded-[2.5rem] space-y-5 text-center">
             <input type="number" id="target-badge" placeholder="N°" class="w-full bg-black/40 border border-white/10 rounded-3xl p-6 text-center text-6xl font-black text-white outline-none">
             <button id="btn-like-trigger" class="w-full btn-main py-6 rounded-2xl font-black text-xl text-white uppercase tracking-widest">Flasher</button>
-            <p id="like-error" class="text-red-500 text-[10px] font-bold uppercase hidden">Ce numéro n'est pas encore inscrit !</p>
+            <p id="like-error" class="text-red-500 text-[10px] font-bold uppercase hidden">Ce numéro n'est pas inscrit !</p>
         </div>
 
         <div id="match-list" class="space-y-3"></div>
     </div>
 
+    <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
+        <header class="p-6 border-b border-white/10 flex items-center space-x-4">
+            <button id="close-chat-trigger" class="text-2xl text-white opacity-50">←</button>
+            <h3 class="flex-1 text-xl font-black italic text-white">Chat #<span id="chat-target-badge">--</span></h3>
+            <span id="chat-msg-count" class="text-[10px] font-bold text-pink-500 uppercase">0/10 MSGS</span>
+        </header>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
+        <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
+            <input type="text" id="chat-input" placeholder="Ton message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
+            <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white">OK</button>
+        </div>
+    </div>
+
     <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
-        <div class="w-full max-w-sm mx-auto space-y-8 py-10">
-            <h2 class="text-3xl font-black text-red-500 uppercase italic text-center">Administration</h2>
-            <p id="admin-timer" class="text-gray-500 text-center text-[10px] font-bold uppercase"></p>
+        <div class="w-full max-w-sm mx-auto space-y-8 py-10 text-center">
+            <h2 class="text-3xl font-black text-red-500 uppercase italic">Administration</h2>
+            <p id="admin-timer" class="text-gray-500 text-[10px] font-bold uppercase"></p>
             
-            <div class="glass rounded-3xl overflow-hidden border-white/10">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold">
-                        <tr><th class="px-6 py-4">Stats</th><th class="px-6 py-4 text-right">Valeur</th></tr>
-                    </thead>
+            <div class="glass rounded-3xl overflow-hidden text-left">
+                <table class="w-full text-sm">
                     <tbody class="divide-y divide-white/5">
-                        <tr><td class="px-6 py-4 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black">0</td></tr>
-                        <tr class="text-pink-500"><td class="px-6 py-4 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black">0</td></tr>
+                        <tr><td class="px-6 py-4 italic">Utilisateurs actifs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black">0</td></tr>
+                        <tr><td class="px-6 py-4 italic text-pink-500">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500">0</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="space-y-4">
-                <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full uppercase disabled:opacity-20">Réinitialiser l'événement</button>
-                <p id="reset-locked-msg" class="text-red-500 text-[10px] font-bold text-center uppercase hidden">Action impossible : Délai expiré.</p>
-                <button id="close-admin-trigger" class="block w-full text-center text-gray-400 font-bold uppercase text-[10px] py-4">Fermer</button>
-            </div>
+            <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full uppercase disabled:opacity-20">Réinitialiser l'événement</button>
+            <button id="close-admin-trigger" class="block w-full text-gray-500 font-bold uppercase text-[10px] py-4">Fermer</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, update, push, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -113,43 +123,39 @@
 
         let currentBadge = localStorage.getItem(`myBadge_${eventID}`);
         let deviceId = localStorage.getItem(`deviceId_${eventID}`) || ('dev-' + Math.random().toString(36).substr(2, 9));
-        let currentLikesCount = 0;
+        let activeChatRoom = null;
+        let myMessageCountInRoom = 0;
         const FORTY_EIGHT_HOURS = 48 * 60 * 60 * 1000;
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
         function showUI(id) {
-            ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            ['closed-screen', 'login-screen', 'main-app', 'chat-window'].forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // --- ECOUTE RESET (Déconnexion forcée) ---
+        // --- SIGNAL RESET ---
         onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
             const sig = snap.val();
-            const lastLocalReset = localStorage.getItem(`lastReset_${eventID}`);
-            if (sig && sig.toString() !== lastLocalReset) {
+            if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
                 localStorage.removeItem(`myBadge_${eventID}`);
                 localStorage.setItem(`lastReset_${eventID}`, sig.toString());
                 location.reload();
             }
         });
 
-        // --- GESTION TEMPS (48H) ---
+        // --- GESTION TEMPS ---
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val() || {};
             const startTime = config.startTime || 0;
             const now = Date.now();
-            const isExpired = startTime !== 0 && (now - startTime > FORTY_EIGHT_HOURS);
-
-            if (isExpired) {
+            if (startTime !== 0 && (now - startTime > FORTY_EIGHT_HOURS)) {
                 showUI('closed-screen');
                 document.getElementById('reset-event-trigger').disabled = true;
-                document.getElementById('reset-locked-msg').classList.remove('hidden');
             } else {
                 if (currentBadge) loadApp(); else showUI('login-screen');
                 if (startTime > 0) {
-                    const diff = FORTY_EIGHT_HOURS - (now - startTime);
-                    const h = Math.floor(diff / 3600000);
-                    document.getElementById('admin-timer').innerText = `Expire dans ${h}h environ`;
+                    const h = Math.floor((FORTY_EIGHT_HOURS - (now - startTime)) / 3600000);
+                    document.getElementById('admin-timer').innerText = `Expire dans ${h}h`;
                 }
             }
         });
@@ -158,12 +164,9 @@
         document.getElementById('btn-login-trigger').onclick = async () => {
             const badge = document.getElementById('user-badge').value.trim();
             if(!badge) return;
-
             const configSnap = await get(ref(db, `${basePath}/config/startTime`));
-            if(!configSnap.exists()) {
-                await update(ref(db, `${basePath}/config`), { startTime: Date.now() });
-            }
-
+            if(!configSnap.exists()) await update(ref(db, `${basePath}/config`), { startTime: Date.now() });
+            
             const userRef = ref(db, `${basePath}/users/${badge}`);
             const snapshot = await get(userRef);
             if (snapshot.exists() && snapshot.val() !== deviceId) {
@@ -180,86 +183,117 @@
         document.getElementById('btn-like-trigger').onclick = async () => {
             const target = document.getElementById('target-badge').value.trim();
             if(!target || target === currentBadge) return;
-
             const checkUser = await get(ref(db, `${basePath}/users/${target}`));
             if(!checkUser.exists()) {
                 document.getElementById('like-error').classList.remove('hidden');
                 setTimeout(() => document.getElementById('like-error').classList.add('hidden'), 3000);
                 return;
             }
-
-            if (currentLikesCount >= 5) return alert("Limite de 5 flashs atteinte !");
-
             await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
             document.getElementById('target-badge').value = "";
         };
 
-        // --- APP LOGIQUE ---
         function loadApp() {
             showUI('main-app');
-            // FIX ICI : On utilise currentBadge qui est global
             document.getElementById('display-badge').innerText = "#" + currentBadge;
 
             onValue(ref(db, `${basePath}/likes`), (snap) => {
                 const data = snap.val() || {};
                 const myLikes = data[currentBadge] || {};
                 let matches = [];
-                currentLikesCount = Object.keys(myLikes).length;
+                for (let user in data) { if (data[user][currentBadge] && myLikes[user]) matches.push(user); }
 
-                for (let user in data) {
-                    if (data[user][currentBadge] && myLikes[user]) matches.push(user);
-                }
-
-                document.getElementById('stat-likes-envoyes').innerText = currentLikesCount;
+                document.getElementById('stat-likes-envoyes').innerText = Object.keys(myLikes).length;
                 document.getElementById('stat-matches').innerText = matches.length;
                 
                 const list = document.getElementById('match-list');
                 list.innerHTML = "";
                 matches.forEach(id => {
                     const div = document.createElement('div');
-                    div.className = "glass p-5 rounded-2xl flex justify-between items-center border-l-4 border-pink-500 font-bold";
-                    div.innerHTML = `MATCH AVEC #${id} 🔥`;
+                    div.className = "glass p-4 rounded-2xl flex justify-between items-center border-l-4 border-pink-500 cursor-pointer";
+                    div.innerHTML = `<span class="font-bold">Match avec #${id}</span><span class="text-xs opacity-50 italic">Chat →</span>`;
+                    div.onclick = () => openChat(id);
                     list.appendChild(div);
                 });
                 updateAdminStats();
             });
         }
 
-        async function updateAdminStats() {
-            const users = await get(ref(db, `${basePath}/users`));
-            const likes = await get(ref(db, `${basePath}/likes`));
-            const uData = users.val() || {};
-            const lData = likes.val() || {};
-            document.getElementById('admin-total-users').innerText = Object.keys(uData).length;
-            
-            let totalM = 0; const pairs = new Set();
-            for(let a in lData) {
-                for(let b in lData[a]) {
-                    if(lData[b] && lData[b][a]) {
-                        const p = [a,b].sort().join('-');
-                        if(!pairs.has(p)) { totalM++; pairs.add(p); }
-                    }
-                }
+        // --- LOGIQUE CHAT + LIMITE 10 MESSAGES ---
+        window.openChat = function(targetBadge) {
+            activeChatRoom = [currentBadge, targetBadge].sort().join('-');
+            document.getElementById('chat-target-badge').innerText = targetBadge;
+            document.getElementById('chat-window').classList.remove('hidden');
+            document.getElementById('chat-messages').innerHTML = "";
+
+            const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
+            off(chatRef);
+            onValue(chatRef, (snap) => {
+                const msgs = snap.val() || {};
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = "";
+                myMessageCountInRoom = 0;
+
+                Object.values(msgs).forEach(m => {
+                    if (m.sender === currentBadge) myMessageCountInRoom++;
+                    const d = document.createElement('div');
+                    d.className = `msg ${m.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
+                    d.innerText = m.text;
+                    container.appendChild(d);
+                });
+                container.scrollTop = container.scrollHeight;
+                
+                // Update compteur UI
+                const counter = document.getElementById('chat-msg-count');
+                counter.innerText = `${myMessageCountInRoom}/10 MSGS`;
+                counter.className = myMessageCountInRoom >= 10 ? "text-red-500 font-black text-[10px]" : "text-pink-500 font-bold text-[10px]";
+            });
+        };
+
+        document.getElementById('send-msg-trigger').onclick = async () => {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text || !activeChatRoom) return;
+
+            if (myMessageCountInRoom >= 10) {
+                alert("Limite de 10 messages atteinte pour ce match !");
+                return;
             }
-            document.getElementById('admin-total-matches').innerText = totalM;
-        }
+
+            await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
+                sender: currentBadge,
+                text: text,
+                time: serverTimestamp()
+            });
+            input.value = "";
+        };
+
+        document.getElementById('close-chat-trigger').onclick = () => {
+            showUI('main-app');
+            activeChatRoom = null;
+        };
 
         // --- ADMIN ---
         document.getElementById('admin-trigger').onclick = () => {
             if (prompt("Code Admin :") === "2026") document.getElementById('admin-panel').classList.remove('hidden');
         };
-        document.getElementById('close-admin-trigger').onclick = () => {
-            document.getElementById('admin-panel').classList.add('hidden');
-        };
+        document.getElementById('close-admin-trigger').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
 
         document.getElementById('reset-event-trigger').onclick = async () => {
-            if (confirm("⚠ RÉINITIALISATION : Cela supprimera TOUS les numéros et déconnectera TOUS les utilisateurs. Confirmer ?")) {
+            if (confirm("⚠ RÉINITIALISATION : Tout effacer et déconnecter tout le monde ?")) {
                 await remove(ref(db, `${basePath}/users`));
                 await remove(ref(db, `${basePath}/likes`));
+                await remove(ref(db, `${basePath}/messages`));
                 await set(ref(db, `${basePath}/resetSignal`), Date.now());
                 location.reload();
             }
         };
+
+        async function updateAdminStats() {
+            const uSnap = await get(ref(db, `${basePath}/users`));
+            document.getElementById('admin-total-users').innerText = uSnap.exists() ? Object.keys(uSnap.val()).length : 0;
+            // (Le calcul des matchs peut être ajouté ici via les likes)
+        }
     </script>
 </body>
 </html>
