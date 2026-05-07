@@ -17,7 +17,8 @@
         .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .notification-dot { width: 10px; height: 10px; background-color: #ff0000; border-radius: 50%; box-shadow: 0 0 10px #ff0000; }
+        /* Point de notification VERT */
+        .notification-dot { width: 10px; height: 10px; background-color: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
@@ -139,7 +140,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, update, off } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -274,7 +275,7 @@
                     `;
                     list.appendChild(div);
 
-                    // Écouteur pour le point rouge (nouveau message)
+                    // Écouteur pour le point VERT (nouveau message)
                     onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
                         const msgs = snap.val();
                         if (msgs && activeChatRoom !== roomID) {
@@ -324,12 +325,18 @@
         }
 
         function openChat(target) {
+            // Empêche les doublons en détachant l'ancien écouteur si existant
+            if (activeChatRoom) {
+                off(ref(db, `${basePath}/messages/${activeChatRoom}`));
+            }
+
             activeChatRoom = [currentBadge, target].sort().join('-');
             document.getElementById('chat-target-badge').innerText = target;
             document.getElementById('chat-window').classList.remove('hidden');
             document.getElementById(`dot-${target}`)?.classList.add('hidden');
             
             const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
+            
             onValue(chatRef, (snap) => {
                 const container = document.getElementById('chat-messages');
                 container.innerHTML = "";
@@ -340,7 +347,6 @@
                         const m = data[key];
                         if(m.sender === currentBadge) currentChatMessagesSent++;
                         else if (m.seen !== true) {
-                            // Marquer comme vu si le chat est ouvert
                             update(ref(db, `${basePath}/messages/${activeChatRoom}/${key}`), { seen: true });
                         }
                         const d = document.createElement('div');
@@ -372,6 +378,9 @@
         };
 
         document.getElementById('close-chat-trigger').onclick = () => {
+            if (activeChatRoom) {
+                off(ref(db, `${basePath}/messages/${activeChatRoom}`));
+            }
             document.getElementById('chat-window').classList.add('hidden');
             activeChatRoom = null;
         };
