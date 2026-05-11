@@ -10,196 +10,251 @@
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
         .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
         .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255, 0, 85, 0.2); }
-        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: none; cursor: pointer; }
         .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
         .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
+        /* Modal Styles */
+        #orderModal { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
+        #orderModal.active { display: flex; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
+        .input-field { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; outline: none; transition: border-color 0.3s; }
+        .input-field:focus { border-color: var(--accent); }
+
+        /* Smartphone Animation */
         .phone-frame { width: 280px; height: 500px; border: 8px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 50px rgba(255,0,85,0.1); }
         .app-screen { position: absolute; inset: 0; padding: 20px; display: none; flex-direction: column; animation: slideUp 0.5s ease-out forwards; }
         .app-screen.active { display: flex; }
-        
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
         .match-glow { animation: pulseGlow 1.5s infinite; }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
     </style>
 </head>
 <body class="bg-[#0a0a0a] text-white antialiased">
 
+    <div id="orderModal">
+        <div class="glass border-white/20 p-8 rounded-[2.5rem] max-w-lg w-full mx-4 relative overflow-y-auto max-h-[90vh]">
+            <div class="absolute top-0 right-0 p-6">
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            
+            <h3 class="text-2xl font-black uppercase italic mb-1">Finaliser <span class="text-pink-500">ma commande</span></h3>
+            <p id="modalPlanTitle" class="text-[10px] text-pink-500 mb-6 font-bold uppercase tracking-[0.2em]"></p>
+            
+            <form id="orderForm" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Nom / Organisation</label>
+                        <input type="text" id="custName" required class="input-field" placeholder="Ex: Club Premium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Téléphone</label>
+                        <input type="tel" id="custPhone" required class="input-field" placeholder="06 00 00 00 00">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Adresse E-mail</label>
+                    <input type="email" id="custEmail" required class="input-field" placeholder="nom@exemple.com">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Date de l'événement</label>
+                    <input type="date" id="activationDate" required class="input-field">
+                </div>
+
+                <div id="optionPhysicalWrapper" class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold">Option Pack Physique (+50€)</p>
+                            <p class="text-[10px] text-gray-400">5 affiches QR Code + 50 badges numérotés</p>
+                        </div>
+                        <input type="checkbox" id="physicalOption" class="w-6 h-6 accent-pink-500 cursor-pointer">
+                    </div>
+                    <p class="text-[9px] text-pink-500/80 mt-2 uppercase font-black italic">⚠️ Prévoir 72h pour l'expédition postale</p>
+                </div>
+
+                <div class="bg-pink-500/5 p-4 rounded-2xl border border-pink-500/10">
+                    <p class="text-[11px] text-gray-300 leading-relaxed">
+                        <span class="text-pink-500 font-bold italic">Dès le paiement effectif :</span> un mail vous sera envoyé avec votre <span class="text-white">facture</span>, la <span class="text-white">notice administrateur</span> et le <span class="text-white">QR code</span> de l'événement.
+                    </p>
+                </div>
+
+                <div class="pt-4 flex justify-between items-end border-t border-white/10">
+                    <div>
+                        <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Total à régler</p>
+                        <p id="totalPriceDisplay" class="text-4xl font-black italic text-white">0€</p>
+                    </div>
+                    <button type="submit" class="btn-main px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Commander</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-50">
         <div class="flex items-center space-x-2">
             <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
         </div>
         <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-400">
-            <a href="#features" class="hover:text-white transition-colors">Concept</a>
+            <a href="#concept" class="hover:text-white transition-colors">Concept</a>
             <a href="#pricing" class="hover:text-white transition-colors">Tarifs</a>
         </nav>
-        <div>
-            <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Commander</a>
-        </div>
+        <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Commander</a>
     </header>
 
-    <section class="relative max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-12 items-center overflow-hidden">
-        <div class="absolute top-0 left-1/4 w-[500px] height-[500px] bg-pink-600/10 blur-[120px] rounded-full -z-10"></div>
-        
+    <section class="relative max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-12 items-center">
         <div class="space-y-8 text-left">
-            <span class="inline-block bg-pink-500/10 border border-pink-500/20 text-pink-500 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full">
-                Solution SaaS Événementielle
-            </span>
-            <h1 class="text-5xl md:text-7xl font-black tracking-tight uppercase italic leading-tight">
-                Brisez la glace <br><span class="text-accent-gradient">en un flash.</span>
-            </h1>
-            <p class="text-gray-400 text-lg max-w-xl font-light leading-relaxed">
-                Le principe est simple : <strong>récupérez votre badge numéroté à l'entrée</strong>, connectez-vous à l'interface sans téléchargement et commencez à "flasher" les profils qui vous intéressent dans la salle.
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight uppercase italic leading-tight">Brisez la glace <br><span class="text-accent-gradient">en un flash.</span></h1>
+            <p class="text-gray-400 text-lg max-w-xl font-light">
+                Le principe est simple : <strong>récupérez votre badge numéroté à l'entrée</strong>, scannez le QR code et flashez les profils qui vous intéressent dans la salle.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="#pricing" class="btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider text-center">
-                    Lancer mon événement
-                </a>
-                <a href="#features" class="glass hover:bg-white/5 transition-colors px-8 py-4 rounded-2xl font-bold text-lg text-center">
-                    Le concept ⚡
-                </a>
+            <div class="flex gap-4">
+                <a href="#pricing" class="btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider">Lancer mon événement</a>
             </div>
         </div>
 
-        <div class="flex justify-center relative">
-            <div class="phone-frame glass border-white/20">
+        <div class="flex justify-center">
+            <div class="phone-frame glass">
                 <div id="step-1" class="app-screen active justify-center space-y-6">
                     <h2 class="text-2xl font-black italic text-center">CLUB<span class="text-pink-500">MATCH</span></h2>
-                    <div class="space-y-4 text-center">
-                        <div class="bg-pink-500/10 border border-pink-500/30 p-3 rounded-lg">
-                           <p class="text-[10px] text-pink-500 font-bold uppercase tracking-widest mb-1">Étape 1</p>
-                           <p class="text-[11px] text-white">Scanne le QR Code & entre ton numéro</p>
-                        </div>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Saisis le numéro de ton badge</p>
-                        <div class="w-full bg-white/10 rounded-xl py-4 text-3xl font-bold text-pink-500" id="anim-badge-self">--</div>
+                    <div class="bg-pink-500/10 border border-pink-500/30 p-4 rounded-xl text-center">
+                        <p class="text-[10px] uppercase font-bold text-pink-500 mb-2">Connexion</p>
+                        <p class="text-xs">Entre ton numéro de badge</p>
+                        <div class="mt-4 text-3xl font-black text-pink-500" id="anim-badge-self">--</div>
                     </div>
-                    <button class="w-full bg-pink-600 py-3 rounded-xl font-bold uppercase text-xs">Se connecter</button>
                 </div>
                 <div id="step-2" class="app-screen justify-center space-y-6">
-                    <div class="flex justify-between items-center opacity-50 text-[8px] font-bold uppercase"><span>Badge #42 (Moi)</span><span>⚙️</span></div>
-                    <div class="flex-1 flex flex-col justify-center space-y-4">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase text-center">Qui as-tu remarqué ?</p>
-                        <div class="w-full bg-white/5 border border-white/10 rounded-2xl py-6 text-5xl font-black text-center" id="anim-target">--</div>
-                        <button class="w-full btn-main py-4 rounded-xl font-black uppercase text-sm">Flasher</button>
+                    <div class="text-center space-y-4">
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Qui as-tu remarqué ?</p>
+                        <div class="bg-white/5 border border-white/10 py-6 text-5xl font-black rounded-2xl" id="anim-target">--</div>
+                        <button class="w-full btn-main py-4 rounded-xl font-bold uppercase text-sm">Flasher</button>
                     </div>
                 </div>
                 <div id="step-3" class="app-screen items-center justify-center bg-pink-600/20">
-                    <div class="match-glow p-8 bg-pink-600 rounded-full mb-6">🔥</div>
-                    <h2 class="text-4xl font-black italic text-white uppercase mb-2">MATCH !</h2>
+                    <div class="match-glow p-8 bg-pink-600 rounded-full mb-6 text-3xl">🔥</div>
+                    <h2 class="text-4xl font-black italic uppercase">MATCH !</h2>
                 </div>
-                <div id="step-4" class="app-screen space-y-4">
-                    <div class="flex items-center space-x-2 border-b border-white/10 pb-2"><span class="font-bold italic">Chat avec #88</span></div>
-                    <div class="flex-1 flex flex-col space-y-2 text-[10px]">
-                        <div class="bg-white/10 self-start p-2 rounded-lg">Salut ! On se capte au bar ?</div>
-                        <div class="bg-pink-600 self-end p-2 rounded-lg">Carrément ! J'ai une chemise bleue.</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="features" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
-        <div class="text-center space-y-4">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Comment ça <span class="text-pink-500">marche ?</span></h2>
-            <p class="text-gray-400 max-w-2xl mx-auto">Trois étapes simples pour transformer votre événement.</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="glass p-8 rounded-3xl space-y-4">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">🏷️</div>
-                <h3 class="text-xl font-bold uppercase italic">1. Scan & Connexion</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Scannez le QR code de l'application à l'entrée et <strong>entrez votre numéro de badge</strong> pour activer votre profil.</p>
-            </div>
-            <div class="glass p-8 rounded-3xl space-y-4">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
-                <h3 class="text-xl font-bold uppercase italic">2. Flash Numérique</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Saisissez le numéro de badge d'une personne qui vous plaît. C'est anonyme.</p>
-            </div>
-            <div class="glass p-8 rounded-3xl space-y-4">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">💬</div>
-                <h3 class="text-xl font-bold uppercase italic">3. Match & Chat</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Si l'intérêt est réciproque, le chat s'ouvre pour vous retrouver immédiatement.</p>
             </div>
         </div>
     </section>
 
     <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
         <div class="text-center space-y-4">
-            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Tarifs <span class="text-pink-500">Licences</span></h2>
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic">Nos <span class="text-pink-500">Licences</span></h2>
+            <p class="text-gray-400">Choisissez la durée adaptée à votre événement.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div class="glass p-8 rounded-[2.5rem] space-y-8 border-white/10">
-                <div class="space-y-4">
-                    <h3 class="text-2xl font-black uppercase italic">Pack Événement</h3>
-                    <p class="text-gray-400 text-sm font-light leading-relaxed">Accès complet à la Web-App pour votre soirée.</p>
-                    <div class="pt-4"><span class="text-5xl font-black">99€</span><span class="text-gray-500 text-sm"> /événement</span></div>
-                    <ul class="text-xs text-gray-400 space-y-3 pt-4">
-                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App personnalisé (valide 48h)</span></li>
-                        <li class="flex items-start gap-2"><span>✔</span> <span>Accès Admin & Statistiques</span></li>
-                        <li class="bg-white/5 p-3 rounded-lg border border-dashed border-white/20 mt-4">
-                            <p class="text-pink-500 font-bold mb-1">Option Pack Physique (+50€) :</p>
-                            <p>50 badges numérotés + 5 affiches QR Code. <br>
-                            <span class="italic text-[10px]">Prévoir 72h de délai pour l'envoi postal.</span></p>
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div class="glass p-8 rounded-[2.5rem] border-white/10 space-y-8">
+                <div>
+                    <h3 class="text-2xl font-black uppercase italic">Licence 48h</h3>
+                    <p class="text-gray-400 text-sm">Parfait pour une soirée unique.</p>
+                    <div class="mt-4 text-5xl font-black">99€</div>
+                    <ul class="mt-6 text-xs text-gray-400 space-y-3">
+                        <li>✔ Lien Web-App valide 48h</li>
+                        <li>✔ Accès Console Admin & Stats</li>
+                        <li class="bg-white/5 p-3 rounded-lg border border-dashed border-white/20">
+                            <span class="text-pink-500 font-bold">Option Pack Physique (+50€) :</span><br>
+                            50 badges + 5 affiches QR Code (envoi 72h).
                         </li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('single', 99)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all">Configurer ma commande</button>
+                <button onclick="openOrderModal('48h', 99)" class="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-bold transition-all uppercase text-sm">Configurer 48h</button>
             </div>
 
-            <div class="glass-premium p-8 rounded-[2.5rem] space-y-8 border-pink-500/30">
-                <div class="space-y-4 text-white">
-                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Mensuel Illimité</h3>
-                    <p class="text-gray-400 text-sm font-light text-white/60">Pour les clubs ou organisateurs récurrents.</p>
-                    <div class="pt-4"><span class="text-5xl font-black">299€</span><span class="text-gray-500 text-sm"> /mois</span></div>
-                    <ul class="text-xs text-gray-300 space-y-4 pt-4">
-                        <li class="flex items-start gap-2"><span>✔</span> <span><strong>Événement renouvelable à volonté</strong> pendant toute la durée de l'abonnement.</span></li>
-                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App & QR Code d'accès fournis.</span></li>
-                        <li class="flex items-start gap-2 text-pink-400 italic"><span>⚠</span> <span>À votre charge : création et impression de vos badges et affiches événementielles.</span></li>
-                        <li class="flex items-start gap-2"><span>✔</span> <span>Support prioritaire 24/7</span></li>
+            <div class="glass-premium p-8 rounded-[2.5rem] border-pink-500/30 space-y-8">
+                <div>
+                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Licence 30 Jours</h3>
+                    <p class="text-gray-400 text-sm">Pour les lieux permanents ou festivals.</p>
+                    <div class="mt-4 text-5xl font-black text-white">299€</div>
+                    <ul class="mt-6 text-xs text-gray-200 space-y-3">
+                        <li>✔ Lien Web-App valide 30 jours</li>
+                        <li>✔ Accès Console Admin & Stats</li>
+                        <li class="text-pink-400 italic">⚠ Supports physiques (badges/affiches) à votre charge.</li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('sub', 299)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">S'abonner maintenant</button>
+                <button onclick="openOrderModal('30j', 299)" class="w-full btn-main py-4 rounded-2xl font-bold shadow-xl shadow-pink-600/20 uppercase text-sm">Configurer 30 jours</button>
             </div>
         </div>
     </section>
 
-    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5 space-y-2">
-        <p>© 2026 Club Match Pro. Facilitateur de rencontres réelles.</p>
-        <p>Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500 hover:underline">admclient@yahoo.fr</a></p>
+    <footer class="w-full text-center py-12 text-xs text-gray-600 border-t border-white/5">
+        <p>© 2026 Club Match Pro | Contact : admclient@yahoo.fr</p>
     </footer>
 
     <script>
-        // --- ANIMATION SMARTPHONE ---
-        const screens = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3'), document.getElementById('step-4')];
+        // Animation Smartphone
+        const screens = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3')];
         const badgeSelf = document.getElementById('anim-badge-self');
         const targetBadge = document.getElementById('anim-target');
         let currentIdx = 0;
 
         function runSimulation() {
-            if(!screens[0]) return;
             screens.forEach(s => s.classList.remove('active'));
             screens[currentIdx].classList.add('active');
             if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
             if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
             currentIdx = (currentIdx + 1) % screens.length;
-            setTimeout(runSimulation, currentIdx === 0 ? 4500 : 3000);
+            setTimeout(runSimulation, 4000);
         }
         window.onload = runSimulation;
 
-        // --- GESTION DES COMMANDES ---
+        // Modal Logic
+        const modal = document.getElementById('orderModal');
+        const modalTitle = document.getElementById('modalPlanTitle');
+        const priceDisplay = document.getElementById('totalPriceDisplay');
+        const physicalWrapper = document.getElementById('optionPhysicalWrapper');
+        const physicalCheckbox = document.getElementById('physicalOption');
+        let currentBasePrice = 0;
+        let currentPlan = "";
+
         function openOrderModal(plan, price) {
-            if(plan === 'single') {
-                const activationDate = prompt("Pour quel jour souhaitez-vous activer votre lien ? (JJ/MM/AAAA)");
-                if(!activationDate) return;
-                const wantsPhysical = confirm("Souhaitez-vous ajouter l'Option Pack Physique (+50€) ?\n(Inclut 50 badges et 5 affiches. Nécessite 72h pour l'envoi postal)");
-                let total = price;
-                if(wantsPhysical) total += 50;
-                alert("RÉCAPITULATIF DE COMMANDE :\nDate d'activation : " + activationDate + "\nTotal : " + total + "€\n\nConfirmation envoyée à l'administration.");
+            currentPlan = plan;
+            currentBasePrice = price;
+            modalTitle.innerText = "Configuration de votre Licence " + plan;
+            
+            if(plan === '30j') {
+                physicalWrapper.style.opacity = '0.3';
+                physicalWrapper.style.pointerEvents = 'none';
+                physicalCheckbox.checked = false;
             } else {
-                alert("SOUSCRIPTION MENSUELLE :\n- Événements illimités (un seul à la fois)\n- QR Code fourni immédiatement\n- Supports physiques (badges/affiches) à votre charge.\n\nTotal : " + price + "€/mois.");
+                physicalWrapper.style.opacity = '1';
+                physicalWrapper.style.pointerEvents = 'auto';
             }
+            
+            updateTotal();
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateTotal() {
+            let total = currentBasePrice;
+            if(physicalCheckbox.checked && currentPlan === '48h') total += 50;
+            priceDisplay.innerText = total + "€";
+        }
+
+        physicalCheckbox.addEventListener('change', updateTotal);
+
+        document.getElementById('orderForm').onsubmit = function(e) {
+            e.preventDefault();
+            const email = document.getElementById('custEmail').value;
+            alert(
+                "COMMANDE RÉCEPTIONNÉE !\n\n" +
+                "Un lien de paiement sécurisé va être envoyé à : " + email + "\n\n" +
+                "Dès confirmation du paiement, vous recevrez par mail :\n" +
+                "- Votre Facture\n" +
+                "- La Notice Administrateur\n" +
+                "- Le QR Code officiel de l'événement"
+            );
+            closeModal();
+        };
+
+        window.onclick = function(e) { if (e.target == modal) closeModal(); }
     </script>
 </body>
 </html>
