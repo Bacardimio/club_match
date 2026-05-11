@@ -3,174 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Match Pro - SaaS Networking</title>
+    <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --accent: #ff0055; }
-        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
         .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255, 0, 85, 0.2); }
         .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
-        .hero-gradient { background: radial-gradient(circle at 50% 50%, rgba(255, 0, 85, 0.1) 0%, transparent 50%); }
+        .text-gradient { background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .phone-frame { width: 280px; height: 500px; border: 8px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 50px rgba(255,0,85,0.1); }
+        .app-screen { position: absolute; inset: 0; padding: 20px; display: none; flex-direction: column; animation: slideUp 0.5s ease-out forwards; }
+        .app-screen.active { display: flex; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .match-glow { animation: pulseGlow 1.5s infinite; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
     </style>
 </head>
 <body class="bg-[#0a0a0a] text-white antialiased">
-    
-    <!-- HEADER -->
+
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-50">
-        <span class="text-2xl font-black tracking-tighter italic uppercase">
-            CLUB<span class="text-pink-600">MATCH</span> 
-            <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400 ml-2">PRO</span>
-        </span>
-        <nav class="hidden md:flex space-x-8 text-sm font-bold uppercase tracking-widest text-gray-400">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
+        </div>
+        <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-400">
             <a href="#features" class="hover:text-white transition-colors">Concept</a>
             <a href="#pricing" class="hover:text-white transition-colors">Tarifs</a>
         </nav>
-        <a href="#pricing" class="btn-main px-6 py-2.5 rounded-xl font-bold text-sm tracking-wide">Lancer mon event</a>
+        <div>
+            <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Commander</a>
+        </div>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="relative max-w-7xl mx-auto px-6 pt-20 pb-32 text-center space-y-8 hero-gradient">
-        <div class="inline-block px-4 py-1.5 rounded-full glass border-pink-500/20 text-pink-500 text-xs font-black uppercase tracking-[0.2em] mb-4">
-            Networking de nouvelle génération
-        </div>
-        <h1 class="text-6xl md:text-8xl font-black tracking-tight uppercase italic max-w-5xl mx-auto leading-[0.9]">
-            Connectez vos <br><span class="text-pink-600">invités</span> simplement
-        </h1>
-        <p class="text-gray-400 text-xl max-w-2xl mx-auto font-medium">
-            Pas d'application à télécharger. Un numéro de badge, un flash, un match. Idéal pour galas, soirées d'entreprise et networking.
-        </p>
+    <section class="relative max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-12 items-center overflow-hidden">
+        <div class="absolute top-0 left-1/4 w-[500px] height-[500px] bg-pink-600/10 blur-[120px] rounded-full -z-10"></div>
         
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
-            <a href="/app.html?event=default" class="w-full sm:w-auto glass hover:bg-white/5 transition-all px-10 py-5 rounded-2xl font-bold text-lg text-center border-white/10">
-                Tester la Démo
-            </a>
-            <a href="#pricing" class="w-full sm:w-auto btn-main px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider text-center shadow-lg shadow-pink-500/20">
-                Acheter une Licence
-            </a>
+        <div class="space-y-8 text-left">
+            <span class="inline-block bg-pink-500/10 border border-pink-500/20 text-pink-500 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full">
+                Solution SaaS Événementielle
+            </span>
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight uppercase italic leading-tight">
+                Brisez la glace <br><span class="text-accent-gradient">en un flash.</span>
+            </h1>
+            <p class="text-gray-400 text-lg max-w-xl font-light leading-relaxed">
+                Le principe est simple : <strong>récupérez votre badge numéroté à l'entrée</strong>, connectez-vous à l'interface sans téléchargement et commencez à "flasher" les profils qui vous intéressent dans la salle.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="#pricing" class="btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider text-center">
+                    Lancer mon événement
+                </a>
+                <a href="#features" class="glass hover:bg-white/5 transition-colors px-8 py-4 rounded-2xl font-bold text-lg text-center">
+                    Le concept ⚡
+                </a>
+            </div>
         </div>
 
-        <!-- VISUEL APP MOCKUP -->
-        <div class="mt-20 relative max-w-4xl mx-auto">
-            <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-orange-600 rounded-[3rem] blur opacity-20"></div>
-            <div class="glass rounded-[3rem] p-4 relative border-white/10">
-                <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=2000" alt="Networking Event" class="rounded-[2.5rem] w-full opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="glass p-6 rounded-2xl border-pink-500/50 animate-pulse">
-                        <span class="text-pink-500 font-black italic text-2xl uppercase">Interface Mobile Intuitive</span>
+        <div class="flex justify-center relative">
+            <div class="phone-frame glass border-white/20">
+                <div id="step-1" class="app-screen active justify-center space-y-6">
+                    <h2 class="text-2xl font-black italic text-center">CLUB<span class="text-pink-500">MATCH</span></h2>
+                    <div class="space-y-4 text-center">
+                        <div class="bg-pink-500/10 border border-pink-500/30 p-3 rounded-lg">
+                           <p class="text-[10px] text-pink-500 font-bold uppercase tracking-widest mb-1">Étape 1</p>
+                           <p class="text-[11px] text-white">Récupère ton badge à l'accueil</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Saisis le numéro reçu</p>
+                        <div class="w-full bg-white/10 rounded-xl py-4 text-3xl font-bold text-pink-500" id="anim-badge-self">--</div>
                     </div>
+                    <button class="w-full bg-pink-600 py-3 rounded-xl font-bold uppercase text-xs">Se connecter</button>
+                </div>
+
+                <div id="step-2" class="app-screen justify-center space-y-6">
+                    <div class="flex justify-between items-center opacity-50">
+                        <span class="text-[8px] font-bold uppercase">Badge #42 (Moi)</span>
+                        <span class="text-[14px]">⚙️</span>
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center space-y-4">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase text-center">Qui as-tu remarqué ?</p>
+                        <p class="text-[8px] text-center text-gray-500 -mt-2">Saisis le numéro du badge de l'autre personne</p>
+                        <div class="w-full bg-white/5 border border-white/10 rounded-2xl py-6 text-5xl font-black text-center" id="anim-target">--</div>
+                        <button class="w-full btn-main py-4 rounded-xl font-black uppercase text-sm" id="btn-anim-flash">Flasher</button>
+                    </div>
+                </div>
+
+                <div id="step-3" class="app-screen items-center justify-center bg-pink-600/20">
+                    <div class="match-glow p-8 bg-pink-600 rounded-full mb-6">🔥</div>
+                    <h2 class="text-4xl font-black italic text-white uppercase mb-2">MATCH !</h2>
+                    <p class="text-xs text-center text-gray-300">Le badge #88 a aussi flashé votre numéro !</p>
+                </div>
+
+                <div id="step-4" class="app-screen space-y-4">
+                    <div class="flex items-center space-x-2 border-b border-white/10 pb-2">
+                        <span class="text-pink-500 text-lg">←</span>
+                        <span class="font-bold italic">Chat avec #88</span>
+                    </div>
+                    <div class="flex-1 flex flex-col space-y-2">
+                        <div class="bg-white/10 self-start p-2 rounded-lg text-[10px] max-w-[80%]">Salut ! On se capte au bar ?</div>
+                        <div class="bg-pink-600 self-end p-2 rounded-lg text-[10px] max-w-[80%]">Carrément ! J'ai une chemise bleue.</div>
+                    </div>
+                    <div class="bg-white/5 p-2 rounded-lg text-[10px] text-gray-500 italic text-center">Boucle de démonstration...</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- PRICING SECTION -->
-    <section id="pricing" class="max-w-5xl mx-auto px-6 py-24 relative">
-        <div class="text-center mb-16 space-y-4">
-            <h2 class="text-4xl font-black uppercase italic">Choisis ta <span class="text-pink-600">licence</span></h2>
-            <p class="text-gray-500 uppercase text-xs font-bold tracking-widest">Activation instantanée après paiement</p>
+    <section id="features" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
+        <div class="text-center space-y-4">
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Comment ça <span class="text-pink-500">marche ?</span></h2>
+            <p class="text-gray-400 max-w-2xl mx-auto">Trois étapes simples pour transformer votre événement en un hub de connexions.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8">
-            <!-- SINGLE EVENT -->
-            <div class="glass p-10 rounded-[3rem] border-white/10 space-y-8 flex flex-col justify-between hover:border-white/20 transition-all">
-                <div class="space-y-4">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-3xl font-black uppercase italic">Single</h3>
-                        <span class="bg-white/5 px-3 py-1 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">Un soir</span>
-                    </div>
-                    <p class="text-5xl font-black">49€<span class="text-gray-500 text-sm font-bold lowercase">/event</span></p>
-                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Accès complet Web App</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Jusqu'à 500 invités</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Messagerie en temps réel</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Dashboard Admin</li>
-                    </ul>
-                </div>
-                <button onclick="openPurchaseModal('Single', 49)" class="w-full py-5 bg-white/10 hover:bg-white/20 rounded-2xl font-bold uppercase transition-all tracking-widest text-sm">Commander</button>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏷️</div>
+                <h3 class="text-xl font-bold uppercase italic">1. Badge physique</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Chaque invité reçoit à son arrivée un badge avec un <strong>numéro unique</strong>. C'est votre identifiant pour toute la soirée.</p>
             </div>
-
-            <!-- AGENCY PRO -->
-            <div class="glass p-10 rounded-[3rem] border-pink-500/30 bg-pink-500/5 space-y-8 flex flex-col justify-between relative overflow-hidden group">
-                <div class="absolute top-0 right-0 bg-pink-600 text-[10px] font-black px-6 py-2 rotate-45 translate-x-6 translate-y-2 uppercase">Populaire</div>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-3xl font-black uppercase italic text-pink-500">Agency</h3>
-                        <span class="bg-pink-500/20 px-3 py-1 rounded-full text-[10px] font-bold text-pink-400 uppercase tracking-widest">Annuel</span>
-                    </div>
-                    <p class="text-5xl font-black">199€<span class="text-gray-500 text-sm font-bold lowercase">/an</span></p>
-                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Événements illimités</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Support prioritaire 24/7</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Personnalisation du nom (Slug)</li>
-                        <li class="flex items-center"><span class="text-pink-500 mr-2">✓</span> Export des données CSV</li>
-                    </ul>
-                </div>
-                <button onclick="openPurchaseModal('Agency', 199)" class="w-full btn-main py-5 rounded-2xl font-black uppercase transition-all tracking-widest text-sm shadow-lg shadow-pink-600/20">Devenir Pro</button>
+            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⚡</div>
+                <h3 class="text-xl font-bold uppercase italic">2. Flash Numérique</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Un profil vous plaît ? Saisissez son numéro de badge dans la Web-App. C'est totalement anonyme et sécurisé.</p>
+            </div>
+            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💬</div>
+                <h3 class="text-xl font-bold uppercase italic">3. Match & Chat</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Si l'intérêt est réciproque : Match ! Le chat s'ouvre pour vous permettre de vous retrouver immédiatement IRL.</p>
             </div>
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="w-full text-center py-20 border-t border-white/5 space-y-4">
-        <span class="text-xl font-black italic uppercase">CLUB<span class="text-pink-600">MATCH</span></span>
-        <p class="text-gray-600 text-xs font-bold uppercase tracking-widest">© 2026 Tous droits réservés. Propulsé par Google Firebase & Vercel.</p>
+    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
+        <div class="text-center space-y-4">
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Tarifs <span class="text-pink-500">Licences</span></h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div class="glass p-8 rounded-[2.5rem] space-y-8 border-white/10">
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-black uppercase italic">Pack Événement</h3>
+                    <p class="text-gray-400 text-sm font-light leading-relaxed">Solution clé en main pour une soirée ou un séminaire unique.</p>
+                    <div class="pt-4"><span class="text-5xl font-black">99€</span><span class="text-gray-500 text-sm"> /événement</span></div>
+                    <ul class="text-xs text-gray-400 space-y-3 pt-4">
+                        <li>✔ 50 Badges physiques inclus</li>
+                        <li>✔ 5 Affiches QR Code personnalisées</li>
+                        <li>✔ Accès Admin (Statistiques)</li>
+                    </ul>
+                </div>
+                <button onclick="openOrderModal('single', 99)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all">Choisir</button>
+            </div>
+
+            <div class="glass-premium p-8 rounded-[2.5rem] space-y-8 border-pink-500/30">
+                <div class="space-y-4 text-white">
+                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Mensuel Illimité</h3>
+                    <p class="text-gray-400 text-sm font-light">Pour les clubs ou organisateurs récurrents.</p>
+                    <div class="pt-4"><span class="text-5xl font-black">299€</span><span class="text-gray-500 text-sm"> /mois</span></div>
+                    <ul class="text-xs text-gray-300 space-y-3 pt-4">
+                        <li>✔ Événements illimités</li>
+                        <li>✔ Jusqu'à 100 participants simultanés</li>
+                        <li>✔ Support prioritaire 24/7</li>
+                    </ul>
+                </div>
+                <button onclick="openOrderModal('sub', 299)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">Prendre l'abonnement</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5">
+        <p>© 2026 Club Match Pro. Facilitateur de rencontres réelles. Hébergé sur Vercel.</p>
     </footer>
 
-    <!-- MODAL COMMANDE -->
-    <div id="purchase-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-        <div class="glass max-w-md w-full p-10 rounded-[3rem] space-y-8 relative border-white/20 animate-pop">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white text-xl">✕</button>
-            
-            <div class="text-center space-y-2">
-                <h3 class="text-2xl font-black uppercase italic">Finaliser l'activation</h3>
-                <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Plan sélectionné : <span id="selected-plan" class="text-pink-500">...</span></p>
-            </div>
-
-            <form onsubmit="processOrder(event)" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Identifiant de l'événement</label>
-                    <input type="text" id="event-slug" required placeholder="ex: gala-paris-2026" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-pink-500 transition-colors text-white font-bold">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-2">Email de facturation</label>
-                    <input type="email" required placeholder="votre@email.com" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-pink-500 transition-colors text-white font-bold">
-                </div>
-                
-                <div class="p-6 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5">
-                    <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Total à payer:</span>
-                    <span id="price-display" class="text-3xl font-black text-pink-500">0€</span>
-                </div>
-
-                <button type="submit" class="w-full btn-main py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-pink-600/10">Payer et Créer l'App</button>
-            </form>
-            
-            <p class="text-[10px] text-center text-gray-600 uppercase font-bold tracking-tighter">Paiement sécurisé par Stripe. Activation immédiate.</p>
-        </div>
-    </div>
-
     <script>
-        function openPurchaseModal(plan, price) {
-            document.getElementById('selected-plan').innerText = plan;
-            document.getElementById('price-display').innerText = price + '€';
-            document.getElementById('purchase-modal').classList.remove('hidden');
+        const screens = [
+            document.getElementById('step-1'),
+            document.getElementById('step-2'),
+            document.getElementById('step-3'),
+            document.getElementById('step-4')
+        ];
+        
+        const badgeSelf = document.getElementById('anim-badge-self');
+        const targetBadge = document.getElementById('anim-target');
+        let currentIdx = 0;
+
+        function runSimulation() {
+            screens.forEach(s => s.classList.remove('active'));
+            screens[currentIdx].classList.add('active');
+
+            if(currentIdx === 0) {
+                badgeSelf.innerText = "--";
+                setTimeout(() => badgeSelf.innerText = "42", 1000);
+            }
+            
+            if(currentIdx === 1) {
+                targetBadge.innerText = "--";
+                setTimeout(() => targetBadge.innerText = "88", 1000);
+            }
+
+            currentIdx = (currentIdx + 1) % screens.length;
+            
+            let delay = 3500;
+            if(currentIdx === 3) delay = 2000; 
+            if(currentIdx === 0) delay = 4500; 
+            
+            setTimeout(runSimulation, delay);
         }
 
-        function closeModal() {
-            document.getElementById('purchase-modal').classList.add('hidden');
-        }
+        window.onload = runSimulation;
 
-        function processOrder(e) {
-            e.preventDefault();
-            const slug = document.getElementById('event-slug').value.trim().toLowerCase().replace(/\s+/g, '-');
-            
-            if(!slug) return;
-
-            // Simulation de paiement et redirection vers l'app avec l'ID personnalisé
-            alert("Paiement réussi ! Votre événement '" + slug + "' est en cours de création...");
-            
-            // Redirection vers votre fichier app.html avec le paramètre de l'événement
-            window.location.href = `/app.html?event=${slug}`;
+        function openOrderModal(plan, price) {
+            alert('Simulation de commande pour le plan ' + plan + ' (' + price + '€)');
         }
     </script>
 </body>
