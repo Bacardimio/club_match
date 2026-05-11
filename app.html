@@ -15,7 +15,6 @@
         .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
         @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
         
-        /* Style pour l'overlay du Match */
         #match-announcement {
             position: fixed;
             inset: 0;
@@ -65,6 +64,11 @@
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
             <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
             <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
+        </div>
+        
+        <div class="space-y-2 opacity-50">
+            <a href="https://clubmatch-lake.vercel.app/" target="_blank" class="text-[10px] uppercase font-bold tracking-[0.2em] hover:text-pink-500 transition-colors">Découvrir le concept</a>
+            <p class="text-[10px] font-bold mt-2">CONTACT : <a href="mailto:admclient@yahoo.fr" class="underline hover:text-pink-500 transition-colors">admclient@yahoo.fr</a></p>
         </div>
     </div>
 
@@ -118,6 +122,15 @@
             </div>
             <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
         </div>
+
+        <footer class="text-center space-y-4 pb-10 opacity-30 pt-6">
+            <div class="h-px w-12 bg-white/20 mx-auto"></div>
+            <div class="space-y-1">
+                <p class="text-[9px] font-black uppercase tracking-[0.3em] text-pink-500">Club Match Pro</p>
+                <a href="mailto:admclient@yahoo.fr" class="block text-[10px] font-bold hover:text-white transition-colors underline underline-offset-4 decoration-pink-500">admclient@yahoo.fr</a>
+                <a href="https://clubmatch-lake.vercel.app/" target="_blank" class="block text-[9px] font-bold uppercase tracking-widest hover:text-pink-500 transition-colors mt-2">Visiter le site web</a>
+            </div>
+        </footer>
     </div>
 
     <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
@@ -198,14 +211,11 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // --- LOGIQUE ANIMATION FEUX D'ARTIFICE ---
         function launchFireworks(targetBadge) {
-            // Afficher l'overlay
             const overlay = document.getElementById('match-announcement');
             document.getElementById('match-number-display').innerText = "#" + targetBadge;
             overlay.style.display = 'flex';
 
-            // Paramètres confetti
             const duration = 5 * 1000;
             const animationEnd = Date.now() + duration;
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
@@ -221,7 +231,6 @@
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
             }, 250);
 
-            // Fermer l'overlay au clic
             overlay.onclick = () => {
                 overlay.style.display = 'none';
                 clearInterval(interval);
@@ -285,7 +294,7 @@
             const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
             
             if(check.exists()) {
-                launchFireworks(target); // DÉCLENCHE L'ANIMATION
+                launchFireworks(target);
             }
             targetInput.value = "";
         };

@@ -12,7 +12,6 @@
         .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255, 0, 85, 0.2); }
         .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
-        .text-gradient { background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
         .phone-frame { width: 280px; height: 500px; border: 8px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 50px rgba(255,0,85,0.1); }
@@ -70,43 +69,31 @@
                     <div class="space-y-4 text-center">
                         <div class="bg-pink-500/10 border border-pink-500/30 p-3 rounded-lg">
                            <p class="text-[10px] text-pink-500 font-bold uppercase tracking-widest mb-1">Étape 1</p>
-                           <p class="text-[11px] text-white">Récupère ton badge à l'accueil</p>
+                           <p class="text-[11px] text-white">Scanne le QR Code & entre ton numéro</p>
                         </div>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Saisis le numéro reçu</p>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Saisis le numéro de ton badge</p>
                         <div class="w-full bg-white/10 rounded-xl py-4 text-3xl font-bold text-pink-500" id="anim-badge-self">--</div>
                     </div>
                     <button class="w-full bg-pink-600 py-3 rounded-xl font-bold uppercase text-xs">Se connecter</button>
                 </div>
-
                 <div id="step-2" class="app-screen justify-center space-y-6">
-                    <div class="flex justify-between items-center opacity-50">
-                        <span class="text-[8px] font-bold uppercase">Badge #42 (Moi)</span>
-                        <span class="text-[14px]">⚙️</span>
-                    </div>
+                    <div class="flex justify-between items-center opacity-50 text-[8px] font-bold uppercase"><span>Badge #42 (Moi)</span><span>⚙️</span></div>
                     <div class="flex-1 flex flex-col justify-center space-y-4">
                         <p class="text-[10px] text-gray-400 font-bold uppercase text-center">Qui as-tu remarqué ?</p>
-                        <p class="text-[8px] text-center text-gray-500 -mt-2">Saisis le numéro du badge de l'autre personne</p>
                         <div class="w-full bg-white/5 border border-white/10 rounded-2xl py-6 text-5xl font-black text-center" id="anim-target">--</div>
-                        <button class="w-full btn-main py-4 rounded-xl font-black uppercase text-sm" id="btn-anim-flash">Flasher</button>
+                        <button class="w-full btn-main py-4 rounded-xl font-black uppercase text-sm">Flasher</button>
                     </div>
                 </div>
-
                 <div id="step-3" class="app-screen items-center justify-center bg-pink-600/20">
                     <div class="match-glow p-8 bg-pink-600 rounded-full mb-6">🔥</div>
                     <h2 class="text-4xl font-black italic text-white uppercase mb-2">MATCH !</h2>
-                    <p class="text-xs text-center text-gray-300">Le badge #88 a aussi flashé votre numéro !</p>
                 </div>
-
                 <div id="step-4" class="app-screen space-y-4">
-                    <div class="flex items-center space-x-2 border-b border-white/10 pb-2">
-                        <span class="text-pink-500 text-lg">←</span>
-                        <span class="font-bold italic">Chat avec #88</span>
+                    <div class="flex items-center space-x-2 border-b border-white/10 pb-2"><span class="font-bold italic">Chat avec #88</span></div>
+                    <div class="flex-1 flex flex-col space-y-2 text-[10px]">
+                        <div class="bg-white/10 self-start p-2 rounded-lg">Salut ! On se capte au bar ?</div>
+                        <div class="bg-pink-600 self-end p-2 rounded-lg">Carrément ! J'ai une chemise bleue.</div>
                     </div>
-                    <div class="flex-1 flex flex-col space-y-2">
-                        <div class="bg-white/10 self-start p-2 rounded-lg text-[10px] max-w-[80%]">Salut ! On se capte au bar ?</div>
-                        <div class="bg-pink-600 self-end p-2 rounded-lg text-[10px] max-w-[80%]">Carrément ! J'ai une chemise bleue.</div>
-                    </div>
-                    <div class="bg-white/5 p-2 rounded-lg text-[10px] text-gray-500 italic text-center">Boucle de démonstration...</div>
                 </div>
             </div>
         </div>
@@ -115,24 +102,23 @@
     <section id="features" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
         <div class="text-center space-y-4">
             <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Comment ça <span class="text-pink-500">marche ?</span></h2>
-            <p class="text-gray-400 max-w-2xl mx-auto">Trois étapes simples pour transformer votre événement en un hub de connexions.</p>
+            <p class="text-gray-400 max-w-2xl mx-auto">Trois étapes simples pour transformer votre événement.</p>
         </div>
-
         <div class="grid md:grid-cols-3 gap-8">
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏷️</div>
-                <h3 class="text-xl font-bold uppercase italic">1. Badge physique</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Chaque invité reçoit à son arrivée un badge avec un <strong>numéro unique</strong>. C'est votre identifiant pour toute la soirée.</p>
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">🏷️</div>
+                <h3 class="text-xl font-bold uppercase italic">1. Scan & Connexion</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Scannez le QR code de l'application à l'entrée et <strong>entrez votre numéro de badge</strong> pour activer votre profil.</p>
             </div>
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⚡</div>
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
                 <h3 class="text-xl font-bold uppercase italic">2. Flash Numérique</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Un profil vous plaît ? Saisissez son numéro de badge dans la Web-App. C'est totalement anonyme et sécurisé.</p>
+                <p class="text-gray-400 text-sm leading-relaxed">Saisissez le numéro de badge d'une personne qui vous plaît. C'est anonyme.</p>
             </div>
-            <div class="glass p-8 rounded-3xl space-y-4 hover:border-pink-500/30 transition-all group">
-                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💬</div>
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">💬</div>
                 <h3 class="text-xl font-bold uppercase italic">3. Match & Chat</h3>
-                <p class="text-gray-400 text-sm leading-relaxed">Si l'intérêt est réciproque : Match ! Le chat s'ouvre pour vous permettre de vous retrouver immédiatement IRL.</p>
+                <p class="text-gray-400 text-sm leading-relaxed">Si l'intérêt est réciproque, le chat s'ouvre pour vous retrouver immédiatement.</p>
             </div>
         </div>
     </section>
@@ -146,76 +132,73 @@
             <div class="glass p-8 rounded-[2.5rem] space-y-8 border-white/10">
                 <div class="space-y-4">
                     <h3 class="text-2xl font-black uppercase italic">Pack Événement</h3>
-                    <p class="text-gray-400 text-sm font-light leading-relaxed">Solution clé en main pour une soirée ou un séminaire unique.</p>
+                    <p class="text-gray-400 text-sm font-light leading-relaxed">Accès complet à la Web-App pour votre soirée.</p>
                     <div class="pt-4"><span class="text-5xl font-black">99€</span><span class="text-gray-500 text-sm"> /événement</span></div>
                     <ul class="text-xs text-gray-400 space-y-3 pt-4">
-                        <li>✔ 50 Badges physiques inclus</li>
-                        <li>✔ 5 Affiches QR Code personnalisées</li>
-                        <li>✔ Accès Admin (Statistiques)</li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App personnalisé (valide 48h)</span></li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Accès Admin & Statistiques</span></li>
+                        <li class="bg-white/5 p-3 rounded-lg border border-dashed border-white/20 mt-4">
+                            <p class="text-pink-500 font-bold mb-1">Option Pack Physique (+50€) :</p>
+                            <p>50 badges numérotés + 5 affiches QR Code. <br>
+                            <span class="italic text-[10px]">Prévoir 72h de délai pour l'envoi postal.</span></p>
+                        </li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('single', 99)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all">Choisir</button>
+                <button onclick="openOrderModal('single', 99)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all">Configurer ma commande</button>
             </div>
 
             <div class="glass-premium p-8 rounded-[2.5rem] space-y-8 border-pink-500/30">
                 <div class="space-y-4 text-white">
                     <h3 class="text-2xl font-black uppercase italic text-pink-500">Mensuel Illimité</h3>
-                    <p class="text-gray-400 text-sm font-light">Pour les clubs ou organisateurs récurrents.</p>
+                    <p class="text-gray-400 text-sm font-light text-white/60">Pour les clubs ou organisateurs récurrents.</p>
                     <div class="pt-4"><span class="text-5xl font-black">299€</span><span class="text-gray-500 text-sm"> /mois</span></div>
-                    <ul class="text-xs text-gray-300 space-y-3 pt-4">
-                        <li>✔ Événements illimités</li>
-                        <li>✔ Jusqu'à 100 participants simultanés</li>
-                        <li>✔ Support prioritaire 24/7</li>
+                    <ul class="text-xs text-gray-300 space-y-4 pt-4">
+                        <li class="flex items-start gap-2"><span>✔</span> <span><strong>Événement renouvelable à volonté</strong> pendant toute la durée de l'abonnement.</span></li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App & QR Code d'accès fournis.</span></li>
+                        <li class="flex items-start gap-2 text-pink-400 italic"><span>⚠</span> <span>À votre charge : création et impression de vos badges et affiches événementielles.</span></li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Support prioritaire 24/7</span></li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('sub', 299)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">Prendre l'abonnement</button>
+                <button onclick="openOrderModal('sub', 299)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">S'abonner maintenant</button>
             </div>
         </div>
     </section>
 
-    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5">
-        <p>© 2026 Club Match Pro. Facilitateur de rencontres réelles. Hébergé sur Vercel.</p>
+    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5 space-y-2">
+        <p>© 2026 Club Match Pro. Facilitateur de rencontres réelles.</p>
+        <p>Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500 hover:underline">admclient@yahoo.fr</a></p>
     </footer>
 
     <script>
-        const screens = [
-            document.getElementById('step-1'),
-            document.getElementById('step-2'),
-            document.getElementById('step-3'),
-            document.getElementById('step-4')
-        ];
-        
+        // --- ANIMATION SMARTPHONE ---
+        const screens = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3'), document.getElementById('step-4')];
         const badgeSelf = document.getElementById('anim-badge-self');
         const targetBadge = document.getElementById('anim-target');
         let currentIdx = 0;
 
         function runSimulation() {
+            if(!screens[0]) return;
             screens.forEach(s => s.classList.remove('active'));
             screens[currentIdx].classList.add('active');
-
-            if(currentIdx === 0) {
-                badgeSelf.innerText = "--";
-                setTimeout(() => badgeSelf.innerText = "42", 1000);
-            }
-            
-            if(currentIdx === 1) {
-                targetBadge.innerText = "--";
-                setTimeout(() => targetBadge.innerText = "88", 1000);
-            }
-
+            if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
+            if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
             currentIdx = (currentIdx + 1) % screens.length;
-            
-            let delay = 3500;
-            if(currentIdx === 3) delay = 2000; 
-            if(currentIdx === 0) delay = 4500; 
-            
-            setTimeout(runSimulation, delay);
+            setTimeout(runSimulation, currentIdx === 0 ? 4500 : 3000);
         }
-
         window.onload = runSimulation;
 
+        // --- GESTION DES COMMANDES ---
         function openOrderModal(plan, price) {
-            alert('Simulation de commande pour le plan ' + plan + ' (' + price + '€)');
+            if(plan === 'single') {
+                const activationDate = prompt("Pour quel jour souhaitez-vous activer votre lien ? (JJ/MM/AAAA)");
+                if(!activationDate) return;
+                const wantsPhysical = confirm("Souhaitez-vous ajouter l'Option Pack Physique (+50€) ?\n(Inclut 50 badges et 5 affiches. Nécessite 72h pour l'envoi postal)");
+                let total = price;
+                if(wantsPhysical) total += 50;
+                alert("RÉCAPITULATIF DE COMMANDE :\nDate d'activation : " + activationDate + "\nTotal : " + total + "€\n\nConfirmation envoyée à l'administration.");
+            } else {
+                alert("SOUSCRIPTION MENSUELLE :\n- Événements illimités (un seul à la fois)\n- QR Code fourni immédiatement\n- Supports physiques (badges/affiches) à votre charge.\n\nTotal : " + price + "€/mois.");
+            }
         }
     </script>
 </body>
