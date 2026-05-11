@@ -156,11 +156,7 @@
                     <ul class="text-xs text-gray-300 space-y-3 pt-4">
                         <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App valide pendant 30 jours</span></li>
                         <li class="flex items-start gap-2"><span>✔</span> <span>Accès Admin & Statistiques complets</span></li>
-                        <li class="bg-pink-500/10 p-3 rounded-lg border border-dashed border-pink-500/20 mt-4">
-                            <p class="text-pink-500 font-bold mb-1">Option Pack Physique (+50€) :</p>
-                            <p>50 badges numérotés + 5 affiches QR Code. <br>
-                            <span class="italic text-[10px]">Expédition postale : prévoir 72h de délai.</span></p>
-                        </li>
+                        <li class="flex items-start gap-2 text-pink-400 italic"><span>⚠</span> <span>À votre charge : création et impression de vos badges et affiches.</span></li>
                     </ul>
                 </div>
                 <button onclick="openOrderModal('30j', 249)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">Configurer 30 jours</button>
@@ -198,14 +194,18 @@
             
             if(!activationDate) return;
 
-            const wantsPhysical = confirm("Souhaitez-vous ajouter l'Option Pack Physique (+50€) ?\n(Inclut 50 badges et 5 affiches. Expédition sous 72h par voie postale)");
-            
             let total = price;
             let deliveryMsg = "Accès numérique immédiat à la date choisie.";
-            
-            if(wantsPhysical) {
-                total += 50;
-                deliveryMsg = "Accès numérique + Envoi postal du Pack Physique (72h de délai).";
+
+            // L'option physique n'est disponible que pour la licence 48h
+            if(type === '48h') {
+                const wantsPhysical = confirm("Souhaitez-vous ajouter l'Option Pack Physique (+50€) ?\n(Inclut 50 badges et 5 affiches. Expédition sous 72h par voie postale)");
+                if(wantsPhysical) {
+                    total += 50;
+                    deliveryMsg = "Accès numérique + Envoi postal du Pack Physique (72h de délai).";
+                }
+            } else {
+                deliveryMsg = "Accès numérique 30 jours. Supports physiques à votre charge.";
             }
 
             alert(
