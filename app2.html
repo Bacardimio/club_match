@@ -120,8 +120,8 @@
             <h3 class="flex-1 text-xl font-black italic text-white">Chat #<span id="chat-target-badge">--</span></h3>
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
-        <div class="px-6 py-2">
-            <p id="chat-limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
+        <div class="px-6 py-2 text-center">
+            <p id="chat-limit-warning" class="text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
         </div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
             <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
@@ -175,7 +175,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.app";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -203,7 +203,9 @@
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
         function showUI(id) {
-            ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            ['closed-screen', 'login-screen', 'main-app'].forEach(s => {
+                document.getElementById(s).classList.add('hidden');
+            });
             document.getElementById(id).classList.remove('hidden');
         }
 
@@ -235,8 +237,11 @@
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             document.getElementById('event-name-display').innerText = eventID.toUpperCase();
-            if (config && config.active === false) { showUI('closed-screen'); } 
-            else { if (currentBadge) loadApp(); else showUI('login-screen'); }
+            if (config && config.active === false) { 
+                showUI('closed-screen'); 
+            } else { 
+                if (currentBadge) loadApp(); else showUI('login-screen'); 
+            }
         });
 
         onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
@@ -343,7 +348,9 @@
                 const msgCount = Object.keys(messages).length;
                 const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
                 const dot = document.getElementById(`dot-${roomID}`);
-                if (dot && msgCount > lastSeen && activeChatRoom !== roomID) { dot.classList.remove('hidden'); }
+                if (dot && msgCount > lastSeen && activeChatRoom !== roomID) { 
+                    dot.classList.remove('hidden'); 
+                }
             });
         }
 
@@ -411,10 +418,16 @@
             input.value = "";
         };
 
-        document.getElementById('close-chat-trigger').onclick = () => { document.getElementById('chat-window').classList.add('hidden'); activeChatRoom = null; };
+        document.getElementById('close-chat-trigger').onclick = () => { 
+            document.getElementById('chat-window').classList.add('hidden'); 
+            activeChatRoom = null; 
+        };
 
         document.getElementById('admin-trigger').onclick = () => {
-            if (prompt("Code Admin :") === "2026") { updateAdminStats(); document.getElementById('admin-panel').classList.remove('hidden'); }
+            if (prompt("Code Admin :") === "2026") { 
+                updateAdminStats(); 
+                document.getElementById('admin-panel').classList.remove('hidden'); 
+            }
         };
         document.getElementById('close-admin-trigger').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
 
