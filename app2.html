@@ -132,6 +132,7 @@
     <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
         <div class="w-full max-w-sm mx-auto space-y-8 py-10">
             <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
+            
             <div class="glass rounded-3xl overflow-hidden border-white/10 text-white">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
@@ -153,16 +154,28 @@
                 </div>
             </div>
 
-            <div class="space-y-4 pt-4">
+            <div class="space-y-4">
                 <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest">Tout effacer</button>
-                <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
             </div>
+
+            <div class="pt-6 border-t border-white/10 space-y-4 text-center">
+                <div class="space-y-1">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
+                    <a href="mailto:admclient@yahoo.fr" class="block text-sm text-pink-500 hover:underline font-bold">admclient@yahoo.fr</a>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Informations</p>
+                    <a href="https://clubmatch-lake.vercel.app/" target="_blank" class="block text-[11px] text-gray-300 hover:text-white transition-colors underline">clubmatch-lake.vercel.app</a>
+                </div>
+            </div>
+
+            <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.app";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
