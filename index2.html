@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Match Pro - Facilitateur de rencontres</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --accent: #ff0055; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.05), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(20px); border: 1px solid rgba(255, 0, 85, 0.2); }
+        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
+        .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .phone-frame { width: 280px; height: 500px; border: 8px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 50px rgba(255,0,85,0.1); }
+        .app-screen { position: absolute; inset: 0; padding: 20px; display: none; flex-direction: column; animation: slideUp 0.5s ease-out forwards; }
+        .app-screen.active { display: flex; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .match-glow { animation: pulseGlow 1.5s infinite; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-white antialiased">
+
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-50">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
+        </div>
+        <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-400">
+            <a href="#features" class="hover:text-white transition-colors">Concept</a>
+            <a href="#pricing" class="hover:text-white transition-colors">Tarifs</a>
+        </nav>
+        <div>
+            <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Commander</a>
+        </div>
+    </header>
+
+    <section class="relative max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-12 items-center overflow-hidden">
+        <div class="absolute top-0 left-1/4 w-[500px] height-[500px] bg-pink-600/10 blur-[120px] rounded-full -z-10"></div>
+        
+        <div class="space-y-8 text-left">
+            <span class="inline-block bg-pink-500/10 border border-pink-500/20 text-pink-500 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full">
+                Solution SaaS Événementielle
+            </span>
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight uppercase italic leading-tight">
+                Brisez la glace <br><span class="text-accent-gradient">en un flash.</span>
+            </h1>
+            <p class="text-gray-400 text-lg max-w-xl font-light leading-relaxed">
+                Le principe est simple : <strong>récupérez votre badge numéroté à l'entrée</strong>, scannez le QR code et entrez votre numéro pour commencer à "flasher" les profils qui vous intéressent.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="#pricing" class="btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider text-center">
+                    Choisir ma licence
+                </a>
+                <a href="#features" class="glass hover:bg-white/5 transition-colors px-8 py-4 rounded-2xl font-bold text-lg text-center">
+                    Le concept ⚡
+                </a>
+            </div>
+        </div>
+
+        <div class="flex justify-center relative">
+            <div class="phone-frame glass border-white/20">
+                <div id="step-1" class="app-screen active justify-center space-y-6">
+                    <h2 class="text-2xl font-black italic text-center">CLUB<span class="text-pink-500">MATCH</span></h2>
+                    <div class="space-y-4 text-center">
+                        <div class="bg-pink-500/10 border border-pink-500/30 p-3 rounded-lg">
+                           <p class="text-[10px] text-pink-500 font-bold uppercase tracking-widest mb-1">Étape 1</p>
+                           <p class="text-[11px] text-white">Scanne le QR Code de l'appli</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Saisis ton numéro de badge</p>
+                        <div class="w-full bg-white/10 rounded-xl py-4 text-3xl font-bold text-pink-500" id="anim-badge-self">--</div>
+                    </div>
+                    <button class="w-full bg-pink-600 py-3 rounded-xl font-bold uppercase text-xs">Se connecter</button>
+                </div>
+                <div id="step-2" class="app-screen justify-center space-y-6">
+                    <div class="flex justify-between items-center opacity-50 text-[8px] font-bold uppercase"><span>Badge #42 (Moi)</span><span>⚙️</span></div>
+                    <div class="flex-1 flex flex-col justify-center space-y-4">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase text-center">Qui as-tu remarqué ?</p>
+                        <div class="w-full bg-white/5 border border-white/10 rounded-2xl py-6 text-5xl font-black text-center" id="anim-target">--</div>
+                        <button class="w-full btn-main py-4 rounded-xl font-black uppercase text-sm">Flasher</button>
+                    </div>
+                </div>
+                <div id="step-3" class="app-screen items-center justify-center bg-pink-600/20">
+                    <div class="match-glow p-8 bg-pink-600 rounded-full mb-6">🔥</div>
+                    <h2 class="text-4xl font-black italic text-white uppercase mb-2">MATCH !</h2>
+                </div>
+                <div id="step-4" class="app-screen space-y-4">
+                    <div class="flex items-center space-x-2 border-b border-white/10 pb-2"><span class="font-bold italic">Chat avec #88</span></div>
+                    <div class="flex-1 flex flex-col space-y-2 text-[10px]">
+                        <div class="bg-white/10 self-start p-2 rounded-lg">Salut ! On se capte au bar ?</div>
+                        <div class="bg-pink-600 self-end p-2 rounded-lg">Carrément !</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
+        <div class="text-center space-y-4">
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Comment ça <span class="text-pink-500">marche ?</span></h2>
+            <p class="text-gray-400 max-w-2xl mx-auto">Une solution simple et efficace pour vos événements.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">🏷️</div>
+                <h3 class="text-xl font-bold uppercase italic">1. Scan & Connexion</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Scannez le QR code de l'application à l'entrée et <strong>entrez votre numéro de badge</strong> pour activer votre profil.</p>
+            </div>
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
+                <h3 class="text-xl font-bold uppercase italic">2. Flash Numérique</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Saisissez le numéro de badge d'une personne qui vous plaît. C'est anonyme et instantané.</p>
+            </div>
+            <div class="glass p-8 rounded-3xl space-y-4">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-2xl flex items-center justify-center text-2xl">💬</div>
+                <h3 class="text-xl font-bold uppercase italic">3. Match & Chat</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Si l'intérêt est réciproque : Match ! Discutez pour vous retrouver physiquement dans la salle.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 space-y-16">
+        <div class="text-center space-y-4">
+            <h2 class="text-3xl md:text-5xl font-black uppercase italic tracking-tight">Nos <span class="text-pink-500">Licences</span></h2>
+            <p class="text-gray-400">Choisissez la durée adaptée à votre événement.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div class="glass p-8 rounded-[2.5rem] space-y-8 border-white/10 relative overflow-hidden">
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-black uppercase italic">Licence 48h</h3>
+                    <p class="text-gray-400 text-sm font-light">Idéal pour une soirée unique ou un week-end.</p>
+                    <div class="pt-4"><span class="text-5xl font-black">99€</span></div>
+                    <ul class="text-xs text-gray-400 space-y-3 pt-4">
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App valide pendant 48h</span></li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Accès Admin & Statistiques complets</span></li>
+                        <li class="bg-white/5 p-3 rounded-lg border border-dashed border-white/20 mt-4">
+                            <p class="text-pink-500 font-bold mb-1">Option Pack Physique (+50€) :</p>
+                            <p>50 badges numérotés + 5 affiches QR Code. <br>
+                            <span class="italic text-[10px]">Expédition postale : prévoir 72h de délai.</span></p>
+                        </li>
+                    </ul>
+                </div>
+                <button onclick="openOrderModal('48h', 99)" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all">Configurer 48h</button>
+            </div>
+
+            <div class="glass-premium p-8 rounded-[2.5rem] space-y-8 border-pink-500/30">
+                <div class="space-y-4 text-white">
+                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Licence 30 Jours</h3>
+                    <p class="text-gray-400 text-sm font-light text-white/60">Pour un festival, un lieu permanent ou des événements récurrents.</p>
+                    <div class="pt-4"><span class="text-5xl font-black">249€</span></div>
+                    <ul class="text-xs text-gray-300 space-y-3 pt-4">
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Lien Web-App valide pendant 30 jours</span></li>
+                        <li class="flex items-start gap-2"><span>✔</span> <span>Accès Admin & Statistiques complets</span></li>
+                        <li class="bg-pink-500/10 p-3 rounded-lg border border-dashed border-pink-500/20 mt-4">
+                            <p class="text-pink-500 font-bold mb-1">Option Pack Physique (+50€) :</p>
+                            <p>50 badges numérotés + 5 affiches QR Code. <br>
+                            <span class="italic text-[10px]">Expédition postale : prévoir 72h de délai.</span></p>
+                        </li>
+                    </ul>
+                </div>
+                <button onclick="openOrderModal('30j', 249)" class="w-full btn-main text-white font-bold py-4 rounded-xl transition-all shadow-xl">Configurer 30 jours</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="w-full text-center py-12 text-xs text-gray-500 border-t border-white/5 space-y-2">
+        <p>© 2026 Club Match Pro. Facilitateur de rencontres réelles.</p>
+        <p>Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500 hover:underline">admclient@yahoo.fr</a></p>
+    </footer>
+
+    <script>
+        // --- ANIMATION SMARTPHONE ---
+        const screens = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3'), document.getElementById('step-4')];
+        const badgeSelf = document.getElementById('anim-badge-self');
+        const targetBadge = document.getElementById('anim-target');
+        let currentIdx = 0;
+
+        function runSimulation() {
+            if(!screens[0]) return;
+            screens.forEach(s => s.classList.remove('active'));
+            screens[currentIdx].classList.add('active');
+            if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
+            if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
+            currentIdx = (currentIdx + 1) % screens.length;
+            setTimeout(runSimulation, currentIdx === 0 ? 4500 : 3000);
+        }
+        window.onload = runSimulation;
+
+        // --- GESTION DES COMMANDES ---
+        function openOrderModal(type, price) {
+            const durationLabel = type === '48h' ? '48 heures' : '30 jours';
+            const activationDate = prompt("Pour quel jour souhaitez-vous activer votre Licence " + durationLabel + " ? (JJ/MM/AAAA)");
+            
+            if(!activationDate) return;
+
+            const wantsPhysical = confirm("Souhaitez-vous ajouter l'Option Pack Physique (+50€) ?\n(Inclut 50 badges et 5 affiches. Expédition sous 72h par voie postale)");
+            
+            let total = price;
+            let deliveryMsg = "Accès numérique immédiat à la date choisie.";
+            
+            if(wantsPhysical) {
+                total += 50;
+                deliveryMsg = "Accès numérique + Envoi postal du Pack Physique (72h de délai).";
+            }
+
+            alert(
+                "RÉCAPITULATIF DE VOTRE LICENCE " + type.toUpperCase() + " :\n" +
+                "------------------------------------------\n" +
+                "Date d'activation : " + activationDate + "\n" +
+                "Logistique : " + deliveryMsg + "\n" +
+                "Total à régler : " + total + "€\n\n" +
+                "Votre demande a été transmise à admclient@yahoo.fr."
+            );
+        }
+    </script>
+</body>
+</html>
