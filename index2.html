@@ -85,7 +85,7 @@
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Total à régler</p>
                         <p id="totalPriceDisplay" class="text-4xl font-black italic text-white">0€</p>
                     </div>
-                    <button type="submit" class="btn-main px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Commander</button>
+                    <button type="submit" id="btn-submit-order" class="btn-main px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Commander</button>
                 </div>
             </form>
         </div>
@@ -182,7 +182,24 @@
         <p>© 2026 Club Match Pro | Contact : admclient@yahoo.fr</p>
     </footer>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // Configuration Firebase (issue de app.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+            authDomain: "club-match-d2d39.firebaseapp.com",
+            databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "club-match-d2d39",
+            storageBucket: "club-match-d2d39.firebasestorage.app",
+            messagingSenderId: "975364560340",
+            appId: "1:975364560340:web:64fd827ced5c24b808f241"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         // Animation Smartphone
         const screens = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3')];
         const badgeSelf = document.getElementById('anim-badge-self');
@@ -199,7 +216,7 @@
         }
         window.onload = runSimulation;
 
-        // Modal Logic
+        // Logique de la Modale
         const modal = document.getElementById('orderModal');
         const modalTitle = document.getElementById('modalPlanTitle');
         const priceDisplay = document.getElementById('totalPriceDisplay');
@@ -208,7 +225,7 @@
         let currentBasePrice = 0;
         let currentPlan = "";
 
-        function openOrderModal(plan, price) {
+        window.openOrderModal = function(plan, price) {
             currentPlan = plan;
             currentBasePrice = price;
             modalTitle.innerText = "Configuration de votre Licence " + plan;
@@ -227,7 +244,7 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function closeModal() {
+        window.closeModal = function() {
             modal.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
@@ -240,18 +257,45 @@
 
         physicalCheckbox.addEventListener('change', updateTotal);
 
-        document.getElementById('orderForm').onsubmit = function(e) {
+        // ENREGISTREMENT EN BASE DE DONNÉES
+        document.getElementById('orderForm').onsubmit = async function(e) {
             e.preventDefault();
-            const email = document.getElementById('custEmail').value;
-            alert(
-                "COMMANDE RÉCEPTIONNÉE !\n\n" +
-                "Un lien de paiement sécurisé va être envoyé à : " + email + "\n\n" +
-                "Dès confirmation du paiement, vous recevrez par mail :\n" +
-                "- Votre Facture\n" +
-                "- La Notice Administrateur\n" +
-                "- Le QR Code officiel de l'événement"
-            );
-            closeModal();
+            const btn = document.getElementById('btn-submit-order');
+            btn.disabled = true;
+            btn.innerText = "Enregistrement...";
+
+            const orderData = {
+                clientName: document.getElementById('custName').value,
+                email: document.getElementById('custEmail').value,
+                phone: document.getElementById('custPhone').value,
+                eventDate: document.getElementById('activationDate').value,
+                plan: currentPlan,
+                physicalOption: physicalCheckbox.checked,
+                totalPrice: priceDisplay.innerText,
+                status: "En attente de paiement",
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                // Envoi vers le nouveau nœud "orders"
+                await push(ref(db, 'orders'), orderData);
+                
+                alert(
+                    "COMMANDE RÉCEPTIONNÉE !\n\n" +
+                    "Un lien de paiement sécurisé va être envoyé à : " + orderData.email + "\n\n" +
+                    "Dès confirmation du paiement, vous recevrez par mail :\n" +
+                    "- Votre Facture\n" +
+                    "- La Notice Administrateur\n" +
+                    "- Le QR Code officiel de l'événement"
+                );
+                closeModal();
+            } catch (error) {
+                console.error("Erreur Firebase:", error);
+                alert("Une erreur technique est survenue. Veuillez nous contacter à admclient@yahoo.fr");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Commander";
+            }
         };
 
         window.onclick = function(e) { if (e.target == modal) closeModal(); }
