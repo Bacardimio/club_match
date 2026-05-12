@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Gestion des Commandes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0a0a0a] text-white p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold italic uppercase tracking-tighter">
+                CLUB<span class="text-pink-500">MATCH</span> <span class="text-white/50 text-xl">ADMIN</span>
+            </h1>
+            <div id="connection-status" class="px-4 py-2 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-500">
+                Connexion en cours...
+            </div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-white/5 text-[10px] uppercase tracking-widest text-gray-400">
+                        <th class="p-5">Date</th>
+                        <th class="p-5">Événement</th>
+                        <th class="p-5">Client</th>
+                        <th class="p-5">Plan / Option</th>
+                        <th class="p-5">Total</th>
+                        <th class="p-5">Statut</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-list" class="divide-y divide-white/5">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // Configuration exacte de votre projet
+        const firebaseConfig = {
+            apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+            authDomain: "club-match-d2d39.firebaseapp.com",
+            databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "club-match-d2d39",
+            appId: "1:975364560340:web:64fd827ced5c24b808f241"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getDatabase(app);
+            const ordersRef = ref(db, 'orders');
+            const statusIndicator = document.getElementById('connection-status');
+
+            onValue(ordersRef, (snapshot) => {
+                statusIndicator.innerText = "Connecté à la base";
+                statusIndicator.className = "px-4 py-2 rounded-full text-xs font-bold bg-green-500/20 text-green-500";
+                
+                const list = document.getElementById('orders-list');
+                const data = snapshot.val();
+
+                if (!data) {
+                    list.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-500">Aucune commande trouvée dans la base.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = "";
+                // Convertir l'objet en tableau et trier par date décroissante
+                const entries = Object.entries(data).reverse();
+
+                entries.forEach(([id, order]) => {
+                    const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-white/5 transition-colors";
+                    row.innerHTML = `
+                        <td class="p-5 text-sm text-gray-400 font-mono">${date}</td>
+                        <td class="p-5 font-bold text-pink-500">${order.eventName || 'N/A'}</td>
+                        <td class="p-5">
+                            <div class="font-bold">${order.clientName}</div>
+                            <div class="text-[10px] text-gray-500">${order.email} | ${order.phone}</div>
+                        </td>
+                        <td class="p-5 text-sm">
+                            <span class="bg-white/10 px-2 py-1 rounded text-[10px]">${order.plan}</span>
+                            ${order.hasPhysicalOption ? '<span class="ml-2 text-pink-500 text-[10px] font-bold">+ PACK PHYSIQUE</span>' : ''}
+                        </td>
+                        <td class="p-5 font-black">${order.totalAmount || order.totalPrice}</td>
+                        <td class="p-5 text-xs">
+                            <span class="text-yellow-500 italic">${order.status || 'Reçue'}</span>
+                        </td>
+                    `;
+                    list.appendChild(row);
+                });
+            }, (error) => {
+                console.error(error);
+                statusIndicator.innerText = "Erreur de Permission (Rules)";
+                statusIndicator.className = "px-4 py-2 rounded-full text-xs font-bold bg-red-500/20 text-red-500";
+            });
+        } catch (e) {
+            console.error("Erreur d'initialisation:", e);
+        }
+    </script>
+</body>
+</html>
