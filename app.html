@@ -237,11 +237,40 @@
         }
         window.deleteLike = deleteLike;
 
+        // Remplace l'ancien onValue du config par celui-ci
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
-            document.getElementById('event-name-display').innerText = eventID.toUpperCase();
-            if (config && config.active === false) { showUI('closed-screen'); } 
-            else { if (currentBadge) loadApp(); else showUI('login-screen'); }
+            const now = Date.now();
+            const closedScreen = document.getElementById('closed-screen');
+            const closedMsg = document.getElementById('closed-message');
+
+            if (!config) {
+                showUI('closed-screen');
+                closedMsg.innerText = "Événement introuvable.";
+                return;
+            }
+
+            document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+
+            // Vérification des dates et du statut
+            if (config.active === false) {
+                showUI('closed-screen');
+                closedMsg.innerText = "L'organisateur a désactivé cet événement.";
+            } 
+            else if (now < config.startDate) {
+                showUI('closed-screen');
+                const dateDebut = new Date(config.startDate).toLocaleDateString();
+                closedMsg.innerHTML = `Cet événement n'a pas encore commencé.<br><span class="text-pink-500">Ouverture le ${dateDebut}</span>`;
+            } 
+            else if (now > config.expiryDate) {
+                showUI('closed-screen');
+                closedMsg.innerText = "Cet événement est terminé (licence expirée).";
+            } 
+            else {
+                // Tout est OK
+                if (currentBadge) loadApp(); 
+                else showUI('login-screen');
+            }
         });
 
         onValue(ref(db, `${basePath}/resetSignal`), (snap) => {

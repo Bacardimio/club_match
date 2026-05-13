@@ -201,126 +201,141 @@
     </footer>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // Configuration issue de votre fichier app.html
-        const firebaseConfig = {
-            apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
-            authDomain: "club-match-d2d39.firebaseapp.com",
-            databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "club-match-d2d39",
-            storageBucket: "club-match-d2d39.firebasestorage.app",
-            messagingSenderId: "975364560340",
-            appId: "1:975364560340:web:64fd827ced5c24b808f241"
+    const firebaseConfig = {
+        apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+        authDomain: "club-match-d2d39.firebaseapp.com",
+        databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "club-match-d2d39",
+        storageBucket: "club-match-d2d39.firebasestorage.app",
+        messagingSenderId: "975364560340",
+        appId: "1:975364560340:web:64fd827ced5c24b808f241"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- Animation Smartphone ---
+    const screens = [
+        document.getElementById('step-1'),
+        document.getElementById('step-2'),
+        document.getElementById('step-3'),
+        document.getElementById('step-4')
+    ];
+    const badgeSelf = document.getElementById('anim-badge-self');
+    const targetBadge = document.getElementById('anim-target');
+    let currentIdx = 0;
+
+    function runSimulation() {
+        screens.forEach(s => s.classList.remove('active'));
+        screens[currentIdx].classList.add('active');
+        if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
+        if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
+        currentIdx = (currentIdx + 1) % screens.length;
+        let delay = (currentIdx === 3) ? 2000 : (currentIdx === 0) ? 4500 : 3500;
+        setTimeout(runSimulation, delay);
+    }
+    window.onload = runSimulation;
+
+    // --- Gestion de la Modale & Calculs ---
+    const modal = document.getElementById('orderModal');
+    const modalTitle = document.getElementById('modalPlanTitle');
+    const priceDisplay = document.getElementById('totalPriceDisplay');
+    const physicalWrapper = document.getElementById('optionPhysicalWrapper');
+    const physicalCheckbox = document.getElementById('physicalOption');
+    let currentBasePrice = 0;
+    let currentPlan = "";
+
+    window.openOrderModal = function(plan, price) {
+        currentPlan = plan;
+        currentBasePrice = price;
+        modalTitle.innerText = "Licence " + plan;
+        if(plan === '30j') {
+            physicalWrapper.style.opacity = '0.3';
+            physicalWrapper.style.pointerEvents = 'none';
+            physicalCheckbox.checked = false;
+        } else {
+            physicalWrapper.style.opacity = '1';
+            physicalWrapper.style.pointerEvents = 'auto';
+        }
+        updateTotal();
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closeModal = function() {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function updateTotal() {
+        let total = currentBasePrice;
+        if(physicalCheckbox.checked && currentPlan === '48h') total += 50;
+        priceDisplay.innerText = total + "€";
+    }
+
+    physicalCheckbox.addEventListener('change', updateTotal);
+
+    // --- Génération de l'évènement et commande ---
+    document.getElementById('orderForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-order');
+        btn.disabled = true;
+        btn.innerText = "Initialisation...";
+
+        const eventName = document.getElementById('eventName').value;
+        const startDateStr = document.getElementById('activationDate').value;
+        
+        // Création d'un identifiant URL unique (slug)
+        const eventSlug = eventName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
+        
+        // Calcul des dates
+        const startTimestamp = new Date(startDateStr).getTime();
+        const durationMs = currentPlan === '48h' ? (48 * 60 * 60 * 1000) : (30 * 24 * 60 * 60 * 1000);
+        const expiryTimestamp = startTimestamp + durationMs;
+
+        const orderData = {
+            eventSlug: eventSlug,
+            eventName: eventName,
+            clientName: document.getElementById('custName').value,
+            email: document.getElementById('custEmail').value,
+            plan: currentPlan,
+            totalAmount: priceDisplay.innerText,
+            createdAt: serverTimestamp()
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // Animation Smartphone (reprise de votre code)
-        const screens = [
-            document.getElementById('step-1'),
-            document.getElementById('step-2'),
-            document.getElementById('step-3'),
-            document.getElementById('step-4')
-        ];
-        const badgeSelf = document.getElementById('anim-badge-self');
-        const targetBadge = document.getElementById('anim-target');
-        let currentIdx = 0;
-
-        function runSimulation() {
-            screens.forEach(s => s.classList.remove('active'));
-            screens[currentIdx].classList.add('active');
-            if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
-            if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
-            currentIdx = (currentIdx + 1) % screens.length;
-            let delay = (currentIdx === 3) ? 2000 : (currentIdx === 0) ? 4500 : 3500;
-            setTimeout(runSimulation, delay);
-        }
-        window.onload = runSimulation;
-
-        // Gestion de la Modale
-        const modal = document.getElementById('orderModal');
-        const modalTitle = document.getElementById('modalPlanTitle');
-        const priceDisplay = document.getElementById('totalPriceDisplay');
-        const physicalWrapper = document.getElementById('optionPhysicalWrapper');
-        const physicalCheckbox = document.getElementById('physicalOption');
-        let currentBasePrice = 0;
-        let currentPlan = "";
-
-        window.openOrderModal = function(plan, price) {
-            currentPlan = plan;
-            currentBasePrice = price;
-            modalTitle.innerText = "Licence " + plan;
-            
-            if(plan === '30j') {
-                physicalWrapper.style.opacity = '0.3';
-                physicalWrapper.style.pointerEvents = 'none';
-                physicalCheckbox.checked = false;
-            } else {
-                physicalWrapper.style.opacity = '1';
-                physicalWrapper.style.pointerEvents = 'auto';
-            }
-            
-            updateTotal();
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        window.closeModal = function() {
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        function updateTotal() {
-            let total = currentBasePrice;
-            if(physicalCheckbox.checked && currentPlan === '48h') total += 50;
-            priceDisplay.innerText = total + "€";
-        }
-
-        physicalCheckbox.addEventListener('change', updateTotal);
-
-        // ENREGISTREMENT FIREBASE
-        document.getElementById('orderForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit-order');
-            btn.disabled = true;
-            btn.innerText = "Enregistrement...";
-
-            const orderData = {
-                eventName: document.getElementById('eventName').value,
-                clientName: document.getElementById('custName').value,
-                email: document.getElementById('custEmail').value,
-                phone: document.getElementById('custPhone').value,
-                startDate: document.getElementById('activationDate').value,
-                plan: currentPlan,
-                hasPhysicalOption: physicalCheckbox.checked,
-                totalAmount: priceDisplay.innerText,
-                status: "En attente de paiement",
-                createdAt: serverTimestamp()
-            };
-
-            try {
-                await push(ref(db, 'orders'), orderData);
-                alert(
-                    "COMMANDE ENREGISTRÉE !\n\n" +
-                    "Un lien de paiement a été généré pour l'événement : " + orderData.eventName + ".\n\n" +
-                    "Dès validation, vous recevrez par mail :\n" +
-                    "- Votre Facture\n" +
-                    "- La Notice Admin\n" +
-                    "- Le QR Code officiel"
-                );
-                closeModal();
-            } catch (error) {
-                alert("Erreur lors de l'enregistrement. Contactez admclient@yahoo.fr");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Commander";
-            }
+        const configData = {
+            name: eventName,
+            active: true,
+            startDate: startTimestamp,
+            expiryDate: expiryTimestamp,
+            plan: currentPlan
         };
 
-        window.onclick = function(e) { if (e.target == modal) closeModal(); }
-    </script>
+        try {
+            // 1. Enregistre la commande
+            await push(ref(db, 'orders'), orderData);
+            
+            // 2. Crée l'évènement prêt à l'emploi
+            await set(ref(db, `events/${eventSlug}/config`), configData);
+
+            alert(
+                "COMMANDE ET ÉVÈNEMENT CRÉÉS !\n\n" +
+                "Votre Web-App est prête à l'adresse suivante :\n" +
+                window.location.origin + "/app.html?event=" + eventSlug + "\n\n" +
+                "L'évènement s'activera automatiquement le " + new Date(startTimestamp).toLocaleDateString()
+            );
+            closeModal();
+        } catch (error) {
+            console.error(error);
+            alert("Erreur. Contactez admclient@yahoo.fr");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Commander";
+        }
+    };
+</script>
 </body>
 </html>
