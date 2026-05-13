@@ -2,30 +2,53 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Gestion des Commandes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Match Pro - Dashboard Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0a0a0a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .status-pill { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+    </style>
 </head>
-<body class="bg-[#0a0a0a] text-white p-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold italic uppercase tracking-tighter">
-                CLUB<span class="text-pink-500">MATCH</span> <span class="text-white/50 text-xl">ADMIN</span>
-            </h1>
-            <div id="connection-status" class="px-4 py-2 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-500">
-                Connexion en cours...
+<body class="p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-black italic uppercase">Back<span class="text-pink-500">Office</span></h1>
+                <p class="text-gray-500 text-sm">Gestion des commandes et licences</p>
+            </div>
+            <div class="text-right">
+                <p id="clock" class="font-mono text-pink-500"></p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass p-6 rounded-3xl">
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total CA</p>
+                <p id="stat-ca" class="text-4xl font-black mt-2">0€</p>
+            </div>
+            <div class="glass p-6 rounded-3xl">
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Commandes</p>
+                <p id="stat-orders" class="text-4xl font-black mt-2">0</p>
+            </div>
+            <div class="glass p-6 rounded-3xl border-pink-500/30">
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Dernière commande</p>
+                <p id="stat-last" class="text-xl font-bold mt-2 text-pink-500">--</p>
             </div>
         </div>
 
-        <div class="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-white/5 text-[10px] uppercase tracking-widest text-gray-400">
-                        <th class="p-5">Date</th>
-                        <th class="p-5">Événement</th>
-                        <th class="p-5">Client</th>
-                        <th class="p-5">Plan / Option</th>
-                        <th class="p-5">Total</th>
-                        <th class="p-5">Statut</th>
+        <div class="glass rounded-[2rem] overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-white/5 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                    <tr>
+                        <th class="p-6">Date</th>
+                        <th class="p-6">Événement</th>
+                        <th class="p-6">Client</th>
+                        <th class="p-6">Plan</th>
+                        <th class="p-6 text-right">Montant</th>
+                        <th class="p-6 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody id="orders-list" class="divide-y divide-white/5">
@@ -36,69 +59,88 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // Configuration exacte de votre projet
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
             authDomain: "club-match-d2d39.firebaseapp.com",
             databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "club-match-d2d39",
+            storageBucket: "club-match-d2d39.firebasestorage.app",
+            messagingSenderId: "975364560340",
             appId: "1:975364560340:web:64fd827ced5c24b808f241"
         };
 
-        try {
-            const app = initializeApp(firebaseConfig);
-            const db = getDatabase(app);
-            const ordersRef = ref(db, 'orders');
-            const statusIndicator = document.getElementById('connection-status');
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-            onValue(ordersRef, (snapshot) => {
-                statusIndicator.innerText = "Connecté à la base";
-                statusIndicator.className = "px-4 py-2 rounded-full text-xs font-bold bg-green-500/20 text-green-500";
-                
-                const list = document.getElementById('orders-list');
-                const data = snapshot.val();
-
-                if (!data) {
-                    list.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-500">Aucune commande trouvée dans la base.</td></tr>';
-                    return;
-                }
-
-                list.innerHTML = "";
-                // Convertir l'objet en tableau et trier par date décroissante
-                const entries = Object.entries(data).reverse();
-
-                entries.forEach(([id, order]) => {
-                    const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
-                    const row = document.createElement('tr');
-                    row.className = "hover:bg-white/5 transition-colors";
-                    row.innerHTML = `
-                        <td class="p-5 text-sm text-gray-400 font-mono">${date}</td>
-                        <td class="p-5 font-bold text-pink-500">${order.eventName || 'N/A'}</td>
-                        <td class="p-5">
-                            <div class="font-bold">${order.clientName}</div>
-                            <div class="text-[10px] text-gray-500">${order.email} | ${order.phone}</div>
-                        </td>
-                        <td class="p-5 text-sm">
-                            <span class="bg-white/10 px-2 py-1 rounded text-[10px]">${order.plan}</span>
-                            ${order.hasPhysicalOption ? '<span class="ml-2 text-pink-500 text-[10px] font-bold">+ PACK PHYSIQUE</span>' : ''}
-                        </td>
-                        <td class="p-5 font-black">${order.totalAmount || order.totalPrice}</td>
-                        <td class="p-5 text-xs">
-                            <span class="text-yellow-500 italic">${order.status || 'Reçue'}</span>
-                        </td>
-                    `;
-                    list.appendChild(row);
-                });
-            }, (error) => {
-                console.error(error);
-                statusIndicator.innerText = "Erreur de Permission (Rules)";
-                statusIndicator.className = "px-4 py-2 rounded-full text-xs font-bold bg-red-500/20 text-red-500";
-            });
-        } catch (e) {
-            console.error("Erreur d'initialisation:", e);
+        // Protection par mot de passe simple
+        const pass = prompt("Accès restreint - Code :");
+        if (pass !== "2026") {
+            document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>Accès refusé</h1>";
         }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleString('fr-FR');
+        }
+        setInterval(updateClock, 1000);
+
+        // Écoute des commandes
+        onValue(ref(db, 'orders'), (snapshot) => {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = "";
+            let totalCA = 0;
+            let count = 0;
+            let lastEvent = "--";
+
+            const data = snapshot.val();
+            if (!data) {
+                list.innerHTML = "<tr><td colspan='6' class='p-10 text-center text-gray-500 italic'>Aucune commande enregistrée.</td></tr>";
+                return;
+            }
+
+            // Transformer l'objet en tableau et trier par date décroissante
+            const orders = Object.entries(data).reverse();
+
+            orders.forEach(([key, order]) => {
+                count++;
+                const amount = parseInt(order.totalAmount.replace('€', ''));
+                totalCA += amount;
+                lastEvent = order.eventName;
+
+                const date = new Date(order.createdAt).toLocaleDateString('fr-FR');
+                const appLink = `${window.location.origin}/app.html?event=${order.eventSlug}`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-6 text-sm text-gray-400 font-mono">${date}</td>
+                    <td class="p-6">
+                        <p class="font-bold text-white">${order.eventName}</p>
+                        <p class="text-[10px] text-pink-500 font-mono">${order.eventSlug}</p>
+                    </td>
+                    <td class="p-6 text-sm">
+                        <div class="text-white font-medium">${order.clientName}</div>
+                        <div class="text-gray-500 text-xs">${order.email}</div>
+                    </td>
+                    <td class="p-6">
+                        <span class="status-pill ${order.plan === '48h' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}">
+                            ${order.plan}
+                        </span>
+                    </td>
+                    <td class="p-6 text-right font-black text-white">${order.totalAmount}</td>
+                    <td class="p-6 text-center">
+                        <a href="${appLink}" target="_blank" class="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg font-bold uppercase transition-all">Accéder à l'App</a>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+
+            document.getElementById('stat-ca').innerText = totalCA + "€";
+            document.getElementById('stat-orders').innerText = count;
+            document.getElementById('stat-last').innerText = lastEvent;
+        });
     </script>
 </body>
 </html>
