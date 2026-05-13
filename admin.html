@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -10,6 +11,22 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .status-pill { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .table-header { padding: 1.5rem 1rem; }
+        
+        .qr-container { position: relative; display: inline-block; }
+        .qr-preview { 
+            position: absolute; 
+            bottom: 100%; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: none; 
+            z-index: 50; 
+            background: white; 
+            padding: 12px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 180px;
+        }
+        .qr-container:hover .qr-preview { display: block; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -18,11 +35,9 @@
         <header class="flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-black italic uppercase">Back<span class="text-pink-500">Office</span></h1>
-                <p class="text-gray-500 text-sm">Gestion des commandes et validité des licences</p>
+                <p class="text-gray-500 text-sm">Gestion & Téléchargement QR Codes</p>
             </div>
-            <div class="text-right">
-                <p id="clock" class="font-mono text-pink-500"></p>
-            </div>
+            <div class="text-right font-mono text-pink-500" id="clock"></div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -30,32 +45,29 @@
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total CA</p>
                 <p id="stat-ca" class="text-4xl font-black mt-2">0€</p>
             </div>
-            <div class="glass p-6 rounded-3xl text-center">
+            <div class="glass p-6 rounded-3xl text-center border-pink-500/20">
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Commandes</p>
                 <p id="stat-orders" class="text-4xl font-black mt-2 text-pink-500">0</p>
             </div>
-            <div class="glass p-6 rounded-3xl text-right">
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Dernier Événement</p>
-                <p id="stat-last" class="text-xl font-bold mt-2 truncate">--</p>
+            <div class="glass p-6 rounded-3xl text-right text-gray-500 text-xs italic">
+                Passez la souris sur le bouton QR pour un aperçu ou cliquez pour télécharger le JPG.
             </div>
         </div>
 
         <div class="glass rounded-[2rem] overflow-hidden overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1000px]">
+            <table class="w-full text-left border-collapse min-w-[1100px]">
                 <thead class="bg-white/5 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
                     <tr>
-                        <th class="table-header">Date Achat</th>
-                        <th class="table-header">Événement / Client</th>
+                        <th class="table-header">Achat</th>
+                        <th class="table-header">Événement</th>
                         <th class="table-header">E-mail</th>
-                        <th class="table-header">Début Event</th>
-                        <th class="table-header">Fin Event</th>
-                        <th class="table-header">Plan</th>
+                        <th class="table-header">Début</th>
+                        <th class="table-header">Fin</th>
                         <th class="table-header text-right">Montant</th>
-                        <th class="table-header text-center">Action</th>
+                        <th class="table-header text-center">QR Code (JPG)</th>
                     </tr>
                 </thead>
-                <tbody id="orders-list" class="divide-y divide-white/5">
-                    </tbody>
+                <tbody id="orders-list" class="divide-y divide-white/5"></tbody>
             </table>
         </div>
     </div>
@@ -77,73 +89,72 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Mot de passe simple
-        const pass = prompt("Accès Admin - Code :");
-        if (pass !== "2026") {
-            document.body.innerHTML = "<h1 class='text-white text-center mt-20 text-2xl font-black uppercase'>Accès Refusé</h1>";
-        }
+        const pass = prompt("Accès Admin :");
+        if (pass !== "2026") document.body.innerHTML = "";
 
-        function updateClock() {
-            document.getElementById('clock').innerText = new Date().toLocaleString('fr-FR');
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
+
+        async function downloadQR(url, filename) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = filename + ".jpg";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                alert("Erreur lors du téléchargement.");
+            }
         }
-        setInterval(updateClock, 1000);
 
         onValue(ref(db, 'orders'), async (snapshot) => {
             const list = document.getElementById('orders-list');
             list.innerHTML = "";
             let totalCA = 0;
-            let count = 0;
-            let lastEvent = "--";
-
             const data = snapshot.val();
             if (!data) return;
 
             const orders = Object.entries(data).reverse();
+            document.getElementById('stat-orders').innerText = orders.length;
 
             for (const [key, order] of orders) {
-                count++;
-                totalCA += parseInt(order.totalAmount.replace('€', ''));
-                lastEvent = order.eventName;
-
-                // Récupération des dates réelles dans la config de l'event
+                totalCA += parseInt(order.totalAmount);
                 const configSnap = await get(ref(db, `events/${order.eventSlug}/config`));
                 const config = configSnap.val() || {};
-                
-                const dateAchat = new Date(order.createdAt).toLocaleDateString('fr-FR');
-                const dateDebut = config.startDate ? new Date(config.startDate).toLocaleDateString('fr-FR') : "N/A";
-                const dateFin = config.expiryDate ? new Date(config.expiryDate).toLocaleDateString('fr-FR') : "N/A";
-                
                 const appLink = `${window.location.origin}/app.html?event=${order.eventSlug}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&format=jpg&data=${encodeURIComponent(appLink)}`;
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-4 text-xs text-gray-500 font-mono">${dateAchat}</td>
+                    <td class="p-4 text-[10px] text-gray-500 font-mono">${new Date(order.createdAt).toLocaleDateString()}</td>
                     <td class="p-4">
-                        <div class="font-bold text-white text-sm">${order.eventName}</div>
-                        <div class="text-[10px] text-gray-500 uppercase">${order.clientName}</div>
+                        <div class="font-bold text-sm">${order.eventName}</div>
+                        <div class="text-[9px] text-pink-500 font-mono uppercase">${order.eventSlug}</div>
                     </td>
-                    <td class="p-4 text-xs">
-                        <span class="bg-white/5 px-2 py-1 rounded text-pink-400 font-mono select-all border border-white/10">${order.email}</span>
-                    </td>
-                    <td class="p-4 text-sm font-bold text-green-400">${dateDebut}</td>
-                    <td class="p-4 text-sm font-bold text-red-400">${dateFin}</td>
-                    <td class="p-4">
-                        <span class="status-pill ${order.plan === '48h' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}">
-                            ${order.plan}
-                        </span>
-                    </td>
+                    <td class="p-4"><span class="text-xs bg-white/5 px-2 py-1 rounded select-all">${order.email}</span></td>
+                    <td class="p-4 text-xs font-bold text-green-500">${config.startDate ? new Date(config.startDate).toLocaleDateString() : '--'}</td>
+                    <td class="p-4 text-xs font-bold text-red-500">${config.expiryDate ? new Date(config.expiryDate).toLocaleDateString() : '--'}</td>
                     <td class="p-4 text-right font-black text-white">${order.totalAmount}</td>
                     <td class="p-4 text-center">
-                        <a href="${appLink}" target="_blank" class="text-[9px] bg-white/10 hover:bg-pink-500 hover:text-white px-3 py-2 rounded-lg font-bold uppercase transition-all">Lien App</a>
+                        <div class="qr-container">
+                            <button id="dl-${order.eventSlug}" class="bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase hover:bg-white hover:text-black transition-all">
+                                ↓ JPG
+                            </button>
+                            <div class="qr-preview">
+                                <img src="${qrUrl}" alt="QR" width="150" height="150" class="mx-auto">
+                                <p class="text-[8px] text-black text-center font-bold mt-2 uppercase">Clic pour télécharger</p>
+                            </div>
+                        </div>
                     </td>
                 `;
                 list.appendChild(tr);
+                
+                document.getElementById(`dl-${order.eventSlug}`).onclick = () => downloadQR(qrUrl, `QR_${order.eventSlug}`);
             }
-
             document.getElementById('stat-ca').innerText = totalCA + "€";
-            document.getElementById('stat-orders').innerText = count;
-            document.getElementById('stat-last').innerText = lastEvent;
         });
     </script>
 </body>
