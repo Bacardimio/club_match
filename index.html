@@ -336,16 +336,20 @@ if (selectedDate < todayCheck) {
             // 2. Crée l'évènement prêt à l'emploi
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
+            // --- FENÊTRE DE CONFIRMATION CORRIGÉE ---
             alert(
-                "COMMANDE ET ÉVÈNEMENT CRÉÉS !\n\n" +
-                "Votre Web-App est prête à l'adresse suivante :\n" +
-                window.location.origin + "/app.html?event=" + eventSlug + "\n\n" +
-                "L'évènement s'activera automatiquement le " + new Date(startTimestamp).toLocaleDateString()
+                "COMMANDE ENREGISTRÉE !\n\n" +
+                "Votre demande va être traitée dans les meilleurs délais.\n\n" +
+                "Dès confirmation du paiement, un mail vous sera envoyé avec :\n" +
+                "• Votre QR CODE personnalisé\n" +
+                "• Votre facture\n" +
+                "• La notice administrateur"
             );
+            
             closeModal();
         } catch (error) {
             console.error(error);
-            alert("Erreur. Contactez admclient@yahoo.fr");
+            alert("Erreur technique. Contactez admclient@yahoo.fr");
         } finally {
             btn.disabled = false;
             btn.innerText = "Commander";
