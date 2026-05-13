@@ -203,7 +203,7 @@
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-
+	
     const firebaseConfig = {
         apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
         authDomain: "club-match-d2d39.firebaseapp.com",
@@ -213,7 +213,11 @@
         messagingSenderId: "975364560340",
         appId: "1:975364560340:web:64fd827ced5c24b808f241"
     };
-
+	// --- Initialisation des contraintes de date ---
+const dateInput = document.getElementById('activationDate');
+const today = new Date().toISOString().split('T')[0];
+dateInput.setAttribute('min', today);
+dateInput.value = today; // Optionnel : définit par défaut à aujourd'hui
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -287,7 +291,18 @@
 
         const eventName = document.getElementById('eventName').value;
         const startDateStr = document.getElementById('activationDate').value;
-        
+        // --- AJOUT DU CONTRÔLE DE COHÉRENCE ---
+const selectedDate = new Date(startDateStr);
+selectedDate.setHours(0, 0, 0, 0);
+const todayCheck = new Date();
+todayCheck.setHours(0, 0, 0, 0);
+
+if (selectedDate < todayCheck) {
+    alert("Erreur : La date de début ne peut pas être antérieure à aujourd'hui.");
+    btn.disabled = false;
+    btn.innerText = "Commander";
+    return;
+}
         // Création d'un identifiant URL unique (slug)
         const eventSlug = eventName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
         
