@@ -8,8 +8,7 @@
     <style>
         body { background: #0a0a0a; color: white; font-family: sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .status-pill { padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .table-header { padding: 1.5rem 1rem; }
+        .table-header { padding: 1rem; white-space: nowrap; }
         
         .qr-container { position: relative; display: inline-block; }
         .qr-preview { 
@@ -30,40 +29,46 @@
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="max-w-[1600px] mx-auto space-y-8">
         <header class="flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-black italic uppercase">Back<span class="text-pink-500">Office</span></h1>
-                <p class="text-gray-500 text-sm">Gestion & Téléchargement QR Codes</p>
+                <p class="text-gray-500 text-sm">Console de gestion complète</p>
             </div>
             <div class="text-right font-mono text-pink-500" id="clock"></div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="glass p-6 rounded-3xl">
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total CA</p>
                 <p id="stat-ca" class="text-4xl font-black mt-2">0€</p>
             </div>
-            <div class="glass p-6 rounded-3xl text-center border-pink-500/20">
+            <div class="glass p-6 rounded-3xl border-pink-500/20">
                 <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Commandes</p>
                 <p id="stat-orders" class="text-4xl font-black mt-2 text-pink-500">0</p>
             </div>
-            <div class="glass p-6 rounded-3xl text-right text-gray-500 text-xs italic">
-                Passez la souris sur le bouton QR pour un aperçu ou cliquez pour télécharger le JPG.
+            <div class="glass p-6 rounded-3xl border-blue-500/20">
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Total Packs Physiques</p>
+                <p id="stat-packs" class="text-4xl font-black mt-2 text-blue-400">0</p>
+            </div>
+            <div class="glass p-6 rounded-3xl flex items-center justify-center">
+                <p class="text-gray-500 text-[10px] italic">Données en temps réel</p>
             </div>
         </div>
 
         <div class="glass rounded-[2rem] overflow-hidden overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[1100px]">
+            <table class="w-full text-left border-collapse">
                 <thead class="bg-white/5 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
                     <tr>
-                        <th class="table-header">Achat</th>
+                        <th class="table-header">Date</th>
                         <th class="table-header">Événement</th>
+                        <th class="table-header">Slug</th>
                         <th class="table-header">E-mail</th>
-                        <th class="table-header">Début</th>
-                        <th class="table-header">Fin</th>
+                        <th class="table-header">Téléphone</th>
+                        <th class="table-header">Adresse</th>
+                        <th class="table-header text-center">Packs Phys.</th>
                         <th class="table-header text-right">Montant</th>
-                        <th class="table-header text-center">QR Code (JPG)</th>
+                        <th class="table-header text-center">QR Code</th>
                         <th class="table-header text-center">Actions</th>
                     </tr>
                 </thead>
@@ -74,7 +79,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, onValue, get, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -104,88 +109,86 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-            } catch (e) {
-                alert("Erreur lors du téléchargement.");
-            }
+            } catch (e) { alert("Erreur de téléchargement."); }
         }
 
         async function deleteOrderAndEvent(orderId, eventSlug, eventName) {
-            if (confirm(`Êtes-vous sûr de vouloir supprimer la commande pour l'événement "${eventName}" ?\nCela supprimera définitivement la commande ET l'événement lié.`)) {
+            if (confirm(`Supprimer la commande "${eventName}" ?`)) {
                 try {
-                    // Suppression de la commande
                     await remove(ref(db, `orders/${orderId}`));
-                    
-                    // Suppression de l'événement s'il existe un slug
-                    if (eventSlug) {
-                        await remove(ref(db, `events/${eventSlug}`));
-                    }
-                    
-                    alert("Suppression effectuée avec succès.");
-                } catch (error) {
-                    console.error("Erreur de suppression:", error);
-                    alert("Une erreur est survenue lors de la suppression.");
-                }
+                    if (eventSlug) await remove(ref(db, `events/${eventSlug}`));
+                } catch (e) { alert("Erreur."); }
             }
         }
 
-        onValue(ref(db, 'orders'), async (snapshot) => {
+        onValue(ref(db, 'orders'), (snapshot) => {
             const list = document.getElementById('orders-list');
             list.innerHTML = "";
             let totalCA = 0;
+            let totalPacksGlobal = 0;
             const data = snapshot.val();
             
             if (!data) {
-                document.getElementById('stat-orders').innerText = "0";
-                document.getElementById('stat-ca').innerText = "0€";
+                document.querySelectorAll('#stat-ca, #stat-orders, #stat-packs').forEach(el => el.innerText = "0");
                 return;
             }
 
             const orders = Object.entries(data).reverse();
             document.getElementById('stat-orders').innerText = orders.length;
 
-            for (const [key, order] of orders) {
-                totalCA += parseInt(order.totalAmount || 0);
-                const configSnap = await get(ref(db, `events/${order.eventSlug}/config`));
-                const config = configSnap.val() || {};
+            orders.forEach(([key, order]) => {
+                // Gestion CA
+                const valAmount = parseFloat(order.totalAmount) || 0;
+                totalCA += valAmount;
+                
+                // GESTION PACKS : Vérification multi-formats (string ou number)
+                let packCount = 0;
+                if (order.physicalpackordered !== undefined) {
+                    packCount = parseInt(order.physicalpackordered, 10);
+                }
+                if (isNaN(packCount)) packCount = 0;
+                totalPacksGlobal += packCount;
+
                 const appLink = `${window.location.origin}/app.html?event=${order.eventSlug}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&format=jpg&data=${encodeURIComponent(appLink)}`;
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/5 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-4 text-[10px] text-gray-500 font-mono">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '--'}</td>
-                    <td class="p-4">
-                        <div class="font-bold text-sm">${order.eventName || 'Sans nom'}</div>
-                        <div class="text-[9px] text-pink-500 font-mono uppercase">${order.eventSlug || '--'}</div>
+                    <td class="p-4 text-[10px] text-gray-500 font-mono whitespace-nowrap">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '--'}</td>
+                    <td class="p-4 font-bold text-xs text-white uppercase">${order.eventName || '--'}</td>
+                    <td class="p-4 text-[9px] text-pink-500 font-mono uppercase">${order.eventSlug || '--'}</td>
+                    <td class="p-4 text-xs text-gray-300">${order.email || '--'}</td>
+                    <td class="p-4 text-xs text-blue-400 font-mono">${order.phone || '--'}</td>
+                    <td class="p-4 text-[10px] text-gray-400 italic">${order.shippingAddress || '--'}</td>
+                    <td class="p-4 text-center">
+                        <span class="${packCount > 0 ? 'bg-blue-600 text-white' : 'text-gray-600 bg-white/5'} font-black px-3 py-1 rounded text-xs">
+                            ${packCount}
+                        </span>
                     </td>
-                    <td class="p-4"><span class="text-xs bg-white/5 px-2 py-1 rounded select-all">${order.email || '--'}</span></td>
-                    <td class="p-4 text-xs font-bold text-green-500">${config.startDate ? new Date(config.startDate).toLocaleDateString() : '--'}</td>
-                    <td class="p-4 text-xs font-bold text-red-500">${config.expiryDate ? new Date(config.expiryDate).toLocaleDateString() : '--'}</td>
-                    <td class="p-4 text-right font-black text-white">${order.totalAmount || 0}€</td>
+                    <td class="p-4 text-right font-black text-white">${valAmount}€</td>
                     <td class="p-4 text-center">
                         <div class="qr-container">
-                            <button id="dl-${key}" class="bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase hover:bg-white hover:text-black transition-all">
-                                ↓ JPG
-                            </button>
-                            <div class="qr-preview">
-                                <img src="${qrUrl}" alt="QR" width="150" height="150" class="mx-auto">
-                                <p class="text-[8px] text-black text-center font-bold mt-2 uppercase">Clic pour télécharger</p>
-                            </div>
+                            <button id="dl-${key}" class="bg-white/10 text-white text-[10px] font-black px-3 py-1.5 rounded uppercase hover:bg-pink-500 transition-all">QR</button>
+                            <div class="qr-preview"><img src="${qrUrl}" alt="QR" width="150" height="150" class="mx-auto"></div>
                         </div>
                     </td>
                     <td class="p-4 text-center">
-                        <button id="del-${key}" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all">
-                            Supprimer
+                        <button id="del-${key}" class="text-gray-600 hover:text-red-500 transition-colors p-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                         </button>
                     </td>
                 `;
                 list.appendChild(tr);
                 
-                // Assignation des événements au clic
                 document.getElementById(`dl-${key}`).onclick = () => downloadQR(qrUrl, `QR_${order.eventSlug || key}`);
                 document.getElementById(`del-${key}`).onclick = () => deleteOrderAndEvent(key, order.eventSlug, order.eventName || 'Sans nom');
-            }
+            });
+            
             document.getElementById('stat-ca').innerText = totalCA + "€";
+            document.getElementById('stat-packs').innerText = totalPacksGlobal;
         });
     </script>
 </body>
