@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affichette A4 ClubMatch Pro - Export Transparent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        :root {
+            --accent: #ff0055;
+            --accent-light: #ff5e00;
+        }
+
+        /* Fond transparent pour l'export PNG */
+        body {
+            background: transparent !important;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            background: transparent !important; /* Suppression de toute couleur de fond */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* On garde des lueurs légères mais elles seront transparentes en périphérie */
+        .bg-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 0, 85, 0.15) 0%, rgba(0,0,0,0) 70%);
+            top: -200px;
+            right: -200px;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            padding: 60px 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header-logo {
+            font-weight: 900;
+            font-style: italic;
+            font-size: 2.8rem;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .text-accent { color: var(--accent); }
+
+        /* Carte avec bordure pour l'impression sur supports variés */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3rem;
+            padding: 3rem;
+            width: 100%;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 25px;
+            border-radius: 2.5rem;
+            box-shadow: 0 0 50px rgba(255, 0, 85, 0.5);
+            display: inline-block;
+            margin: 2.5rem 0;
+        }
+
+        .step-number {
+            font-weight: 900;
+            font-style: italic;
+            font-size: 1.3rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .accent-gradient {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Ombres portées pour que le texte soit lisible sur n'importe quel fond futur */
+        h1, p, .header-logo {
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        @media print {
+            body, .a4-page { background: transparent !important; }
+            * { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="a4-page">
+        <div class="bg-glow"></div>
+
+        <div class="content">
+            <div class="header-logo">
+                CLUB<span class="text-accent">MATCH</span>
+            </div>
+            
+            <h1 class="text-6xl font-black italic uppercase leading-none mb-6">
+                Brisez la glace <br>
+                <span class="accent-gradient">en un flash.</span>
+            </h1>
+
+            <div class="qr-container">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://club-match-d2d39.web.app/&bgcolor=ffffff&color=000000" alt="QR Code" style="width: 280px; height: 280px;">
+            </div>
+
+            <p class="font-bold text-sm tracking-[0.4em] uppercase text-pink-500 mb-12">
+                Scan pour accéder à la web-app
+            </p>
+
+            <div class="glass-card">
+                <div class="grid grid-cols-2 gap-x-12 gap-y-10 text-left">
+                    <div>
+                        <span class="step-number">01. ACCUEIL</span>
+                        <p class="text-sm text-white font-semibold">Récupérez votre badge numéroté à l'entrée.</p>
+                    </div>
+                    <div>
+                        <span class="step-number">02. CONNEXION</span>
+                        <p class="text-sm text-white font-semibold">Scannez ce code (aucune installation requise).</p>
+                    </div>
+                    <div>
+                        <span class="step-number">03. CIBLAGE</span>
+                        <p class="text-sm text-white font-semibold">Flashez les numéros des badges qui vous plaisent.</p>
+                    </div>
+                    <div>
+                        <span class="step-number">04. MATCH</span>
+                        <p class="text-sm text-white font-semibold">Si c'est réciproque, c'est un Match ! Allez vous parler.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-10 w-full flex justify-between items-end opacity-70">
+                <div class="text-[10px] uppercase font-bold tracking-widest text-left">
+                    Expérience exclusive<br>ClubMatch Pro
+                </div>
+                <div class="text-[10px] text-pink-500 font-black italic uppercase">
+                    Pas de match ? Continuez de flasher !
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
