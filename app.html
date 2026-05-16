@@ -238,7 +238,6 @@
         }
         window.deleteLike = deleteLike;
 
-        // Remplace l'ancien onValue du config par celui-ci
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             const now = Date.now();
@@ -253,7 +252,6 @@
 
             document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
 
-            // Vérification des dates et du statut
             if (config.active === false) {
                 showUI('closed-screen');
                 closedMsg.innerText = "L'organisateur a désactivé cet événement.";
@@ -268,9 +266,7 @@
                 closedMsg.innerText = "Cet événement est terminé (licence expirée).";
             } 
             else {
-                // Tout est OK
                 if (currentBadge) {
-                    // Sécurité additionnelle au rechargement si le localStorage contient un badge > 200
                     const badgeNum = parseInt(currentBadge, 10);
                     if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
                         localStorage.removeItem(`myBadge_${eventID}`);
@@ -300,11 +296,9 @@
             const loginError = document.getElementById('login-error');
             const limitError = document.getElementById('login-limit-error');
 
-            // Masquer les erreurs précédentes à chaque tentative
             loginError.classList.add('hidden');
             limitError.classList.add('hidden');
 
-            // Vérification de la limite stricte à 200
             if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
                 limitError.classList.remove('hidden');
                 return;
@@ -511,9 +505,12 @@
             }
         };
 
+        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
-            if (confirm("⚠ Supprimer TOUTES les données ?")) {
-                await remove(ref(db, basePath)); 
+            if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
+                await remove(ref(db, `${basePath}/users`));
+                await remove(ref(db, `${basePath}/likes`));
+                await remove(ref(db, `${basePath}/messages`));
                 await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
                 location.reload();
             }
