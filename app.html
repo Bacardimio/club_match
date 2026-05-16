@@ -63,6 +63,7 @@
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
             <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
             <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
+            <p id="login-limit-error" class="text-red-500 text-center text-xs font-bold hidden">Numéro de badge invalide (maximum 200).</p>
         </div>
     </div>
 
@@ -268,7 +269,16 @@
             } 
             else {
                 // Tout est OK
-                if (currentBadge) loadApp(); 
+                if (currentBadge) {
+                    // Sécurité additionnelle au rechargement si le localStorage contient un badge > 200
+                    const badgeNum = parseInt(currentBadge, 10);
+                    if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
+                        localStorage.removeItem(`myBadge_${eventID}`);
+                        showUI('login-screen');
+                    } else {
+                        loadApp(); 
+                    }
+                } 
                 else showUI('login-screen');
             }
         });
@@ -283,12 +293,29 @@
         });
 
         document.getElementById('btn-login-trigger').onclick = async () => {
-            const badge = document.getElementById('user-badge').value.trim();
-            if(!badge) return;
+            const badgeRaw = document.getElementById('user-badge').value.trim();
+            if(!badgeRaw) return;
+
+            const badgeNum = parseInt(badgeRaw, 10);
+            const loginError = document.getElementById('login-error');
+            const limitError = document.getElementById('login-limit-error');
+
+            // Masquer les erreurs précédentes à chaque tentative
+            loginError.classList.add('hidden');
+            limitError.classList.add('hidden');
+
+            // Vérification de la limite stricte à 200
+            if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
+                limitError.classList.remove('hidden');
+                return;
+            }
+
+            const badge = badgeNum.toString();
             const userRef = ref(db, `${basePath}/users/${badge}`);
             const snapshot = await get(userRef);
+            
             if (snapshot.exists() && snapshot.val() !== deviceId) {
-                document.getElementById('login-error').classList.remove('hidden');
+                loginError.classList.remove('hidden');
             } else {
                 await set(userRef, deviceId);
                 currentBadge = badge;
@@ -299,8 +326,18 @@
 
         document.getElementById('btn-like-trigger').onclick = async () => {
             const targetInput = document.getElementById('target-badge');
-            const target = targetInput.value.trim();
-            if(!target || target === currentBadge) return;
+            const targetRaw = targetInput.value.trim();
+            if(!targetRaw) return;
+
+            const targetNum = parseInt(targetRaw, 10);
+            if (isNaN(targetNum) || targetNum > 200 || targetNum <= 0) {
+                document.getElementById('target-error').classList.remove('hidden');
+                return;
+            }
+
+            const target = targetNum.toString();
+            if(target === currentBadge) return;
+
             if (currentLikesSentCount >= 5) {
                 document.getElementById('limit-warning').classList.remove('hidden');
                 setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 3000);
