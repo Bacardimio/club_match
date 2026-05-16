@@ -60,7 +60,7 @@
                 <p id="stat-packs" class="text-4xl font-black mt-2 text-blue-400">0</p>
             </div>
             <div class="glass p-6 rounded-3xl flex items-center justify-center text-center">
-                <p class="text-emerald-400 text-[10px] font-mono animate-pulse">Liaison events (startDate / expiryDate) Active</p>
+                <p class="text-emerald-400 text-[10px] font-mono uppercase tracking-wider3">Suivi Temporel (À venir / Active / Expirée)</p>
             </div>
         </div>
 
@@ -71,9 +71,8 @@
                         <th class="table-header">Date Reçue</th>
                         <th class="table-header">Événement / Slug</th>
                         <th class="table-header">Contact Client</th>
-                        <th class="table-header">Formule / Plan</th>
-                        <th class="table-header">Date Début</th>
-                        <th class="table-header">Date Fin</th>
+                        <th class="table-header">Formule</th>
+                        <th class="table-header">Statut Licence</th>
                         <th class="table-header">Logistique (Packs & Adresse)</th>
                         <th class="table-header text-center">Traité</th>
                         <th class="table-header text-right">Montant</th>
@@ -127,31 +126,66 @@
             return isNaN(d.getTime()) ? dateVal : d.toLocaleDateString('fr-FR');
         };
 
-        // FONCTION EXTRACTRICE ULTRA-ROBUSTE DES DATES DEPUIS LE NOEUD "EVENTS"
         const getDatesFromEventNode = (orderSlug, orderItem) => {
             let start = null;
             let end = null;
 
             if (orderSlug && globalEventsData) {
-                // Nettoyage pour éviter les erreurs d'espaces ou de majuscules
                 const cleanSlug = String(orderSlug).trim().toLowerCase();
                 const matchedKey = Object.keys(globalEventsData).find(k => k.trim().toLowerCase() === cleanSlug);
                 
                 if (matchedKey) {
                     const targetEvent = globalEventsData[matchedKey];
-                    start = targetEvent.startDate; // "startDate" spécifié par l'utilisateur
-                    end = targetEvent.expiryDate;  // "expiryDate" spécifié par l'utilisateur
+                    start = targetEvent.startDate; 
+                    end = targetEvent.expiryDate;  
                 }
             }
 
-            // Fallback de secours dans l'objet order direct au cas où l'événement n'existe pas encore
             if (!start) start = orderItem.startDate || orderItem.eventStartDate || orderItem.dateDebut;
             if (!end) end = orderItem.expiryDate || orderItem.eventEndDate || orderItem.dateFin;
 
-            return {
-                startDisp: formatEventDate(start),
-                endDisp: formatEventDate(end)
+            return { start, end };
+        };
+
+        // CALCUL DE STATUT À TRIPLE ÉTAT : À VENIR / ACTIVE / EXPIRÉE
+        const getLicenseStatusBadge = (startDate, expiryDate) => {
+            if (!expiryDate) return '<span class="bg-gray-500/10 text-gray-400 border border-gray-500/20 text-[10px] font-bold px-2.5 py-1 rounded uppercase">Inconnu</span>';
+            
+            const parseToTimestamp = (val) => {
+                if (!val) return null;
+                if (typeof val === 'object') {
+                    if (val.seconds) val = val.seconds * 1000;
+                    else if (val.time) val = val.time;
+                }
+                let timestamp = Number(val);
+                if (!isNaN(timestamp) && String(val).trim() !== '') {
+                    if (timestamp > 0 && timestamp < 9999999999) timestamp = timestamp * 1000;
+                    return timestamp;
+                }
+                const d = new Date(val).getTime();
+                return isNaN(d) ? null : d;
             };
+
+            const now = Date.now();
+            const startT = parseToTimestamp(startDate);
+            const endT = parseToTimestamp(expiryDate);
+
+            if (!endT) {
+                return '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold px-2.5 py-1 rounded uppercase">Invalide</span>';
+            }
+
+            // Case 1 : L'événement est dans le futur (Pas encore actif)
+            if (startT && now < startT) {
+                return '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1.5 w-fit"><span class="h-1.5 w-1.5 rounded-full bg-blue-400"></span>À venir</span>';
+            } 
+            // Case 2 : L'événement a expiré
+            else if (now > endT) {
+                return '<span class="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1.5 w-fit"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Expirée</span>';
+            } 
+            // Case 3 : L'événement est actuellement actif
+            else {
+                return '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1.5 w-fit"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Active</span>';
+            }
         };
 
         async function downloadQR(url, filename) {
@@ -176,7 +210,7 @@
             }
         }
 
-        // EXPORT EXCEL CORRIGÉ
+        // EXPORT EXCEL
         document.getElementById('btn-export').onclick = () => {
             if (!globalOrdersData) return alert("Aucune donnée.");
             let csvContent = "\ufeff"; 
@@ -184,12 +218,12 @@
 
             Object.entries(globalOrdersData).reverse().forEach(([key, order]) => {
                 const formula = order.plan || order.formula || order.formule || '48h';
-                const { startDisp, endDisp } = getDatesFromEventNode(order.eventSlug, order);
+                const { start, end } = getDatesFromEventNode(order.eventSlug, order);
                 
                 let packCount = parseInt(order.physicalPacksOrdered, 10) || 0;
                 const address = (order.postalAdress || order.postalAddress || order.shippingAddress || 'Licence seule').replace(/;/g, ',').replace(/\n/g, ' ');
 
-                csvContent += `${key};${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''};${(order.eventName || '').replace(/;/g, ',')};${(order.eventSlug || '').replace(/;/g, ',')};${(order.email || '').replace(/;/g, ',')};${(order.phone || '').replace(/;/g, ',')};${formula};${startDisp};${endDisp};${packCount};${address};${parseFloat(order.totalAmount) || 0};${order.processed ? "TRAITÉ" : "À TRAITER"}\n`;
+                csvContent += `${key};${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''};${(order.eventName || '').replace(/;/g, ',')};${(order.eventSlug || '').replace(/;/g, ',')};${(order.email || '').replace(/;/g, ',')};${(order.phone || '').replace(/;/g, ',')};${formula};${formatEventDate(start)};${formatEventDate(end)};${packCount};${address};${parseFloat(order.totalAmount) || 0};${order.processed ? "TRAITÉ" : "À TRAITER"}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -201,7 +235,7 @@
             document.body.removeChild(link);
         };
 
-        // LECTURE EN TEMPS RÉEL DE LA RACINE DU PROJET (ORDERS & EVENTS)
+        // ECOUTEUR TEMPS REEL
         onValue(ref(db), (snapshot) => {
             const list = document.getElementById('orders-list');
             list.innerHTML = "";
@@ -230,8 +264,9 @@
                 const formulaText = order.plan || order.formula || order.formule || '48h'; 
                 const isProcessed = order.processed === true;
 
-                // Récupération des dates via la fonction robuste ciblant "events -> startDate / expiryDate"
-                const { startDisp, endDisp } = getDatesFromEventNode(order.eventSlug, order);
+                // Récupération dynamique et calcul du badge triple état
+                const { start, end } = getDatesFromEventNode(order.eventSlug, order);
+                const statusBadge = getLicenseStatusBadge(start, end);
 
                 const appLink = `${window.location.origin}/app.html?event=${order.eventSlug}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&format=jpg&data=${encodeURIComponent(appLink)}`;
@@ -258,12 +293,8 @@
                         </span>
                     </td>
                     
-                    <td class="p-4 text-xs font-mono text-gray-300 whitespace-nowrap">
-                        ${startDisp}
-                    </td>
-
-                    <td class="p-4 text-xs font-mono text-gray-300 whitespace-nowrap">
-                        ${endDisp}
+                    <td class="p-4 whitespace-nowrap">
+                        ${statusBadge}
                     </td>
                     
                     <td class="p-4">
