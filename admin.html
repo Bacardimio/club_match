@@ -37,7 +37,7 @@
             </div>
             <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                 <button id="btn-export" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-xl uppercase transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/xl" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Exporter Excel
@@ -60,7 +60,7 @@
                 <p id="stat-packs" class="text-4xl font-black mt-2 text-blue-400">0</p>
             </div>
             <div class="glass p-6 rounded-3xl flex items-center justify-center text-center">
-                <p class="text-emerald-400 text-[10px] font-mono animate-pulse">Interface & Code Nettoyés</p>
+                <p class="text-emerald-400 text-[10px] font-mono animate-pulse">Jointure Commandes ⇆ Événements Active</p>
             </div>
         </div>
 
@@ -73,7 +73,7 @@
                         <th class="table-header">Contact Client</th>
                         <th class="table-header">Formule / Plan</th>
                         <th class="table-header">Période Événement</th>
-                        <th class="table-header">Logistique (Packs & Addresse)</th>
+                        <th class="table-header">Logistique (Packs & Adresse)</th>
                         <th class="table-header text-center">Traité</th>
                         <th class="table-header text-right">Montant</th>
                         <th class="table-header text-center">QR Code</th>
@@ -103,6 +103,7 @@
         const db = getDatabase(app);
 
         let globalOrdersData = null;
+        let globalEventsData = null;
 
         const pass = prompt("Accès Admin :");
         if (pass !== "2026") document.body.innerHTML = "";
@@ -147,18 +148,22 @@
             }
         }
 
-        // EXPORT EXCEL
+        // EXPORT EXCEL AVEC RECHERCHE DE DATES CROISÉE
         document.getElementById('btn-export').onclick = () => {
             if (!globalOrdersData) return alert("Aucune donnée.");
             let csvContent = "\ufeff"; 
-            csvContent += "ID Commande;Date Achat;Nom Événement;Slug;E-mail;Téléphone;Formule / Plan;Date Début;Date Fin;Packs Physiques;Addresse Livraison;Montant (€);Statut Traité\n";
+            csvContent += "ID Commande;Date Achat;Nom Événement;Slug;E-mail;Téléphone;Formule / Plan;Date Début;Date Fin;Packs Physiques;Adresse Livraison;Montant (€);Statut Traité\n";
 
             Object.entries(globalOrdersData).reverse().forEach(([key, order]) => {
+                const linkedEvent = order.eventSlug && globalEventsData ? globalEventsData[order.eventSlug] : null;
                 const formula = order.plan || order.formula || order.formule || '48h';
-                const start = formatEventDate(order.eventStartDate || order.startDate || order.eventStart || order.dateDebut || order.dateStart);
-                const end = formatEventDate(order.eventEndDate || order.endDate || order.eventEnd || order.dateFin || order.dateEnd || order.expiryDate);
+                
+                // Récupération intelligente (Commande ou nœud Événement)
+                const start = formatEventDate(order.eventStartDate || order.startDate || order.eventStart || order.dateDebut || order.dateStart || (linkedEvent ? (linkedEvent.startDate || linkedEvent.eventStartDate || linkedEvent.dateDebut || linkedEvent.start) : null));
+                const end = formatEventDate(order.eventEndDate || order.endDate || order.eventEnd || order.dateFin || order.dateEnd || order.expiryDate || (linkedEvent ? (linkedEvent.expiryDate || linkedEvent.endDate || linkedEvent.eventEndDate || linkedEvent.dateFin || linkedEvent.end) : null));
+                
                 let packCount = parseInt(order.physicalPacksOrdered, 10) || 0;
-                const address = (order.postalAddress || order.shippingAddress || 'Licence seule').replace(/;/g, ',').replace(/\n/g, ' ');
+                const address = (order.postalAdress || order.postalAddress || order.shippingAddress || 'Licence seule').replace(/;/g, ',').replace(/\n/g, ' ');
 
                 csvContent += `${key};${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''};${(order.eventName || '').replace(/;/g, ',')};${(order.eventSlug || '').replace(/;/g, ',')};${(order.email || '').replace(/;/g, ',')};${(order.phone || '').replace(/;/g, ',')};${formula};${start};${end};${packCount};${address};${parseFloat(order.totalAmount) || 0};${order.processed ? "TRAITÉ" : "À TRAITER"}\n`;
             });
@@ -172,16 +177,18 @@
             document.body.removeChild(link);
         };
 
-        // EN TEMPS RÉEL
-        onValue(ref(db, 'orders'), (snapshot) => {
+        // LECTURE DU LOG DE LA RACINE POUR RÉCUPÉRER LES COMMANDES + ÉVÉNEMENTS
+        onValue(ref(db), (snapshot) => {
             const list = document.getElementById('orders-list');
             list.innerHTML = "";
             let totalCA = 0;
             let totalPacksGlobal = 0;
-            const data = snapshot.val();
             
-            globalOrdersData = data;
-            if (!data) {
+            const rootData = snapshot.val() || {};
+            globalOrdersData = rootData.orders || {};
+            globalEventsData = rootData.events || {};
+
+            if (!rootData.orders) {
                 document.getElementById('stat-ca').innerText = "0€";
                 document.getElementById('stat-orders').innerText = "0";
                 document.getElementById('stat-packs').innerText = "0";
@@ -189,9 +196,9 @@
             }
 
             console.clear();
-            console.log("%c--- LOGS DEBOGAGE DATES (F12) ---", "color: #ec4899; font-weight: bold;");
+            console.log("%c--- LOGS DEBOGAGE DE VALEURS DE DATES (F12) ---", "color: #ec4899; font-weight: bold;");
 
-            const orders = Object.entries(data).reverse();
+            const orders = Object.entries(globalOrdersData).reverse();
             document.getElementById('stat-orders').innerText = orders.length;
 
             orders.forEach(([key, order]) => {
@@ -202,11 +209,14 @@
                 const formulaText = order.plan || order.formula || order.formule || '48h'; 
                 const isProcessed = order.processed === true;
 
-                // Récupération des dates
-                const startDateDisp = formatEventDate(order.eventStartDate || order.startDate || order.eventStart || order.dateDebut || order.dateStart);
-                const endDateDisp = formatEventDate(order.eventEndDate || order.endDate || order.eventEnd || order.dateFin || order.dateEnd || order.expiryDate);
+                // Récupération de l'éventuel nœud lié dans la base de données
+                const linkedEvent = order.eventSlug ? globalEventsData[order.eventSlug] : null;
 
-                console.log(`[${order.eventName || 'Sans nom'}] Du : ${startDateDisp} | Au : ${endDateDisp}`);
+                // Extraction robuste des dates (Vérification dans Order puis fallback dans Event)
+                const startDateDisp = formatEventDate(order.eventStartDate || order.startDate || order.eventStart || order.dateDebut || order.dateStart || (linkedEvent ? (linkedEvent.startDate || linkedEvent.eventStartDate || linkedEvent.dateDebut || linkedEvent.start) : null));
+                const endDateDisp = formatEventDate(order.eventEndDate || order.endDate || order.eventEnd || order.dateFin || order.dateEnd || order.expiryDate || (linkedEvent ? (linkedEvent.expiryDate || linkedEvent.endDate || linkedEvent.eventEndDate || linkedEvent.dateFin || linkedEvent.end) : null));
+
+                console.log(`[Slug: ${order.eventSlug || 'Inconnu'}] Début: ${startDateDisp} | Fin: ${endDateDisp}`);
 
                 const appLink = `${window.location.origin}/app.html?event=${order.eventSlug}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&format=jpg&data=${encodeURIComponent(appLink)}`;
@@ -245,7 +255,7 @@
                             <span class="${packCount > 0 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-600 bg-white/5'} font-black px-2.5 py-0.5 rounded text-xs inline-block min-w-[32px] text-center mt-0.5">
                                 ${packCount}
                             </span>
-                            <span class="text-[10px] text-gray-400 italic max-w-[220px] block break-words">${order.postalAddress || order.shippingAddress || 'Licence numérique seule'}</span>
+                            <span class="text-[10px] text-gray-400 italic max-w-[220px] block break-words">${order.postalAdress || order.postalAddress || order.shippingAddress || 'Licence numérique seule'}</span>
                         </div>
                     </td>
 
