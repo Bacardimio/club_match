@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --accent: #ff0055; }
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
@@ -248,13 +247,9 @@
         </div>
     </section>
 
-    <section id="features" class="hidden"></section>
-
     <footer class="w-full text-center py-12 text-xs text-gray-600 border-t border-white/5">
         <p>© 2026 Club Match Pro | Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500">admclient@yahoo.fr</a></p>
     </footer>
-
-    <div id="qrcode-hidden" style="display: none;"></div>
 
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -291,9 +286,9 @@
 
     function runSimulation() {
         screens.forEach(s => s.classList.remove('active'));
-        if (screens[currentIdx]) screens[currentIdx].classList.add('active');
-        if(currentIdx === 0 && badgeSelf) { badgeSelf.innerText = "--"; setTimeout(() => { if(badgeSelf) badgeSelf.innerText = "42" }, 1000); }
-        if(currentIdx === 1 && targetBadge) { targetBadge.innerText = "--"; setTimeout(() => { if(targetBadge) targetBadge.innerText = "88" }, 1000); }
+        screens[currentIdx].classList.add('active');
+        if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
+        if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
         currentIdx = (currentIdx + 1) % screens.length;
         let delay = (currentIdx === 3) ? 2000 : (currentIdx === 0) ? 4500 : 3500;
         setTimeout(runSimulation, delay);
@@ -317,6 +312,7 @@
         currentBasePrice = price;
         modalTitle.innerText = "Licence " + plan;
         
+        // Réinitialiser les champs spécifiques à l'ouverture pour être sûr
         physicalPacksInput.value = 0;
         postalAddressInput.value = "";
         
@@ -387,31 +383,6 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
-        // --- GÉNÉRATION DU QR CODE ---
-        // Utilisation du Hash Routeur (Fréquent pour Loveable/SPA) pour éviter l'erreur 404 Vercel
-        const appUrl = `https://clubmatch-lake.vercel.app/#/event/${eventSlug}`; 
-        
-        // Nettoyage préalable du div invisible
-        document.getElementById('qrcode-hidden').innerHTML = "";
-        
-        // Génération du QR Code
-        const qrcodeGenerator = new QRCode(document.getElementById("qrcode-hidden"), {
-            text: appUrl,
-            width: 512,
-            height: 512,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
-
-        // Temporisation de 300ms pour garantir le tracé complet de l'élément dans le DOM
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Récupération de l'image au format Base64
-        const qrCodeImg = document.getElementById('qrcode-hidden').querySelector('img');
-        const qrCodeBase64 = qrCodeImg ? qrCodeImg.src : "";
-        // ------------------------------
-
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -430,17 +401,17 @@
             active: true,
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
-            plan: currentPlan,
-            appUrl: appUrl,          // Stocke le lien de redirection direct vers l'application
-            qrCode: qrCodeBase64     // Stocke l'image encodée du QR Code
+            plan: currentPlan
         };
 
         try {
             await push(ref(db, 'orders'), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
+            // RÉINITIALISATION DU FORMULAIRE APRÈS SUCCÈS
             document.getElementById('orderForm').reset();
             
+            // Remettre la date du jour par défaut et recalculer le total (masque l'adresse)
             dateInput.value = today;
             updateTotal();
 

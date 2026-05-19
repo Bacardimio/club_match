@@ -147,7 +147,6 @@
                         <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
-                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Statut Licence</td><td id="admin-licence-status" class="px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-gray-400">--</td></tr>
                         <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
                         <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
                         <tr class="bg-pink-500/5"><td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
@@ -239,18 +238,9 @@
         }
         window.deleteLike = deleteLike;
 
-        // Fonction d'évaluation dynamique du statut de la licence
-        function getLicenceStatus(config) {
-            if (!config) return "Introuvable";
-            const now = Date.now();
-            if (config.active === false) return "Désactivée";
-            if (now < config.startDate) return "À venir";
-            if (now > config.expiryDate) return "Expirée";
-            return "En cours";
-        }
-
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
+            const now = Date.now();
             const closedScreen = document.getElementById('closed-screen');
             const closedMsg = document.getElementById('closed-message');
 
@@ -262,25 +252,20 @@
 
             document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
 
-            // Analyse du statut temporel réel
-            const statutLicence = getLicenceStatus(config);
-
-            if (statutLicence === "Désactivée") {
+            if (config.active === false) {
                 showUI('closed-screen');
                 closedMsg.innerText = "L'organisateur a désactivé cet événement.";
             } 
-            else if (statutLicence === "À venir") {
+            else if (now < config.startDate) {
                 showUI('closed-screen');
-                const dateDebut = new Date(config.startDate).toLocaleDateString('fr-FR', {
-                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-                });
+                const dateDebut = new Date(config.startDate).toLocaleDateString();
                 closedMsg.innerHTML = `Cet événement n'a pas encore commencé.<br><span class="text-pink-500">Ouverture le ${dateDebut}</span>`;
             } 
-            else if (statutLicence === "Expirée") {
+            else if (now > config.expiryDate) {
                 showUI('closed-screen');
                 closedMsg.innerText = "Cet événement est terminé (licence expirée).";
             } 
-            else if (statutLicence === "En cours") {
+            else {
                 if (currentBadge) {
                     const badgeNum = parseInt(currentBadge, 10);
                     if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
@@ -433,18 +418,6 @@
         }
 
         async function updateAdminStats() {
-            // Lecture et coloration du Statut de la licence dans l'Admin Panel
-            const configSnap = await get(ref(db, `${basePath}/config`));
-            if (configSnap.exists()) {
-                const config = configSnap.val();
-                const status = getLicenceStatus(config);
-                const statusElem = document.getElementById('admin-licence-status');
-                statusElem.innerText = status;
-                if (status === "En cours") statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-green-500";
-                else if (status === "À venir") statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-orange-500";
-                else statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-red-500";
-            }
-
             const usersSnap = await get(ref(db, `${basePath}/users`));
             const likesSnap = await get(ref(db, `${basePath}/likes`));
             const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
@@ -532,7 +505,7 @@
             }
         };
 
-        // Supprime uniquement l'activité du jeu pour permettre la réutilisation immédiate
+        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
                 await remove(ref(db, `${basePath}/users`));
