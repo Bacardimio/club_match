@@ -6,8 +6,6 @@
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    
     <style>
         :root { --accent: #ff0055; }
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
@@ -258,6 +256,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
     
+    // NOUVEAU : Importation directe du module QRCode pour éviter les erreurs "undefined"
+    import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+    
     const firebaseConfig = {
         apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
         authDomain: "club-match-d2d39.firebaseapp.com",
@@ -379,14 +380,12 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
-        // --- GÉNÉRATION DU QR CODE VIA NPM LIBRARY (100% Mémoire JS) ---
-        // Remplacez "/event/" par ce qui correspond à votre architecture app exacte (ex: /?event= ou /#/event/)
         const appUrl = `https://clubmatch-lake.vercel.app/event/${eventSlug}`; 
         
         let qrCodeBase64 = "";
         
         try {
-            // Génère directement le Base64 de l'image de manière asynchrone sans le DOM
+            // Le générateur trouve désormais "QRCode" sans aucun problème
             qrCodeBase64 = await QRCode.toDataURL(appUrl, {
                 width: 512,
                 margin: 2,
@@ -403,7 +402,6 @@
             btn.innerText = "Commander";
             return;
         }
-        // -------------------------------------------------------------
 
         const orderData = {
             eventSlug: eventSlug,
@@ -425,7 +423,7 @@
             expiryDate: expiryTimestamp,
             plan: currentPlan,
             appUrl: appUrl,
-            qrCode: qrCodeBase64 // Sauvegardé instantanément dans Firebase
+            qrCode: qrCodeBase64
         };
 
         try {
