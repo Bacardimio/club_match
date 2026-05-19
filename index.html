@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --accent: #ff0055; }
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
@@ -251,6 +252,8 @@
         <p>© 2026 Club Match Pro | Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500">admclient@yahoo.fr</a></p>
     </footer>
 
+    <div id="qrcode-hidden" style="display: none;"></div>
+
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
@@ -383,6 +386,31 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
+        // --- GÉNÉRATION DU QR CODE ---
+        // Lien absolu unique de la Web-App pour cet événement
+        const appUrl = `https://club-match-d2d39.web.app/event/${eventSlug}`; 
+        
+        // On s'assure que la zone de dessin temporaire est vide
+        document.getElementById('qrcode-hidden').innerHTML = "";
+        
+        // Initialisation de QRCodeJS
+        const qrcodeGenerator = new QRCode(document.getElementById("qrcode-hidden"), {
+            text: appUrl,
+            width: 512, // Haute résolution adaptée à l'impression
+            height: 512,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H // Résistance maximale aux déchirures/salissures
+        });
+
+        // Petite pause asynchrone (300ms) indispensable pour laisser le script dessiner le canvas
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Extraction de l'image générée en chaîne Base64
+        const qrCodeImg = document.getElementById('qrcode-hidden').querySelector('img');
+        const qrCodeBase64 = qrCodeImg ? qrCodeImg.src : "";
+        // ------------------------------
+
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -401,7 +429,9 @@
             active: true,
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
-            plan: currentPlan
+            plan: currentPlan,
+            appUrl: appUrl,          // URL stockée
+            qrCode: qrCodeBase64     // Image Base64 stockée
         };
 
         try {
