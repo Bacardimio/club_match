@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
     <style>
         :root { --accent: #ff0055; }
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
@@ -273,7 +276,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- Animation Smartphone ---
+    // Animation Smartphone
     const screens = [
         document.getElementById('step-1'),
         document.getElementById('step-2'),
@@ -286,16 +289,16 @@
 
     function runSimulation() {
         screens.forEach(s => s.classList.remove('active'));
-        screens[currentIdx].classList.add('active');
-        if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
-        if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
+        if (screens[currentIdx]) screens[currentIdx].classList.add('active');
+        if(currentIdx === 0 && badgeSelf) { badgeSelf.innerText = "--"; setTimeout(() => { if(badgeSelf) badgeSelf.innerText = "42" }, 1000); }
+        if(currentIdx === 1 && targetBadge) { targetBadge.innerText = "--"; setTimeout(() => { if(targetBadge) targetBadge.innerText = "88" }, 1000); }
         currentIdx = (currentIdx + 1) % screens.length;
         let delay = (currentIdx === 3) ? 2000 : (currentIdx === 0) ? 4500 : 3500;
         setTimeout(runSimulation, delay);
     }
     window.onload = runSimulation;
 
-    // --- Gestion des Modales ---
+    // Gestion Modales
     const modal = document.getElementById('orderModal');
     const successModal = document.getElementById('successModal');
     const modalTitle = document.getElementById('modalPlanTitle');
@@ -311,11 +314,8 @@
         currentPlan = plan;
         currentBasePrice = price;
         modalTitle.innerText = "Licence " + plan;
-        
-        // Réinitialiser les champs spécifiques à l'ouverture pour être sûr
         physicalPacksInput.value = 0;
         postalAddressInput.value = "";
-        
         updateTotal();
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -334,11 +334,7 @@
     function updateTotal() {
         let total = currentBasePrice;
         let qty = parseInt(physicalPacksInput.value) || 0;
-        
-        if (qty < 0) {
-            qty = 0;
-            physicalPacksInput.value = 0;
-        }
+        if (qty < 0) { qty = 0; physicalPacksInput.value = 0; }
         
         if (qty > 0) {
             addressFieldWrapper.classList.remove('hidden');
@@ -355,12 +351,12 @@
     physicalPacksInput.addEventListener('input', updateTotal);
     physicalPacksInput.addEventListener('change', updateTotal);
 
-    // --- Envoi Formulaire ---
+    // --- ENVOI FORMULAIRE & GÉNÉRATION DU QR CODE ---
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit-order');
         btn.disabled = true;
-        btn.innerText = "Traitement...";
+        btn.innerText = "Génération en cours...";
 
         const eventName = document.getElementById('eventName').value;
         const startDateStr = document.getElementById('activationDate').value;
@@ -383,6 +379,27 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
+        // URL directe de votre application
+        const appUrl = `https://clubmatch-lake.vercel.app/app.html?event=${eventSlug}`; 
+        
+        let qrCodeBase64 = "";
+        
+        try {
+            // Utilisation de QRious (Synchronous et fiable, aucune erreur d'encodage possible)
+            const qr = new window.QRious({
+                value: appUrl,
+                size: 512,
+                level: 'H'
+            });
+            qrCodeBase64 = qr.toDataURL('image/png');
+        } catch (qrError) {
+            console.error("Erreur QR Code:", qrError);
+            alert("Une erreur technique empêche la génération du QR Code.");
+            btn.disabled = false;
+            btn.innerText = "Commander";
+            return;
+        }
+
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -401,17 +418,16 @@
             active: true,
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
-            plan: currentPlan
+            plan: currentPlan,
+            appUrl: appUrl,
+            qrCode: qrCodeBase64 // Sauvegarde l'image parfaite dans Firebase
         };
 
         try {
             await push(ref(db, 'orders'), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
-            // RÉINITIALISATION DU FORMULAIRE APRÈS SUCCÈS
             document.getElementById('orderForm').reset();
-            
-            // Remettre la date du jour par défaut et recalculer le total (masque l'adresse)
             dateInput.value = today;
             updateTotal();
 
@@ -419,13 +435,13 @@
             successModal.classList.add('active');
 
         } catch (error) {
-            console.error(error);
-            alert("Erreur. Contact : admclient@yahoo.fr");
+            console.error("Erreur Firebase:", error);
+            alert("Erreur de connexion. Contact : admclient@yahoo.fr");
         } finally {
             btn.disabled = false;
             btn.innerText = "Commander";
         }
     };
-</script>
+    </script>
 </body>
 </html>
