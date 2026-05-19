@@ -248,6 +248,8 @@
         </div>
     </section>
 
+    <section id="features" class="hidden"></section>
+
     <footer class="w-full text-center py-12 text-xs text-gray-600 border-t border-white/5">
         <p>© 2026 Club Match Pro | Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500">admclient@yahoo.fr</a></p>
     </footer>
@@ -289,9 +291,9 @@
 
     function runSimulation() {
         screens.forEach(s => s.classList.remove('active'));
-        screens[currentIdx].classList.add('active');
-        if(currentIdx === 0) { badgeSelf.innerText = "--"; setTimeout(() => badgeSelf.innerText = "42", 1000); }
-        if(currentIdx === 1) { targetBadge.innerText = "--"; setTimeout(() => targetBadge.innerText = "88", 1000); }
+        if (screens[currentIdx]) screens[currentIdx].classList.add('active');
+        if(currentIdx === 0 && badgeSelf) { badgeSelf.innerText = "--"; setTimeout(() => { if(badgeSelf) badgeSelf.innerText = "42" }, 1000); }
+        if(currentIdx === 1 && targetBadge) { targetBadge.innerText = "--"; setTimeout(() => { if(targetBadge) targetBadge.innerText = "88" }, 1000); }
         currentIdx = (currentIdx + 1) % screens.length;
         let delay = (currentIdx === 3) ? 2000 : (currentIdx === 0) ? 4500 : 3500;
         setTimeout(runSimulation, delay);
@@ -386,8 +388,8 @@
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
         // --- GÉNÉRATION DU QR CODE ---
-        // Utilisation du format URL paramétré (Option A) pour éviter les erreurs de routage Vercel
-        const appUrl = `https://clubmatch-lake.vercel.app/?event=${eventSlug}`; 
+        // Utilisation du Hash Routeur (Fréquent pour Loveable/SPA) pour éviter l'erreur 404 Vercel
+        const appUrl = `https://clubmatch-lake.vercel.app/#/event/${eventSlug}`; 
         
         // Nettoyage préalable du div invisible
         document.getElementById('qrcode-hidden').innerHTML = "";
