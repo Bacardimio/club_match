@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --accent: #ff0055; }
+        /* Harmonisation de la police et du style global */
         body { 
             background: #0a0a0a; 
             color: white; 
@@ -238,17 +239,17 @@
         }
         window.deleteLike = deleteLike;
 
-        // Fonction d'évaluation basée sur le temps réel
+        // Fonction d'évaluation dynamique du statut de la licence
         function getLicenceStatus(config) {
             if (!config) return "Introuvable";
             const now = Date.now();
-            if (config.active === "Désactivée" || config.active === false) return "Désactivée";
+            if (config.active === false) return "Désactivée";
             if (now < config.startDate) return "À venir";
             if (now > config.expiryDate) return "Expirée";
             return "En cours";
         }
 
-        onValue(ref(db, `${basePath}/config`), async (snap) => {
+        onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             const closedScreen = document.getElementById('closed-screen');
             const closedMsg = document.getElementById('closed-message');
@@ -261,34 +262,25 @@
 
             document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
 
-            // 1. Calcul du statut réel théorique
-            const statutCalculé = getLicenceStatus(config);
+            // Analyse du statut temporel réel
+            const statutLicence = getLicenceStatus(config);
 
-            // 2. CORRECTION CRITIQUE : Synchronisation dynamique du champ "active" dans Firebase
-            // Si la valeur actuelle dans la DB ne correspond pas à la réalité temporelle, on la met à jour.
-            // Cela permet à vos intégrations (Make, Sheets, etc.) de voir la bonne chaîne de caractères.
-            if (config.active !== statutCalculé) {
-                await set(ref(db, `${basePath}/config/active`), statutCalculé);
-                return; // L'écriture va immédiatement déclencher un nouvel onValue propre
-            }
-
-            // 3. Routage de l'interface graphique selon l'état validé
-            if (statutCalculé === "Désactivée") {
+            if (statutLicence === "Désactivée") {
                 showUI('closed-screen');
                 closedMsg.innerText = "L'organisateur a désactivé cet événement.";
             } 
-            else if (statutCalculé === "À venir") {
+            else if (statutLicence === "À venir") {
                 showUI('closed-screen');
                 const dateDebut = new Date(config.startDate).toLocaleDateString('fr-FR', {
                     day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
                 });
                 closedMsg.innerHTML = `Cet événement n'a pas encore commencé.<br><span class="text-pink-500">Ouverture le ${dateDebut}</span>`;
             } 
-            else if (statutCalculé === "Expirée") {
+            else if (statutLicence === "Expirée") {
                 showUI('closed-screen');
                 closedMsg.innerText = "Cet événement est terminé (licence expirée).";
             } 
-            else if (statutCalculé === "En cours") {
+            else if (statutLicence === "En cours") {
                 if (currentBadge) {
                     const badgeNum = parseInt(currentBadge, 10);
                     if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
@@ -441,6 +433,7 @@
         }
 
         async function updateAdminStats() {
+            // Lecture et coloration du Statut de la licence dans l'Admin Panel
             const configSnap = await get(ref(db, `${basePath}/config`));
             if (configSnap.exists()) {
                 const config = configSnap.val();
@@ -539,6 +532,7 @@
             }
         };
 
+        // Supprime uniquement l'activité du jeu pour permettre la réutilisation immédiate
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
                 await remove(ref(db, `${basePath}/users`));
