@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --accent: #ff0055; }
-        /* Harmonisation de la police et du style global */
         body { 
             background: #0a0a0a; 
             color: white; 
@@ -147,6 +146,7 @@
                         <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
+                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Statut Licence</td><td id="admin-licence-status" class="px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-gray-400">--</td></tr>
                         <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
                         <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
                         <tr class="bg-pink-500/5"><td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
@@ -238,9 +238,18 @@
         }
         window.deleteLike = deleteLike;
 
-        onValue(ref(db, `${basePath}/config`), (snap) => {
-            const config = snap.val();
+        // Fonction d'évaluation basée sur le temps réel
+        function getLicenceStatus(config) {
+            if (!config) return "Introuvable";
             const now = Date.now();
+            if (config.active === "Désactivée" || config.active === false) return "Désactivée";
+            if (now < config.startDate) return "À venir";
+            if (now > config.expiryDate) return "Expirée";
+            return "En cours";
+        }
+
+        onValue(ref(db, `${basePath}/config`), async (snap) => {
+            const config = snap.val();
             const closedScreen = document.getElementById('closed-screen');
             const closedMsg = document.getElementById('closed-message');
 
@@ -252,20 +261,34 @@
 
             document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
 
-            if (config.active === false) {
+            // 1. Calcul du statut réel théorique
+            const statutCalculé = getLicenceStatus(config);
+
+            // 2. CORRECTION CRITIQUE : Synchronisation dynamique du champ "active" dans Firebase
+            // Si la valeur actuelle dans la DB ne correspond pas à la réalité temporelle, on la met à jour.
+            // Cela permet à vos intégrations (Make, Sheets, etc.) de voir la bonne chaîne de caractères.
+            if (config.active !== statutCalculé) {
+                await set(ref(db, `${basePath}/config/active`), statutCalculé);
+                return; // L'écriture va immédiatement déclencher un nouvel onValue propre
+            }
+
+            // 3. Routage de l'interface graphique selon l'état validé
+            if (statutCalculé === "Désactivée") {
                 showUI('closed-screen');
                 closedMsg.innerText = "L'organisateur a désactivé cet événement.";
             } 
-            else if (now < config.startDate) {
+            else if (statutCalculé === "À venir") {
                 showUI('closed-screen');
-                const dateDebut = new Date(config.startDate).toLocaleDateString();
+                const dateDebut = new Date(config.startDate).toLocaleDateString('fr-FR', {
+                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                });
                 closedMsg.innerHTML = `Cet événement n'a pas encore commencé.<br><span class="text-pink-500">Ouverture le ${dateDebut}</span>`;
             } 
-            else if (now > config.expiryDate) {
+            else if (statutCalculé === "Expirée") {
                 showUI('closed-screen');
                 closedMsg.innerText = "Cet événement est terminé (licence expirée).";
             } 
-            else {
+            else if (statutCalculé === "En cours") {
                 if (currentBadge) {
                     const badgeNum = parseInt(currentBadge, 10);
                     if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
@@ -418,6 +441,17 @@
         }
 
         async function updateAdminStats() {
+            const configSnap = await get(ref(db, `${basePath}/config`));
+            if (configSnap.exists()) {
+                const config = configSnap.val();
+                const status = getLicenceStatus(config);
+                const statusElem = document.getElementById('admin-licence-status');
+                statusElem.innerText = status;
+                if (status === "En cours") statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-green-500";
+                else if (status === "À venir") statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-orange-500";
+                else statusElem.className = "px-6 py-4 text-right font-black text-xs uppercase tracking-wider text-red-500";
+            }
+
             const usersSnap = await get(ref(db, `${basePath}/users`));
             const likesSnap = await get(ref(db, `${basePath}/likes`));
             const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
@@ -505,7 +539,6 @@
             }
         };
 
-        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
                 await remove(ref(db, `${basePath}/users`));
