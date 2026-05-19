@@ -6,6 +6,8 @@
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
     <style>
         :root { --accent: #ff0055; }
         body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
@@ -256,9 +258,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
     
-    // NOUVEAU : Importation directe du module QRCode pour éviter les erreurs "undefined"
-    import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-    
     const firebaseConfig = {
         apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
         authDomain: "club-match-d2d39.firebaseapp.com",
@@ -352,7 +351,7 @@
     physicalPacksInput.addEventListener('input', updateTotal);
     physicalPacksInput.addEventListener('change', updateTotal);
 
-    // --- ENVOI FORMULAIRE & GÉNÉRATION SÉCURISÉE DU QR CODE ---
+    // --- ENVOI FORMULAIRE & GÉNÉRATION DU QR CODE ---
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit-order');
@@ -380,23 +379,21 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
+        // URL directe de votre application
         const appUrl = `https://clubmatch-lake.vercel.app/event/${eventSlug}`; 
         
         let qrCodeBase64 = "";
         
         try {
-            // Le générateur trouve désormais "QRCode" sans aucun problème
-            qrCodeBase64 = await QRCode.toDataURL(appUrl, {
-                width: 512,
-                margin: 2,
-                errorCorrectionLevel: 'H',
-                color: {
-                    dark: "#000000",
-                    light: "#ffffff"
-                }
+            // Utilisation de QRious (Synchronous et fiable, aucune erreur d'encodage possible)
+            const qr = new window.QRious({
+                value: appUrl,
+                size: 512,
+                level: 'H'
             });
+            qrCodeBase64 = qr.toDataURL('image/png');
         } catch (qrError) {
-            console.error("Erreur lors de la génération du QR Code:", qrError);
+            console.error("Erreur QR Code:", qrError);
             alert("Une erreur technique empêche la génération du QR Code.");
             btn.disabled = false;
             btn.innerText = "Commander";
@@ -423,7 +420,7 @@
             expiryDate: expiryTimestamp,
             plan: currentPlan,
             appUrl: appUrl,
-            qrCode: qrCodeBase64
+            qrCode: qrCodeBase64 // Sauvegarde l'image parfaite dans Firebase
         };
 
         try {
