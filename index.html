@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
     
     <style>
         :root { --accent: #ff0055; }
@@ -92,7 +93,7 @@
 
                 <div class="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/10">
                     <input type="checkbox" id="legalTerms" required class="w-5 h-5 accent-pink-500 cursor-pointer mt-0.5 flex-shrink-0">
-                    <label for="legalTerms" class="text-[10px] text-gray-400 leading-tight cursor-pointer select-none">
+                    <label for="legalTerms" class="text-[10px] text-gray-400 font-normal leading-tight cursor-pointer select-none">
                         J'accepte les <a href="cgv.html" target="_blank" class="text-pink-500 underline hover:text-pink-400">Conditions Générales de Vente et d'Utilisation</a>, je demande l'exécution immédiate du service numérique avant la fin du délai légal et renonce expressément à mon droit de rétractation de 14 jours, et décharge Club Match Pro de toute responsabilité en cas d'utilisation malveillante.
                     </label>
                 </div>
@@ -102,9 +103,23 @@
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Total TTC</p>
                         <p id="totalPriceDisplay" class="text-4xl font-black italic text-white">0€</p>
                     </div>
-                    <button type="submit" id="btn-submit-order" class="btn-main px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-wider max-w-[240px] text-center leading-tight">Valider ma commande avec obligation de paiement</button>
+                    <button type="submit" id="btn-submit-order" class="btn-main px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-wider max-w-[240px] text-center leading-tight">Valider et Payer avec Stripe</button>
                 </div>
             </form>
+            
+            <div class="hidden">
+               <stripe-buy-button
+                  id="stripe-btn-48h"
+                  buy-button-id="fZu14o5EV3Cn8aU8ZzcQU01"
+                  publishable-key="pk_live_51TZoeYK7pED88quRQrNReixw8zwSHpzJ12GUlpJYq9IeY0kVZaTRM7idfXbCndOZVkptyylDtZ0XjpOj7bmF360400ZtAJHhUV"
+               ></stripe-buy-button>
+
+               <stripe-buy-button
+                  id="stripe-btn-30j"
+                  buy-button-id="aFa6oI3wN8WH8aU6RrcQU03"
+                  publishable-key="pk_live_51TZoeYK7pED88quRQrNReixw8zwSHpzJ12GUlpJYq9IeY0kVZaTRM7idfXbCndOZVkptyylDtZ0XjpOj7bmF360400ZtAJHhUV"
+               ></stripe-buy-button>
+            </div>
         </div>
     </div>
 
@@ -116,13 +131,13 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-2xl font-black uppercase italic text-white leading-tight">Demande <br><span class="text-pink-500">Enregistrée !</span></h3>
+                <h3 class="text-2xl font-black uppercase italic text-white leading-tight">Paiement <br><span class="text-pink-500">Validé !</span></h3>
                 <p class="text-gray-400 text-xs mt-4 leading-relaxed uppercase tracking-wider font-medium">
-                    Un <span class="text-white font-bold">lien de paiement</span> va vous être transmis par mail. Une fois celui-ci validé, votre <span class="text-white font-bold">QR Code</span>, votre <span class="text-white font-bold">facture</span> et votre <span class="text-white font-bold">notice administrateur</span> vous seront immédiatement envoyés.
+                    Votre configuration a été enregistrée avec succès. Votre <span class="text-white font-bold">QR Code</span>, votre <span class="text-white font-bold">facture</span> et votre <span class="text-white font-bold">notice administrateur</span> vous ont été envoyés sur votre adresse e-mail.
                 </p>
             </div>
             <button onclick="closeSuccessModal()" class="btn-main w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-pink-600/20">
-                C'est compris
+                Fermer
             </button>
         </div>
     </div>
@@ -318,7 +333,7 @@
     window.openOrderModal = function(plan, price) {
         currentPlan = plan;
         currentBasePrice = price;
-        modalTitle.innerText = "Licence " + plan;
+        modalTitle.innerText = "Licence " + (plan === '48h' ? '48 Heures' : '30 Jours');
         physicalPacksInput.value = 0;
         postalAddressInput.value = "";
         updateTotal();
@@ -356,12 +371,12 @@
     physicalPacksInput.addEventListener('input', updateTotal);
     physicalPacksInput.addEventListener('change', updateTotal);
 
-    // --- ENVOI FORMULAIRE & GÉNÉRATION DU QR CODE ---
+    // --- ENVOI FORMULAIRE, SÉCURISATION FIREBASE & REDIRECTION STRIPE MULTI-PRODUITS ---
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit-order');
         btn.disabled = true;
-        btn.innerText = "Génération...";
+        btn.innerText = "Traitement en cours...";
 
         const eventName = document.getElementById('eventName').value;
         const startDateStr = document.getElementById('activationDate').value;
@@ -372,9 +387,9 @@
         todayCheck.setHours(0, 0, 0, 0);
 
         if (selectedDate < todayCheck) {
-            alert("Date invalide.");
+            alert("Date de début invalide.");
             btn.disabled = false;
-            btn.innerText = "Valider ma commande avec obligation de paiement";
+            btn.innerText = "Valider et Payer avec Stripe";
             return;
         }
 
@@ -384,13 +399,10 @@
         const expiryTimestamp = startTimestamp + durationMs;
         const finalPacksQty = parseInt(physicalPacksInput.value) || 0;
 
-        // URL directe de votre application
         const appUrl = `https://clubmatch-lake.vercel.app/app.html?event=${eventSlug}`; 
         
         let qrCodeBase64 = "";
-        
         try {
-            // Utilisation de QRious (Synchronous et fiable, aucune erreur d'encodage possible)
             const qr = new window.QRious({
                 value: appUrl,
                 size: 512,
@@ -401,7 +413,7 @@
             console.error("Erreur QR Code:", qrError);
             alert("Une erreur technique empêche la génération du QR Code.");
             btn.disabled = false;
-            btn.innerText = "Valider ma commande avec obligation de paiement";
+            btn.innerText = "Valider et Payer avec Stripe";
             return;
         }
 
@@ -415,36 +427,49 @@
             totalAmount: priceDisplay.innerText,
             physicalPacksOrdered: finalPacksQty,
             postalAddress: finalPacksQty > 0 ? postalAddressInput.value : "Aucune livraison physique",
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            paymentStatus: "pending"
         };
 
         const configData = {
             name: eventName,
-            active: true,
+            active: false, // Reste inactif jusqu'à la confirmation du paiement par webhook
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
             plan: currentPlan,
             appUrl: appUrl,
-            qrCode: qrCodeBase64 // Sauvegarde l'image parfaite dans Firebase
+            qrCode: qrCodeBase64
         };
 
         try {
+            // 1. Sauvegarde des informations de l'établissement dans Firebase
             await push(ref(db, 'orders'), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
-            document.getElementById('orderForm').reset();
-            dateInput.value = today;
-            updateTotal();
-
-            closeModal();
-            successModal.classList.add('active');
+            // 2. Sélection du bon composant Stripe en fonction du choix de licence (48h ou 30j)
+            const targetButtonId = currentPlan === '48h' ? 'stripe-btn-48h' : 'stripe-btn-30j';
+            const buyButtonElement = document.getElementById(targetButtonId);
+            
+            if (buyButtonElement && buyButtonElement.shadowRoot) {
+                const innerButton = buyButtonElement.shadowRoot.querySelector('button') || buyButtonElement.shadowRoot.querySelector('a');
+                if (innerButton) {
+                    innerButton.click();
+                    return;
+                }
+            }
+            
+            // Redirection manuelle de secours (Configuration avec les deux identifiants distincts)
+            if (currentPlan === '30j') {
+                window.location.href = "https://buy.stripe.com/aFa6oI3wN8WH8aU6RrcQU03";
+            } else {
+                window.location.href = "https://buy.stripe.com/fZu14o5EV3Cn8aU8ZzcQU01";
+            }
 
         } catch (error) {
-            console.error("Erreur Firebase:", error);
-            alert("Erreur de connexion. Contact : admclient@yahoo.fr");
-        } finally {
+            console.error("Erreur technique:", error);
+            alert("Erreur lors de la configuration. Contact : admclient@yahoo.fr");
             btn.disabled = false;
-            btn.innerText = "Valider ma commande avec obligation de paiement";
+            btn.innerText = "Valider et Payer avec Stripe";
         }
     };
     </script>
