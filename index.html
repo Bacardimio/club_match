@@ -78,8 +78,8 @@
                         <option value="0">Aucun pack physique (Accès numérique uniquement)</option>
                         <option value="1">1 Pack : 50 badges + 5 affiches (+40€)</option>
                         <option value="2">2 Packs : 100 badges + 10 affiches (+80€)</option>
-			<option value="3">3 Packs : 150 badges + 15 affiches (+120€)</option>
-			<option value="4">4 Packs : 200 badges + 20 affiches (+160€)</option>
+                        <option value="3">3 Packs : 150 badges + 15 affiches (+120€)</option>
+                        <option value="4">4 Packs : 200 badges + 20 affiches (+160€)</option>
                     </select>
                     <p class="text-[9px] text-pink-500/80 uppercase font-black italic mt-1">⚠️ Attention : Un délai d'envoi postal de 72h s'impose pour la livraison</p>
                 </div>
@@ -263,17 +263,19 @@
         appId: "1:975364560340:web:64fd827ced5c24b808f241"
     };
 
-    // --- CONFIGURATION DE VOS LIENS DE PAIEMENT STRIPE (À MODIFIER ICI) ---
-    // Remplacez les liens génériques ci-dessous par vos véritables liens de paiement créés sur Stripe
+    // --- CONFIGURATION DE VOS LIENS DE PAIEMENT STRIPE ---
     const stripeLinks = {
-        '48h_0': 'https://buy.stripe.com/fZu14o5EV3Cn8aU8ZzcQU01', // Licence 48h seule (99€)
-        '48h_1': 'https://buy.stripe.com/fZueVe9Vb5Kv8aU5NncQU00', // Licence 48h + 1 pack (139€)
-        '48h_2': 'https://buy.stripe.com/14AdRa0kBb4P2QA8ZzcQU04', // Licence 48h + 2 packs (179€)
-	'48h_3': 'https://buy.stripe.com/eVq28s4AR2yj62M5NncQU05', // Licence 48h + 3 packs (219€)
-	'48h_4': 'https://buy.stripe.com/aFaeVe3wN8WH0Is0t3cQU06', // Licence 48h + 4 packs (259€)
+        '48h_0': 'https://buy.stripe.com/eVq28s6IZb4P9eYgs1cQU08', // Licence 48h seule (99€)
+        '48h_1': 'https://buy.stripe.com/8x214od7n8WH8aU0t3cQU09', // Licence 48h + 1 pack (139€)
+        '48h_2': 'https://buy.stripe.com/dRm4gAaZf8WH8aUgs1cQU0a', // Licence 48h + 2 packs (179€)
+        '48h_3': 'https://buy.stripe.com/5kQ9AU9Vbc8Tezigs1cQU0b', // Licence 48h + 3 packs (219€)
+        '48h_4': 'https://buy.stripe.com/14AfZigjzb4P9eY7VvcQU0c', // Licence 48h + 4 packs (259€)
         
-        '30j_0': 'https://buy.stripe.com/aFa6oI3wN8WH8aU6RrcQU03', // Licence 30j seule (299€)
-        
+        '30j_0': 'https://buy.stripe.com/9B600kebreh10Is4JjcQU02', // Licence 30j seule (299€)
+        '30j_1': 'https://buy.stripe.com/cNiaEY9Vb8WHaj2dfPcQU0d', // Licence 30j + 1 pack (339€)
+        '30j_2': 'https://buy.stripe.com/8x24gA9Vb4Gr62M1x7cQU0e', // Licence 30j + 2 pack (379€)
+        '30j_3': 'https://buy.stripe.com/9B67sMaZf2yj0Is7VvcQU0f', // Licence 30j + 3 pack (419€)
+        '30j_4': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g'  // Licence 30j + 4 pack (459€)
     };
 
     const dateInput = document.getElementById('activationDate');
@@ -356,7 +358,7 @@
 
     physicalPacksQtyDropdown.addEventListener('change', updateTotal);
 
-    // --- JE SOUHAITE COMMANDER : ENREGISTREMENT ET REDIRECTION NATIVE ---
+    // --- VALIDATION ET REDIRECTION ---
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit-order');
@@ -403,7 +405,7 @@
             return;
         }
 
-        // Toutes les données de quantité sont figées ici et injectées dans Firebase avant le paiement
+        // 1. Données complètes pour la gestion des commandes
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -416,9 +418,10 @@
             physicalPacksQuantity: selectedQty,
             postalAddress: selectedQty > 0 ? postalAddressInput.value : "Aucune livraison physique",
             createdAt: serverTimestamp(),
-            paymentStatus: "pending" // Changera lors du traitement manuel ou automatisé ultérieur
+            paymentStatus: "pending"
         };
 
+        // 2. CORRECTION : Ajout de la quantité de packs dans la configuration technique de l'événement
         const configData = {
             name: eventName,
             active: true, 
@@ -426,15 +429,16 @@
             expiryDate: expiryTimestamp,
             plan: currentPlan,
             appUrl: appUrl,
-            qrCode: qrCodeBase64
+            qrCode: qrCodeBase64,
+            physicalPacksQuantity: selectedQty // <-- Disponible instantanément pour app.html ou vos scripts de contrôle
         };
 
         try {
-            // 1. Sauvegarde instantanée des quantités exactes directement dans votre Firebase
+            // Sauvegarde dans Firebase (Commandes + Configuration Événement)
             await set(ref(db, `orders/${eventSlug}`), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
-            // 2. Détermination de la clé d'association pour Stripe (Ex: "48h_1")
+            // Détermination de la clé d'association pour Stripe
             const targetKey = `${currentPlan}_${selectedQty}`;
             const targetUrl = stripeLinks[targetKey];
 
@@ -445,7 +449,7 @@
                 return;
             }
 
-            // 3. Redirection directe vers Stripe avec pré-remplissage de l'email pour le confort du client
+            // Redirection vers Stripe
             window.location.href = `${targetUrl}?prefilled_email=${encodeURIComponent(customerEmail)}&client_reference_id=${encodeURIComponent(eventSlug)}`;
 
         } catch (error) {
