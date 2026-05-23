@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commande Validée - Club Match Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --accent: #ff0055; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-x: hidden; }
+        .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(25px); border: 1px solid rgba(255, 0, 85, 0.3); }
+        .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: none; text-align: center; display: block; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
+        .match-glow { animation: pulseGlow 1.5s infinite; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0px 0px var(--accent); } 50% { box-shadow: 0 0px 25px var(--accent); } 100% { box-shadow: 0 0px 0px var(--accent); } }
+    </style>
+</head>
+<body>
+
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-pink-600/10 blur-[100px] rounded-full -z-10"></div>
+
+    <div class="glass-premium p-8 rounded-[3rem] max-w-sm w-full text-center space-y-6 shadow-2xl border-pink-500/40 relative z-10">
+        <div class="w-20 h-20 bg-pink-500 rounded-full flex items-center justify-center mx-auto match-glow">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        
+        <div>
+            <h3 class="text-2xl font-black uppercase italic text-white leading-tight">Paiement <br><span class="text-pink-500">Validé !</span></h3>
+            <p class="text-gray-400 text-xs mt-4 leading-relaxed uppercase tracking-wider font-medium">
+                Votre configuration a été enregistrée avec succès. Votre <span class="text-white font-bold">QR Code</span>, votre <span class="text-white font-bold">facture</span> et votre <span class="text-white font-bold">notice administrateur</span> vont vous être adressés sur votre adresse e-mail dans les plus brefs délais.
+            </p>
+        </div>
+
+        <a href="index.html" class="btn-main w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-pink-600/20 text-white decoration-none">
+            Retour à l'accueil
+        </a>
+    </div>
+
+</body>
+</html>

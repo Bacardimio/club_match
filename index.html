@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Match Pro - Facilitateur de rencontres</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body class="bg-[#0a0a0a] text-white antialiased">
@@ -19,9 +18,9 @@
         .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
         .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* Modal Styles */
-        #orderModal, #successModal { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 20px; }
-        #orderModal.active, #successModal.active { display: flex; }
+        /* Modal Style */
+        #orderModal { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 20px; }
+        #orderModal.active { display: flex; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
         .input-field { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; outline: none; transition: border-color 0.3s; }
         .input-field:focus { border-color: var(--accent); }
@@ -104,25 +103,6 @@
                     <button type="submit" id="btn-submit-order" class="btn-main px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-wider max-w-[240px] text-center leading-tight">Valider et Payer avec Stripe</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <div id="successModal">
-        <div class="glass-premium p-8 rounded-[3rem] max-w-sm w-full text-center space-y-6 shadow-2xl border-pink-500/40">
-            <div class="w-20 h-20 bg-pink-500 rounded-full flex items-center justify-center mx-auto match-glow">
-                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-2xl font-black uppercase italic text-white leading-tight">Paiement <br><span class="text-pink-500">Validé !</span></h3>
-                <p class="text-gray-400 text-xs mt-4 leading-relaxed uppercase tracking-wider font-medium">
-                    Votre configuration a été enregistrée avec succès. Votre <span class="text-white font-bold">QR Code</span>, votre <span class="text-white font-bold">facture</span> et votre <span class="text-white font-bold">notice administrateur</span> vous ont été envoyés sur votre adresse e-mail.
-                </p>
-            </div>
-            <button onclick="closeSuccessModal()" class="btn-main w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-pink-600/20">
-                Fermer
-            </button>
         </div>
     </div>
 
@@ -263,19 +243,19 @@
         appId: "1:975364560340:web:64fd827ced5c24b808f241"
     };
 
-    // --- CONFIGURATION DE VOS LIENS DE PAIEMENT STRIPE ---
+    // --- CONFIGURATION STRIPE ---
     const stripeLinks = {
-        '48h_0': 'https://buy.stripe.com/eVq28s6IZb4P9eYgs1cQU08', // Licence 48h seule (99€)
-        '48h_1': 'https://buy.stripe.com/8x214od7n8WH8aU0t3cQU09', // Licence 48h + 1 pack (139€)
-        '48h_2': 'https://buy.stripe.com/dRm4gAaZf8WH8aUgs1cQU0a', // Licence 48h + 2 packs (179€)
-        '48h_3': 'https://buy.stripe.com/5kQ9AU9Vbc8Tezigs1cQU0b', // Licence 48h + 3 packs (219€)
-        '48h_4': 'https://buy.stripe.com/14AfZigjzb4P9eY7VvcQU0c', // Licence 48h + 4 packs (259€)
+        '48h_0': 'https://buy.stripe.com/fZu14o5EV3Cn8aU8ZzcQU01',
+        '48h_1': 'https://buy.stripe.com/fZueVe9Vb5Kv8aU5NncQU00',
+        '48h_2': 'https://buy.stripe.com/14AdRa0kBb4P2QA8ZzcQU04',
+        '48h_3': 'https://buy.stripe.com/eVq28s4AR2yj62M5NncQU05',
+        '48h_4': 'https://buy.stripe.com/aFaeVe3wN8WH0Is0t3cQU06',
         
-        '30j_0': 'https://buy.stripe.com/9B600kebreh10Is4JjcQU02', // Licence 30j seule (299€)
-        '30j_1': 'https://buy.stripe.com/cNiaEY9Vb8WHaj2dfPcQU0d', // Licence 30j + 1 pack (339€)
-        '30j_2': 'https://buy.stripe.com/8x24gA9Vb4Gr62M1x7cQU0e', // Licence 30j + 2 pack (379€)
-        '30j_3': 'https://buy.stripe.com/9B67sMaZf2yj0Is7VvcQU0f', // Licence 30j + 3 pack (419€)
-        '30j_4': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g'  // Licence 30j + 4 pack (459€)
+        '30j_0': 'https://buy.stripe.com/aFa6oI3wN8WH8aU6RrcQU03',
+        '30j_1': 'https://buy.stripe.com/votre_lien_stripe_30j_1pack',
+        '30j_2': 'https://buy.stripe.com/votre_lien_stripe_30j_2packs',
+        '30j_3': 'https://buy.stripe.com/votre_lien_stripe_30j_3packs',
+        '30j_4': 'https://buy.stripe.com/votre_lien_stripe_30j_4packs'
     };
 
     const dateInput = document.getElementById('activationDate');
@@ -286,7 +266,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Animation Simulation Smartphone
+    // Simulation Écran Mobile
     const screens = [
         document.getElementById('step-1'),
         document.getElementById('step-2'),
@@ -308,9 +288,8 @@
     }
     window.onload = runSimulation;
 
-    // Gestion de la Modale et des prix
+    // Modale & Calcul Dynamique Prix
     const modal = document.getElementById('orderModal');
-    const successModal = document.getElementById('successModal');
     const modalTitle = document.getElementById('modalPlanTitle');
     const priceDisplay = document.getElementById('totalPriceDisplay');
     const physicalPacksQtyDropdown = document.getElementById('physicalPacksQty');
@@ -336,12 +315,6 @@
         document.body.style.overflow = 'auto';
     }
 
-    window.closeSuccessModal = function() {
-        successModal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-
-    // Calcul du prix et affichage dynamique du champ d'adresse
     function updateTotal() {
         const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
         const total = currentBasePrice + (qty * 40);
@@ -358,7 +331,7 @@
 
     physicalPacksQtyDropdown.addEventListener('change', updateTotal);
 
-    // --- VALIDATION ET REDIRECTION ---
+    // Traitement Formulaire & Enregistrement Firebase avant Stripe
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btn-submit-order');
@@ -386,16 +359,11 @@
         const startTimestamp = new Date(startDateStr).getTime();
         const durationMs = currentPlan === '48h' ? (48 * 60 * 60 * 1000) : (30 * 24 * 60 * 60 * 1000);
         const expiryTimestamp = startTimestamp + durationMs;
-
         const appUrl = `https://clubmatch-lake.vercel.app/app.html?event=${eventSlug}`; 
         
         let qrCodeBase64 = "";
         try {
-            const qr = new window.QRious({
-                value: appUrl,
-                size: 512,
-                level: 'H'
-            });
+            const qr = new window.QRious({ value: appUrl, size: 512, level: 'H' });
             qrCodeBase64 = qr.toDataURL('image/png');
         } catch (qrError) {
             console.error("Erreur QR Code:", qrError);
@@ -405,7 +373,6 @@
             return;
         }
 
-        // 1. Données complètes pour la gestion des commandes
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -421,7 +388,6 @@
             paymentStatus: "pending"
         };
 
-        // 2. CORRECTION : Ajout de la quantité de packs dans la configuration technique de l'événement
         const configData = {
             name: eventName,
             active: true, 
@@ -430,26 +396,23 @@
             plan: currentPlan,
             appUrl: appUrl,
             qrCode: qrCodeBase64,
-            physicalPacksQuantity: selectedQty // <-- Disponible instantanément pour app.html ou vos scripts de contrôle
+            physicalPacksQuantity: selectedQty
         };
 
         try {
-            // Sauvegarde dans Firebase (Commandes + Configuration Événement)
             await set(ref(db, `orders/${eventSlug}`), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
-            // Détermination de la clé d'association pour Stripe
             const targetKey = `${currentPlan}_${selectedQty}`;
             const targetUrl = stripeLinks[targetKey];
 
             if (!targetUrl || targetUrl.includes('votre_lien_stripe')) {
-                alert("Erreur de configuration : Le lien de paiement correspondant n'a pas encore été configuré dans le code JavaScript.");
+                alert("Erreur de configuration : Le lien de paiement correspondant n'a pas encore été configuré.");
                 btn.disabled = false;
                 btn.innerText = "Valider et Payer avec Stripe";
                 return;
             }
 
-            // Redirection vers Stripe
             window.location.href = `${targetUrl}?prefilled_email=${encodeURIComponent(customerEmail)}&client_reference_id=${encodeURIComponent(eventSlug)}`;
 
         } catch (error) {
