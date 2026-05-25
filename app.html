@@ -74,7 +74,7 @@
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
             <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">...</p>
+            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] opacity-70">...</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
@@ -470,7 +470,7 @@
                 return;
             }
 
-            // CORRECTION : Affichage brut du nom de l'événement (préserve la saisie exacte de la BDD)
+            // Affichage brut du nom de l'événement (sans modification de casse)
             document.getElementById('event-name-display').innerText = config.name ? config.name : eventID;
 
             if (config.active === false) {
@@ -755,6 +755,7 @@
         };
 
         document.getElementById('admin-trigger').onclick = () => {
+            // Modification du texte d'invite du code Admin pour utiliser le domaine clubmatchpro.fr
             if (prompt(translations[window.currentLang]['promptAdminCode']) === "2026") { 
                 updateAdminStats(); 
                 document.getElementById('admin-panel').classList.remove('hidden'); 
