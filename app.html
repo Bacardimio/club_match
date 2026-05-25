@@ -32,85 +32,95 @@
         .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .notification-dot { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+        
+        /* Sélecteur de langue */
+        .lang-btn { padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 12px; transition: all 0.2s; }
+        .lang-btn.active { background: var(--accent); color: white; box-shadow: 0 0 10px rgba(255, 0, 85, 0.4); }
+        .lang-btn:not(.active) { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
+    <div class="w-full max-w-sm flex justify-end space-x-2 mb-4 z-50">
+        <button id="lang-fr" class="lang-btn active" onclick="changeLanguage('fr')">FR</button>
+        <button id="lang-en" class="lang-btn" onclick="changeLanguage('en')">EN</button>
+    </div>
+
     <div id="in-app-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 glass p-4 rounded-2xl shadow-[0_0_40px_rgba(255,0,85,0.25)] flex items-center space-x-4 border-pink-500/20 w-11/12 max-w-sm transition-all duration-300 -translate-y-32 opacity-0 pointer-events-none">
         <div class="bg-pink-500/20 text-pink-500 p-2 rounded-xl text-xl flex items-center justify-center" id="toast-icon">⚡</div>
         <div class="flex-1">
-            <h4 class="font-black text-sm text-white uppercase tracking-tight" id="toast-title">Notification</h4>
-            <p class="text-xs text-gray-400 mt-0.5" id="toast-body">Détails de l'alerte...</p>
+            <h4 class="font-black text-sm text-white uppercase tracking-tight" id="toast-title" data-i18n="toastTitle">Notification</h4>
+            <p class="text-xs text-gray-400 mt-0.5" id="toast-body">Détails...</p>
         </div>
     </div>
 
     <div id="match-announcement">
-        <h2 class="text-pink-500 text-2xl font-black italic uppercase tracking-tighter mb-2">Incroyable !</h2>
+        <h2 class="text-pink-500 text-2xl font-black italic uppercase tracking-tighter mb-2" data-i18n="matchIncredible">Incroyable !</h2>
         <h1 class="text-7xl font-black italic uppercase text-white mb-4">MATCH 🔥</h1>
         <div class="glass p-10 rounded-[3rem] border-pink-500 shadow-[0_0_50px_rgba(255,0,85,0.3)]">
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Tu as flashé le badge</p>
+            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2" data-i18n="matchYouFlashed">Tu as flashé le badge</p>
             <span id="match-number-display" class="text-8xl font-black text-white">--</span>
         </div>
-        <p class="mt-8 text-gray-500 font-bold animate-pulse">Appuie n'importe où pour continuer</p>
+        <p class="mt-8 text-gray-500 font-bold animate-pulse" data-i18n="matchTapDismiss">Appuie n'importe où pour continuer</p>
     </div>
 
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
         <h1 class="text-4xl font-black mb-4 uppercase italic">Club <span class="text-pink-600">Match</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
-            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
+            <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center" data-i18n="eventUnavailable">Événement non disponible.</p>
         </div>
     </div>
 
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
             <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">CHARGEMENT...</p>
+            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">...</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
-            <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
-            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
-            <p id="login-limit-error" class="text-red-500 text-center text-xs font-bold hidden">Numéro de badge invalide (maximum 200).</p>
+            <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white" data-i18n="joinBtn">Rejoindre</button>
+            <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden" data-i18n="errorBadgeUsed">Badge déjà utilisé sur un autre appareil.</p>
+            <p id="login-limit-error" class="text-red-500 text-center text-xs font-bold hidden" data-i18n="errorInvalidBadge">Numéro de badge invalide (maximum 200).</p>
         </div>
     </div>
 
     <div id="main-app" class="hidden w-full max-w-md space-y-6">
         <div id="permission-banner" class="hidden glass p-3 rounded-2xl border-orange-500/20 bg-orange-500/5 text-center space-y-2 animate-pop">
-            <p class="text-[11px] text-gray-300 font-medium">Active les notifications pour recevoir tes Matchs en temps réel ! 🚀</p>
-            <button id="btn-grant-notifications" class="bg-white/10 hover:bg-white text-white hover:text-black font-bold text-[10px] uppercase tracking-wider px-4 py-1.5 rounded-xl transition-all">Autoriser</button>
+            <p class="text-[11px] text-gray-300 font-medium" data-i18n="notifBannerText">Active les notifications pour recevoir tes Matchs en temps réel ! 🚀</p>
+            <button id="btn-grant-notifications" class="bg-white/10 hover:bg-white text-white hover:text-black font-bold text-[10px] uppercase tracking-wider px-4 py-1.5 rounded-xl transition-all" data-i18n="allowBtn">Autoriser</button>
         </div>
 
         <header class="flex justify-between items-center py-4">
             <div>
-                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
-                <h2 class="text-2xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest" data-i18n="connectedState">Connecté</p>
+                <h2 class="text-2xl font-black text-white italic"><span data-i18n="badgeTitle">Badge</span> <span id="display-badge" class="text-pink-500">--</span></h2>
             </div>
             <button id="admin-trigger" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-xl">⚙️</button>
         </header>
 
         <div class="glass p-4 rounded-[2rem] shadow-2xl border-white/5">
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center mb-3">Saisir un numéro à flasher</p>
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center mb-3" data-i18n="enterFlashPrompt">Saisir un numéro à flasher</p>
             <div class="flex space-x-2 items-center justify-center">
                 <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/40 border border-white/10 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white">
-                <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest">Flasher</button>
+                <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest" data-i18n="flashBtn">Flasher</button>
             </div>
-            <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-2">Ce badge n'est pas enregistré !</p>
-            <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-2">Limite de 5 flashs atteinte !</p>
+            <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-2" data-i18n="errorNotRegistered">Ce badge n'est pas enregistré !</p>
+            <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-2" data-i18n="errorLimitFlash">Limite de 5 flashs atteinte !</p>
         </div>
 
         <div class="grid grid-cols-3 gap-2">
             <div class="glass py-4 rounded-2xl text-center">
                 <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
-                <span class="text-[11px] uppercase text-gray-500 font-bold tracking-tight">Flashs Reçus</span>
+                <span class="text-[11px] uppercase text-gray-500 font-bold tracking-tight" data-i18n="statRecus">Flashs Reçus</span>
             </div>
             <div class="glass py-4 rounded-2xl text-center border-pink-500/20 bg-pink-500/5">
                 <span class="block text-2xl font-black text-pink-500" id="stat-matches">0</span>
-                <span class="text-[11px] uppercase text-pink-400 font-bold tracking-tight">Matches 🔥</span>
+                <span class="text-[11px] uppercase text-pink-400 font-bold tracking-tight" data-i18n="sectionMatchesShort">Matches 🔥</span>
             </div>
             <div class="glass py-4 rounded-2xl text-center">
                 <div class="flex flex-col items-center">
                     <span class="block text-2xl font-black text-white"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-sm">/5</span></span>
-                    <span class="text-[11px] uppercase text-gray-500 font-bold tracking-tight">Flashs Envoyés</span>
+                    <span class="text-[11px] uppercase text-gray-500 font-bold tracking-tight" data-i18n="statEnvoyes">Flashs Envoyés</span>
                 </div>
             </div>
         </div>
@@ -118,7 +128,7 @@
         <div id="match-section" class="space-y-4">
             <div class="flex items-center space-x-2 px-2">
                 <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-sm font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
+                <span class="text-sm font-black text-pink-500 uppercase tracking-widest italic" data-i18n="sectionMatches">Tes Matches 🔥</span>
                 <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <div id="match-list" class="space-y-3"></div>
@@ -127,7 +137,7 @@
         <div id="likes-sent-section" class="space-y-4 pb-10">
             <div class="flex items-center space-x-2 px-2">
                 <div class="h-px flex-1 bg-white/10"></div>
-                <span class="text-sm font-black text-gray-500 uppercase tracking-widest italic">Tes Flashs Envoyés</span>
+                <span class="text-sm font-black text-gray-500 uppercase tracking-widest italic" data-i18n="sectionSent">Tes Flashs Envoyés</span>
                 <div class="h-px flex-1 bg-white/10"></div>
             </div>
             <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
@@ -137,57 +147,193 @@
     <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
         <header class="p-6 border-b border-white/10 flex items-center space-x-4 bg-black/50 backdrop-blur-md">
             <button id="close-chat-trigger" class="text-2xl text-white opacity-50">←</button>
-            <h3 class="flex-1 text-xl font-black italic text-white">Chat #<span id="chat-target-badge">--</span></h3>
+            <h3 class="flex-1 text-xl font-black italic text-white"><span data-i18n="chatWith">Chat</span> #<span id="chat-target-badge">--</span></h3>
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
         <div class="px-6 py-2 text-center">
-            <p id="chat-limit-warning" class="text-orange-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
+            <p id="chat-limit-warning" class="text-orange-500 text-[10px] font-bold uppercase hidden" data-i18n="errorLimitMsg">Limite de 10 messages atteinte !</p>
         </div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
             <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
-            <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
+            <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase" data-i18n="sendBtn">Envoyer</button>
         </div>
     </div>
 
     <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
         <div class="w-full max-w-sm mx-auto space-y-8 py-10">
-            <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
+            <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter" data-i18n="adminTitle">Administration</h2>
             
             <div class="glass rounded-3xl overflow-hidden border-white/10 text-white">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
-                        <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
+                        <tr><th class="px-6 py-4" data-i18n="adminIndicator">Indicateur</th><th class="px-6 py-4 text-right" data-i18n="adminValue">Valeur</th></tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
-                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
-                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="adminTotalUsers">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+                        <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="adminTotalLikes">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
                         <tr class="bg-pink-500/5"><td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="glass p-5 rounded-3xl space-y-3">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Réinitialiser un badge</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center" data-i18n="adminResetBadgePrompt">Réinitialiser un badge</p>
                 <div class="flex space-x-2 items-center justify-center">
                     <input type="number" id="admin-delete-badge-input" placeholder="N°" class="w-20 bg-white/10 border-none rounded-xl p-3 text-center text-xl font-bold text-white outline-none">
-                    <button id="btn-admin-delete-user" class="flex-1 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white py-3 rounded-xl font-bold transition-all uppercase text-xs">Supprimer</button>
+                    <button id="btn-admin-delete-user" class="flex-1 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white py-3 rounded-xl font-bold transition-all uppercase text-xs" data-i18n="adminDeleteBtn">Supprimer</button>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest">Tout effacer</button>
+                <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest" data-i18n="adminClearAllBtn">Tout effacer</button>
             </div>
 
             <div class="pt-6 border-t border-white/10 space-y-4 text-center">
                 <div class="space-y-1">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest" data-i18n="adminSupport">Support Technique</p>
                     <a href="mailto:info@clubmatchpro.fr" class="block text-sm text-pink-500 hover:underline font-bold">info@clubmatchpro.fr</a>
                 </div>
             </div>
 
-            <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
+            <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4" data-i18n="adminCloseBtn">Fermer</button>
         </div>
     </div>
+
+    <script>
+        const urlParamsObj = new URLSearchParams(window.location.search);
+        const eventIDObj = urlParamsObj.get('event') || 'default';
+
+        const translations = {
+            fr: {
+                toastTitle: "Notification",
+                matchIncredible: "Incroyable !",
+                matchYouFlashed: "Tu as flashé le badge",
+                matchTapDismiss: "Appuie n'importe où pour continuer",
+                eventUnavailable: "Événement non disponible.",
+                joinBtn: "Rejoindre",
+                errorBadgeUsed: "Badge déjà utilisé sur un autre appareil.",
+                errorInvalidBadge: "Numéro de badge invalide (maximum 200).",
+                notifBannerText: "Active les notifications pour recevoir tes Matchs en temps réel ! 🚀",
+                allowBtn: "Autoriser",
+                connectedState: "Connecté",
+                badgeTitle: "Badge",
+                enterFlashPrompt: "Saisir un numéro à flasher",
+                flashBtn: "Flasher",
+                errorNotRegistered: "Ce badge n'est pas enregistré !",
+                errorLimitFlash: "Limite de 5 flashs atteinte !",
+                statRecus: "Flashs Reçus",
+                statEnvoyes: "Flashs Envoyés",
+                sectionMatchesShort: "Matches 🔥",
+                sectionMatches: "Tes Matches 🔥",
+                sectionSent: "Tes Flashs Envoyés",
+                noMatchesYet: "Aucun match pour le moment...",
+                noSentYet: "Aucun flash envoyé",
+                flashSentTo: "Flash envoyé à #",
+                chatWith: "Chat",
+                chatPlaceholder: "Message...",
+                errorLimitMsg: "Limite de 10 messages atteinte !",
+                sendBtn: "Envoyer",
+                adminTitle: "Administration",
+                adminIndicator: "Indicateur",
+                adminValue: "Valeur",
+                adminTotalUsers: "Utilisateurs",
+                adminTotalLikes: "Flashs envoyés",
+                adminResetBadgePrompt: "Réinitialiser un badge",
+                adminDeleteBtn: "Supprimer",
+                adminClearAllBtn: "Tout effacer",
+                adminSupport: "Support Technique",
+                adminCloseBtn: "Fermer",
+                promptAdminCode: "Code Admin :",
+                confirmDeleteLike: "Supprimer le like/match avec #",
+                confirmClearAll: "⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.",
+                alertBadgeFreed: "Badge #_NUM_ libéré.",
+                eventNotFound: "Événement introuvable.",
+                eventDisabled: "L'organisateur a désactivé cet événement.",
+                eventNotStarted: "Cet événement n'a pas encore commencé.<br><span class='text-pink-500'>Ouverture le _DATE_</span>",
+                eventExpired: "Cet événement est terminé (licence expirée).",
+                notifMatchBody: "Tu avez un match avec le Badge #_NUM_ !",
+                notifFlashTitle: "Nouveau Flash ⚡",
+                notifFlashBody: "Quelqu'un vient de flasher ton badge !",
+                chatActionWith: "Chat avec #"
+            },
+            en: {
+                toastTitle: "Notification",
+                matchIncredible: "Incredible!",
+                matchYouFlashed: "You flashed badge",
+                matchTapDismiss: "Tap anywhere to continue",
+                eventUnavailable: "Event not available.",
+                joinBtn: "Join",
+                errorBadgeUsed: "Badge already in use on another device.",
+                errorInvalidBadge: "Invalid badge number (maximum 200).",
+                notifBannerText: "Enable notifications to receive your Matches in real time! 🚀",
+                allowBtn: "Allow",
+                connectedState: "Connected",
+                badgeTitle: "Badge",
+                enterFlashPrompt: "Enter a number to flash",
+                flashBtn: "Flash",
+                errorNotRegistered: "This badge is not registered!",
+                errorLimitFlash: "Limit of 5 flashes reached!",
+                statRecus: "Flashes Received",
+                statEnvoyes: "Flashes Sent",
+                sectionMatchesShort: "Matches 🔥",
+                sectionMatches: "Your Matches 🔥",
+                sectionSent: "Your Sent Flashes",
+                noMatchesYet: "No matches yet...",
+                noSentYet: "No flashes sent",
+                flashSentTo: "Flash sent to #",
+                chatWith: "Chat",
+                chatPlaceholder: "Message...",
+                errorLimitMsg: "Limit of 10 messages reached!",
+                sendBtn: "Send",
+                adminTitle: "Administration",
+                adminIndicator: "Indicator",
+                adminValue: "Value",
+                adminTotalUsers: "Users",
+                adminTotalLikes: "Flashes Sent",
+                adminResetBadgePrompt: "Reset a badge",
+                adminDeleteBtn: "Delete",
+                adminClearAllBtn: "Clear Everything",
+                adminSupport: "Technical Support",
+                adminCloseBtn: "Close",
+                promptAdminCode: "Admin Code:",
+                confirmDeleteLike: "Delete the flash/match with #",
+                confirmClearAll: "⚠ Delete event data only (users, flashes, messages)? License configuration will be kept.",
+                alertBadgeFreed: "Badge #_NUM_ freed.",
+                eventNotFound: "Event not found.",
+                eventDisabled: "The organizer has disabled this event.",
+                eventNotStarted: "This event has not started yet.<br><span class='text-pink-500'>Opening on _DATE_</span>",
+                eventExpired: "This event has ended (license expired).",
+                notifMatchBody: "You have a match with Badge #_NUM_!",
+                notifFlashTitle: "New Flash ⚡",
+                notifFlashBody: "Someone just flashed your badge!",
+                chatActionWith: "Chat with #"
+            }
+        };
+
+        window.currentLang = localStorage.getItem(`appLang_${eventIDObj}`) || 'fr';
+
+        window.changeLanguage = function(lang) {
+            window.currentLang = lang;
+            localStorage.setItem(`appLang_${eventIDObj}`, lang);
+            
+            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            document.getElementById('chat-input').placeholder = translations[lang]['chatPlaceholder'];
+            window.dispatchEvent(new CustomEvent('langChanged', { detail: lang }));
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            window.changeLanguage(window.currentLang);
+        });
+    </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -218,56 +364,42 @@
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // --- AUDIO COMPATIBLE MOBILE SANS CODE SOURCE EXTERNE ---
         function playAlertSound(isMatch = false) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 if(isMatch) {
-                    // Double bip joyeux ascendant pour le Match
                     let osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
                     let gain = ctx.createGain();
                     osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
-                    
-                    osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // Ré5
-                    osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // La5
+                    osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12);
                     gain.gain.setValueAtTime(0.15, ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
-                    
                     osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.12);
                     osc2.start(ctx.currentTime + 0.12); osc2.stop(ctx.currentTime + 0.45);
                 } else {
-                    // Bip simple, élégant et court pour le Flash simple
                     let osc = ctx.createOscillator();
                     let gain = ctx.createGain();
                     osc.connect(gain); gain.connect(ctx.destination);
-                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Do5
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
                     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
                 }
-            } catch (e) { console.log("Audio en attente d'interaction"); }
+            } catch (e) { console.log("Audio waiting for user interaction"); }
         }
 
-        // --- SYSTÈME DE DISTRIBUTION INTELLIGENT DE L'ALERTE ---
         function triggerGlobalNotification(title, body, icon = "⚡", isMatch = false) {
-            // 1. Déclencher le son immédiatement
             playAlertSound(isMatch);
-
-            // 2. Tenter la notification Push Système Native (PC, Mac, Android)
             if ("Notification" in window && Notification.permission === "granted") {
                 try { new Notification(title, { body: body }); } catch(e) {}
             }
-
-            // 3. TOUJOURS exécuter la bannière Toast graphique In-App (Parfait pour le Safari de l'iPhone !)
             const toast = document.getElementById('in-app-toast');
             document.getElementById('toast-title').innerText = title.toUpperCase();
             document.getElementById('toast-body').innerText = body;
             document.getElementById('toast-icon').innerText = icon;
-
             toast.classList.remove('-translate-y-32', 'opacity-0', 'pointer-events-none');
             toast.classList.add('translate-y-0', 'opacity-100');
-
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('-translate-y-32', 'opacity-0', 'pointer-events-none');
@@ -288,7 +420,6 @@
             if ("Notification" in window) {
                 Notification.requestPermission().then(() => {
                     checkSystemPermissionStatus();
-                    // Petit bip de test pour confirmer le bon fonctionnement de l'audio
                     playAlertSound(false);
                 });
             }
@@ -320,12 +451,13 @@
         }
 
         async function deleteLike(target) {
-            if(confirm(`Supprimer le like/match avec #${target} ?`)) {
+            if(confirm(`${translations[window.currentLang]['confirmDeleteLike']} ${target} ?`)) {
                 await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
             }
         }
         window.deleteLike = deleteLike;
 
+        // Écoute de l'état de l'événement
         onValue(ref(db, `${basePath}/config`), (snap) => {
             const config = snap.val();
             const now = Date.now();
@@ -334,24 +466,25 @@
 
             if (!config) {
                 showUI('closed-screen');
-                closedMsg.innerText = "Événement introuvable.";
+                closedMsg.innerText = translations[window.currentLang]['eventNotFound'];
                 return;
             }
 
-            document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+            // CORRECTION : Affichage brut du nom de l'événement (préserve la saisie exacte de la BDD)
+            document.getElementById('event-name-display').innerText = config.name ? config.name : eventID;
 
             if (config.active === false) {
                 showUI('closed-screen');
-                closedMsg.innerText = "L'organisateur a désactivé cet événement.";
+                closedMsg.innerText = translations[window.currentLang]['eventDisabled'];
             } 
             else if (now < config.startDate) {
                 showUI('closed-screen');
                 const dateDebut = new Date(config.startDate).toLocaleDateString();
-                closedMsg.innerHTML = `Cet événement n'a pas encore commencé.<br><span class="text-pink-500">Ouverture le ${dateDebut}</span>`;
+                closedMsg.innerHTML = translations[window.currentLang]['eventNotStarted'].replace('_DATE_', dateDebut);
             } 
             else if (now > config.expiryDate) {
                 showUI('closed-screen');
-                closedMsg.innerText = "Cet événement est terminé (licence expirée).";
+                closedMsg.innerText = translations[window.currentLang]['eventExpired'];
             } 
             else {
                 if (currentBadge) {
@@ -402,8 +535,6 @@
                 await set(userRef, deviceId);
                 currentBadge = badge;
                 localStorage.setItem(`myBadge_${eventID}`, badge);
-                
-                // GESTE UTILISATEUR VALIDE : On essaie d'activer les notifications à ce moment précis
                 if ("Notification" in window && Notification.permission === "default") {
                     Notification.requestPermission();
                 }
@@ -442,15 +573,64 @@
             targetInput.value = "";
         };
 
-        // Mémoire de session pour éviter les fausses alertes au premier chargement initial de la page
         let previousLikesRecusCount = null;
         let previousMatchesList = [];
+        let globalLikesData = {}; 
+
+        function renderAppLists() {
+            if (!currentBadge || !globalLikesData) return;
+            
+            let matches = [];
+            let likesRecus = 0;
+            let myLikes = globalLikesData[currentBadge] || {};
+            currentLikesSentCount = Object.keys(myLikes).length;
+
+            for (let user in globalLikesData) {
+                if (globalLikesData[user][currentBadge]) {
+                    likesRecus++;
+                    if (myLikes[user]) matches.push(user);
+                }
+            }
+
+            document.getElementById('stat-likes-recus').innerText = likesRecus;
+            document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
+            document.getElementById('stat-matches').innerText = matches.length;
+
+            const list = document.getElementById('match-list');
+            list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${translations[window.currentLang]['noMatchesYet']}</p>`;
+            matches.forEach(id => {
+                const roomID = [currentBadge, id].sort().join('-');
+                const div = document.createElement('div');
+                div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
+                        <span class="font-black italic text-white text-xl">${translations[window.currentLang]['chatActionWith']}${id}</span>
+                        <div id="dot-${roomID}" class="notification-dot hidden"></div>
+                    </div>
+                    <button onclick="deleteLike('${id}')" class="text-gray-500 px-2 text-xl">×</button>
+                `;
+                list.appendChild(div);
+                listenForNotifications(roomID);
+            });
+
+            const sentList = document.getElementById('likes-sent-list');
+            const myLikesArray = Object.keys(myLikes);
+            sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-gray-700 text-[10px] uppercase'>${translations[window.currentLang]['noSentYet']}</p>`;
+            myLikesArray.forEach(id => {
+                if (matches.includes(id)) return;
+                const div = document.createElement('div');
+                div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
+                div.innerHTML = `
+                    <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">${translations[window.currentLang]['flashSentTo']}${id}</span>
+                    <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>
+                `;
+                sentList.appendChild(div);
+            });
+        }
 
         function loadApp() {
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
-            
-            // Vérifier s'il faut afficher la bannière d'invitation aux notifications système
             checkSystemPermissionStatus();
 
             onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
@@ -458,74 +638,40 @@
             });
 
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
-                const data = snapshot.val() || {};
+                globalLikesData = snapshot.val() || {};
+                
                 let matches = [];
                 let likesRecus = 0;
-                let myLikes = data[currentBadge] || {};
-                currentLikesSentCount = Object.keys(myLikes).length;
-                for (let user in data) {
-                    if (data[user][currentBadge]) {
+                let myLikes = globalLikesData[currentBadge] || {};
+                for (let user in globalLikesData) {
+                    if (globalLikesData[user][currentBadge]) {
                         likesRecus++;
                         if (myLikes[user]) matches.push(user);
                     }
                 }
-                document.getElementById('stat-likes-recus').innerText = likesRecus;
-                document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
-                document.getElementById('stat-matches').innerText = matches.length;
 
-                // --- LOGIQUE TRIPLE-ALERTE SUR ÉCOUTE TEMPS RÉEL ---
                 if (previousLikesRecusCount !== null) {
                     const newMatches = matches.filter(id => !previousMatchesList.includes(id));
-                    
                     if (newMatches.length > 0) {
-                        // Cas 1 : Nouveau Match détecté
                         newMatches.forEach(id => {
-                            triggerGlobalNotification("Match 🔥 !", `Tu as un match avec le Badge #${id} !`, "🔥", true);
+                            triggerGlobalNotification("Match 🔥 !", translations[window.currentLang]['notifMatchBody'].replace('_NUM_', id), "🔥", true);
                         });
-                    } 
-                    else if (likesRecus > previousLikesRecusCount) {
-                        // Cas 2 : Flash simple reçu (et aucun nouveau match créé)
-                        triggerGlobalNotification("Nouveau Flash ⚡", "Quelqu'un vient de flasher ton badge !", "⚡", false);
+                    } else if (likesRecus > previousLikesRecusCount) {
+                        triggerGlobalNotification(translations[window.currentLang]['notifFlashTitle'], translations[window.currentLang]['notifFlashBody'], "⚡", false);
                     }
                 }
 
-                // Enregistrement de l'état actuel pour la prochaine variation de données Firebase
                 previousLikesRecusCount = likesRecus;
                 previousMatchesList = [...matches];
-                
-                const list = document.getElementById('match-list');
-                list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
-                matches.forEach(id => {
-                    const roomID = [currentBadge, id].sort().join('-');
-                    const div = document.createElement('div');
-                    div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
-                    div.innerHTML = `
-                        <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
-                            <span class="font-black italic text-white text-xl">Chat avec #${id}</span>
-                            <div id="dot-${roomID}" class="notification-dot hidden"></div>
-                        </div>
-                        <button onclick="deleteLike('${id}')" class="text-gray-500 px-2 text-xl">×</button>
-                    `;
-                    list.appendChild(div);
-                    listenForNotifications(roomID);
-                });
 
-                const sentList = document.getElementById('likes-sent-list');
-                const myLikesArray = Object.keys(myLikes);
-                sentList.innerHTML = myLikesArray.length ? "" : "<p class='text-center text-gray-700 text-[10px] uppercase'>Aucun flash envoyé</p>";
-                myLikesArray.forEach(id => {
-                    if (matches.includes(id)) return;
-                    const div = document.createElement('div');
-                    div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
-                    div.innerHTML = `
-                        <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">Flash envoyé à #${id}</span>
-                        <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>
-                    `;
-                    sentList.appendChild(div);
-                });
+                renderAppLists();
                 updateAdminStats();
             });
         }
+
+        window.addEventListener('langChanged', () => {
+            renderAppLists();
+        });
 
         function listenForNotifications(roomID) {
             onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
@@ -609,7 +755,7 @@
         };
 
         document.getElementById('admin-trigger').onclick = () => {
-            if (prompt("Code Admin :") === "2026") { 
+            if (prompt(translations[window.currentLang]['promptAdminCode']) === "2026") { 
                 updateAdminStats(); 
                 document.getElementById('admin-panel').classList.remove('hidden'); 
             }
@@ -619,17 +765,16 @@
         document.getElementById('btn-admin-delete-user').onclick = async () => {
             const badge = document.getElementById('admin-delete-badge-input').value.trim();
             if(!badge) return;
-            if (confirm(`Réinitialiser le badge #${badge} ?`)) {
+            if (confirm(`${translations[window.currentLang]['confirmDeleteLike']} ${badge} ?`)) {
                 await remove(ref(db, `${basePath}/users/${badge}`));
-                alert(`Badge #${badge} libéré.`);
+                alert(translations[window.currentLang]['alertBadgeFreed'].replace('_NUM_', badge));
                 document.getElementById('admin-delete-badge-input').value = "";
                 updateAdminStats();
             }
         };
 
-        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
-            if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
+            if (confirm(translations[window.currentLang]['confirmClearAll'])) {
                 await remove(ref(db, `${basePath}/users`));
                 await remove(ref(db, `${basePath}/likes`));
                 await remove(ref(db, `${basePath}/messages`));
