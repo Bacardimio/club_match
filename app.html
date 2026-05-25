@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --accent: #ff0055; }
-        /* Harmonisation de la police et du style global */
         body { 
             background: #0a0a0a; 
             color: white; 
@@ -36,6 +35,14 @@
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
+
+    <div id="in-app-toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 glass p-4 rounded-2xl shadow-[0_0_40px_rgba(255,0,85,0.25)] flex items-center space-x-4 border-pink-500/20 w-11/12 max-w-sm transition-all duration-300 -translate-y-32 opacity-0 pointer-events-none">
+        <div class="bg-pink-500/20 text-pink-500 p-2 rounded-xl text-xl flex items-center justify-center" id="toast-icon">⚡</div>
+        <div class="flex-1">
+            <h4 class="font-black text-sm text-white uppercase tracking-tight" id="toast-title">Notification</h4>
+            <p class="text-xs text-gray-400 mt-0.5" id="toast-body">Détails de l'alerte...</p>
+        </div>
+    </div>
 
     <div id="match-announcement">
         <h2 class="text-pink-500 text-2xl font-black italic uppercase tracking-tighter mb-2">Incroyable !</h2>
@@ -68,6 +75,11 @@
     </div>
 
     <div id="main-app" class="hidden w-full max-w-md space-y-6">
+        <div id="permission-banner" class="hidden glass p-3 rounded-2xl border-orange-500/20 bg-orange-500/5 text-center space-y-2 animate-pop">
+            <p class="text-[11px] text-gray-300 font-medium">Active les notifications pour recevoir tes Matchs en temps réel ! 🚀</p>
+            <button id="btn-grant-notifications" class="bg-white/10 hover:bg-white text-white hover:text-black font-bold text-[10px] uppercase tracking-wider px-4 py-1.5 rounded-xl transition-all">Autoriser</button>
+        </div>
+
         <header class="flex justify-between items-center py-4">
             <div>
                 <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
@@ -206,23 +218,81 @@
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // --- NOUVEAU : FONCTIONS POUR LES NOTIFICATIONS NAVIGATEUR ---
-        function requestNotificationPermission() {
+        // --- AUDIO COMPATIBLE MOBILE SANS CODE SOURCE EXTERNE ---
+        function playAlertSound(isMatch = false) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if(isMatch) {
+                    // Double bip joyeux ascendant pour le Match
+                    let osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+                    
+                    osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // Ré5
+                    osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // La5
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+                    
+                    osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.12);
+                    osc2.start(ctx.currentTime + 0.12); osc2.stop(ctx.currentTime + 0.45);
+                } else {
+                    // Bip simple, élégant et court pour le Flash simple
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Do5
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+                }
+            } catch (e) { console.log("Audio en attente d'interaction"); }
+        }
+
+        // --- SYSTÈME DE DISTRIBUTION INTELLIGENT DE L'ALERTE ---
+        function triggerGlobalNotification(title, body, icon = "⚡", isMatch = false) {
+            // 1. Déclencher le son immédiatement
+            playAlertSound(isMatch);
+
+            // 2. Tenter la notification Push Système Native (PC, Mac, Android)
+            if ("Notification" in window && Notification.permission === "granted") {
+                try { new Notification(title, { body: body }); } catch(e) {}
+            }
+
+            // 3. TOUJOURS exécuter la bannière Toast graphique In-App (Parfait pour le Safari de l'iPhone !)
+            const toast = document.getElementById('in-app-toast');
+            document.getElementById('toast-title').innerText = title.toUpperCase();
+            document.getElementById('toast-body').innerText = body;
+            document.getElementById('toast-icon').innerText = icon;
+
+            toast.classList.remove('-translate-y-32', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-32', 'opacity-0', 'pointer-events-none');
+            }, 4500);
+        }
+
+        function checkSystemPermissionStatus() {
             if ("Notification" in window) {
-                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                    Notification.requestPermission();
+                if (Notification.permission === "default") {
+                    document.getElementById('permission-banner').classList.remove('hidden');
+                } else {
+                    document.getElementById('permission-banner').classList.add('hidden');
                 }
             }
         }
 
-        function sendLocalNotification(title, body) {
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(title, {
-                    body: body,
-                    icon: "https://pub-c2a4170364b44cb0966a0bcbf6f33d7b.r2.dev/clubmatch-icon.png" // Icône générique, personnalisable
+        document.getElementById('btn-grant-notifications').onclick = () => {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(() => {
+                    checkSystemPermissionStatus();
+                    // Petit bip de test pour confirmer le bon fonctionnement de l'audio
+                    playAlertSound(false);
                 });
             }
-        }
+        };
 
         function showUI(id) {
             ['closed-screen', 'login-screen', 'main-app'].forEach(s => {
@@ -332,6 +402,11 @@
                 await set(userRef, deviceId);
                 currentBadge = badge;
                 localStorage.setItem(`myBadge_${eventID}`, badge);
+                
+                // GESTE UTILISATEUR VALIDE : On essaie d'activer les notifications à ce moment précis
+                if ("Notification" in window && Notification.permission === "default") {
+                    Notification.requestPermission();
+                }
                 loadApp();
             }
         };
@@ -367,7 +442,7 @@
             targetInput.value = "";
         };
 
-        // Variables de mémorisation d'état persistantes pour la session de l'application
+        // Mémoire de session pour éviter les fausses alertes au premier chargement initial de la page
         let previousLikesRecusCount = null;
         let previousMatchesList = [];
 
@@ -375,8 +450,8 @@
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
             
-            // Demande l'autorisation dès le chargement réussi de l'application
-            requestNotificationPermission();
+            // Vérifier s'il faut afficher la bannière d'invitation aux notifications système
+            checkSystemPermissionStatus();
 
             onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
                 if (!snapshot.exists()) { localStorage.removeItem(`myBadge_${eventID}`); location.reload(); }
@@ -398,24 +473,23 @@
                 document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
                 document.getElementById('stat-matches').innerText = matches.length;
 
-                // --- LOGIQUE DE DÉTECTION ET D'ENVOI DES NOTIFICATIONS ---
+                // --- LOGIQUE TRIPLE-ALERTE SUR ÉCOUTE TEMPS RÉEL ---
                 if (previousLikesRecusCount !== null) {
-                    // Trouver s'il y a de nouveaux identifiants de match
                     const newMatches = matches.filter(id => !previousMatchesList.includes(id));
                     
                     if (newMatches.length > 0) {
-                        // Alerte de Match
+                        // Cas 1 : Nouveau Match détecté
                         newMatches.forEach(id => {
-                            sendLocalNotification("Match 🔥 !!", `Incroyable, tu as un match avec le Badge #${id} !`);
+                            triggerGlobalNotification("Match 🔥 !", `Tu as un match avec le Badge #${id} !`, "🔥", true);
                         });
                     } 
                     else if (likesRecus > previousLikesRecusCount) {
-                        // Alerte de Flash simple reçu (si aucun nouveau match simultané)
-                        sendLocalNotification("Nouveau Flash ⚡", "Quelqu'un vient de te flasher ! Découvre vite qui c'est.");
+                        // Cas 2 : Flash simple reçu (et aucun nouveau match créé)
+                        triggerGlobalNotification("Nouveau Flash ⚡", "Quelqu'un vient de flasher ton badge !", "⚡", false);
                     }
                 }
 
-                // Sauvegarde de l'état actuel pour la prochaine mise à jour de la DB
+                // Enregistrement de l'état actuel pour la prochaine variation de données Firebase
                 previousLikesRecusCount = likesRecus;
                 previousMatchesList = [...matches];
                 
@@ -553,6 +627,7 @@
             }
         };
 
+        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
                 await remove(ref(db, `${basePath}/users`));
