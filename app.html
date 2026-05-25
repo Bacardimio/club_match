@@ -767,7 +767,7 @@
             const badge = document.getElementById('admin-delete-badge-input').value.trim();
             if(!badge) return;
             if (confirm(`${translations[window.currentLang]['confirmDeleteLike']} ${badge} ?`)) {
-                await remove(ref(db, `${basePath}/users/${badge}`));
+                await remove(ref(ref(db, `${basePath}/users/${badge}`)));
                 alert(translations[window.currentLang]['alertBadgeFreed'].replace('_NUM_', badge));
                 document.getElementById('admin-delete-badge-input').value = "";
                 updateAdminStats();
