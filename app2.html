@@ -74,7 +74,7 @@
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
         <div>
             <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
-            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70" data-i18n="loading">CHARGEMENT...</p>
+            <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">...</p>
         </div>
         <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
             <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
@@ -210,7 +210,6 @@
                 matchYouFlashed: "Tu as flashé le badge",
                 matchTapDismiss: "Appuie n'importe où pour continuer",
                 eventUnavailable: "Événement non disponible.",
-                loading: "CHARGEMENT...",
                 joinBtn: "Rejoindre",
                 errorBadgeUsed: "Badge déjà utilisé sur un autre appareil.",
                 errorInvalidBadge: "Numéro de badge invalide (maximum 200).",
@@ -244,7 +243,6 @@
                 adminClearAllBtn: "Tout effacer",
                 adminSupport: "Support Technique",
                 adminCloseBtn: "Fermer",
-                // Alertes JS dynamiques
                 promptAdminCode: "Code Admin :",
                 confirmDeleteLike: "Supprimer le like/match avec #",
                 confirmClearAll: "⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.",
@@ -264,7 +262,6 @@
                 matchYouFlashed: "You flashed badge",
                 matchTapDismiss: "Tap anywhere to continue",
                 eventUnavailable: "Event not available.",
-                loading: "LOADING...",
                 joinBtn: "Join",
                 errorBadgeUsed: "Badge already in use on another device.",
                 errorInvalidBadge: "Invalid badge number (maximum 200).",
@@ -298,7 +295,6 @@
                 adminClearAllBtn: "Clear Everything",
                 adminSupport: "Technical Support",
                 adminCloseBtn: "Close",
-                // Alertes JS dynamiques
                 promptAdminCode: "Admin Code:",
                 confirmDeleteLike: "Delete the flash/match with #",
                 confirmClearAll: "⚠ Delete event data only (users, flashes, messages)? License configuration will be kept.",
@@ -331,12 +327,9 @@
             });
 
             document.getElementById('chat-input').placeholder = translations[lang]['chatPlaceholder'];
-            
-            // Événement personnalisé pour avertir le code Firebase qu'il doit rafraîchir ses listes dynamiques
             window.dispatchEvent(new CustomEvent('langChanged', { detail: lang }));
         };
 
-        // Lancement immédiat de la langue préférée au chargement du DOM
         document.addEventListener("DOMContentLoaded", () => {
             window.changeLanguage(window.currentLang);
         });
@@ -371,7 +364,6 @@
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
-        // --- AUDIO COMPATIBLE MOBILE ---
         function playAlertSound(isMatch = false) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -397,7 +389,6 @@
             } catch (e) { console.log("Audio waiting for user interaction"); }
         }
 
-        // --- ALERTES EN TEMPS RÉEL ---
         function triggerGlobalNotification(title, body, icon = "⚡", isMatch = false) {
             playAlertSound(isMatch);
             if ("Notification" in window && Notification.permission === "granted") {
@@ -479,7 +470,8 @@
                 return;
             }
 
-            document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+            // CORRECTION : Affichage brut du nom de l'événement (préserve la saisie exacte de la BDD)
+            document.getElementById('event-name-display').innerText = config.name ? config.name : eventID;
 
             if (config.active === false) {
                 showUI('closed-screen');
@@ -585,7 +577,6 @@
         let previousMatchesList = [];
         let globalLikesData = {}; 
 
-        // Fonction isolée de rendu pour pouvoir rafraîchir à la volée la langue des listes
         function renderAppLists() {
             if (!currentBadge || !globalLikesData) return;
             
@@ -659,7 +650,6 @@
                     }
                 }
 
-                // Déclenchement des alertes push/toast réelles
                 if (previousLikesRecusCount !== null) {
                     const newMatches = matches.filter(id => !previousMatchesList.includes(id));
                     if (newMatches.length > 0) {
@@ -679,7 +669,6 @@
             });
         }
 
-        // Écouteur pour reconstruire les listes dynamiques dès que l'utilisateur clique sur FR/EN
         window.addEventListener('langChanged', () => {
             renderAppLists();
         });
