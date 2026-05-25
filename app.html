@@ -169,7 +169,7 @@
             <div class="pt-6 border-t border-white/10 space-y-4 text-center">
                 <div class="space-y-1">
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
-                    <a href="mailto:admclient@yahoo.fr" class="block text-sm text-pink-500 hover:underline font-bold">admclient@yahoo.fr</a>
+                    <a href="mailto:info@clubmatchpro.fr" class="block text-sm text-pink-500 hover:underline font-bold">info@clubmatchpro.fr</a>
                 </div>
             </div>
 
@@ -205,6 +205,24 @@
         let currentChatMessagesSent = 0;
         
         localStorage.setItem(`deviceId_${eventID}`, deviceId);
+
+        // --- NOUVEAU : FONCTIONS POUR LES NOTIFICATIONS NAVIGATEUR ---
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+            }
+        }
+
+        function sendLocalNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: "https://pub-c2a4170364b44cb0966a0bcbf6f33d7b.r2.dev/clubmatch-icon.png" // Icône générique, personnalisable
+                });
+            }
+        }
 
         function showUI(id) {
             ['closed-screen', 'login-screen', 'main-app'].forEach(s => {
@@ -349,12 +367,21 @@
             targetInput.value = "";
         };
 
+        // Variables de mémorisation d'état persistantes pour la session de l'application
+        let previousLikesRecusCount = null;
+        let previousMatchesList = [];
+
         function loadApp() {
             showUI('main-app');
             document.getElementById('display-badge').innerText = currentBadge;
+            
+            // Demande l'autorisation dès le chargement réussi de l'application
+            requestNotificationPermission();
+
             onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
                 if (!snapshot.exists()) { localStorage.removeItem(`myBadge_${eventID}`); location.reload(); }
             });
+
             onValue(ref(db, `${basePath}/likes`), (snapshot) => {
                 const data = snapshot.val() || {};
                 let matches = [];
@@ -370,6 +397,27 @@
                 document.getElementById('stat-likes-recus').innerText = likesRecus;
                 document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
                 document.getElementById('stat-matches').innerText = matches.length;
+
+                // --- LOGIQUE DE DÉTECTION ET D'ENVOI DES NOTIFICATIONS ---
+                if (previousLikesRecusCount !== null) {
+                    // Trouver s'il y a de nouveaux identifiants de match
+                    const newMatches = matches.filter(id => !previousMatchesList.includes(id));
+                    
+                    if (newMatches.length > 0) {
+                        // Alerte de Match
+                        newMatches.forEach(id => {
+                            sendLocalNotification("Match 🔥 !!", `Incroyable, tu as un match avec le Badge #${id} !`);
+                        });
+                    } 
+                    else if (likesRecus > previousLikesRecusCount) {
+                        // Alerte de Flash simple reçu (si aucun nouveau match simultané)
+                        sendLocalNotification("Nouveau Flash ⚡", "Quelqu'un vient de te flasher ! Découvre vite qui c'est.");
+                    }
+                }
+
+                // Sauvegarde de l'état actuel pour la prochaine mise à jour de la DB
+                previousLikesRecusCount = likesRecus;
+                previousMatchesList = [...matches];
                 
                 const list = document.getElementById('match-list');
                 list.innerHTML = matches.length ? "" : "<p class='text-center text-gray-600 italic text-xs py-10'>Aucun match pour le moment...</p>";
@@ -505,7 +553,6 @@
             }
         };
 
-        // CORRECTION ICI : On cible uniquement les données de jeu en préservant 'config'
         document.getElementById('reset-event-trigger').onclick = async () => {
             if (confirm("⚠ Supprimer uniquement les données de l'événement (utilisateurs, flashs, messages) ? La configuration de la licence sera conservée.")) {
                 await remove(ref(db, `${basePath}/users`));
