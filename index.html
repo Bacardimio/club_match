@@ -75,10 +75,10 @@
                     <label class="block text-[10px] font-bold uppercase text-gray-500 ml-1">Packs Physiques Optionnels</label>
                     <select id="physicalPacksQty" class="input-field cursor-pointer">
                         <option value="0">Aucun pack physique (Accès numérique uniquement)</option>
-                        <option value="1">1 Pack : 50 badges + 5 affiches (+40€)</option>
-                        <option value="2">2 Packs : 100 badges + 10 affiches (+80€)</option>
-                        <option value="3">3 Packs : 150 badges + 15 affiches (+120€)</option>
-                        <option value="4">4 Packs : 200 badges + 20 affiches (+160€)</option>
+                        <option value="1">1 Pack : 50 badges + 5 affichettes avec QR Code (+40€)</option>
+                        <option value="2">2 Packs : 100 badges + 10 affichettes avec QR Code (+80€)</option>
+                        <option value="3">3 Packs : 150 badges + 15 affichettes avec QR Code (+120€)</option>
+                        <option value="4">4 Packs : 200 badges + 20 affichettes avec QR Code (+160€)</option>
                     </select>
                     <p class="text-[9px] text-pink-500/80 uppercase font-black italic mt-1">⚠️ Attention : Un délai d'envoi postal de 72h s'impose pour la livraison</p>
                 </div>
@@ -130,7 +130,7 @@
                 </div>
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-colors">
                     <span class="text-pink-500 font-black text-xs block tracking-widest mb-1">02. CONNEXION</span>
-                    <p class="text-gray-400 text-xs leading-relaxed">Scan du QR code de l'événement pour accéder à la Web-App instantanément (sans installation).</p>
+                    <p class="text-gray-400 text-xs leading-relaxed">Scan du QR code de l'événement pour accéder à la Web-App instantanément (sans installation)et rejoignez le jeu en saisissant le numéro du badge qui vous a été attribué.</p>
                 </div>
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-colors">
                     <span class="text-pink-500 font-black text-xs block tracking-widest mb-1">03. CIBLAGE</span>
@@ -220,8 +220,41 @@
         </div>
     </section>
 
+    <section id="physical-packs-info" class="max-w-7xl mx-auto px-6 pb-24">
+        <div class="glass p-8 md:p-12 rounded-[2.5rem] border-white/10 max-w-5xl mx-auto relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-[300px] h-[300px] bg-pink-600/5 blur-[100px] rounded-full -z-10"></div>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-6">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Matériel Clé en Main</span>
+                    <h2 class="text-3xl font-black uppercase italic leading-tight">L'Option <span class="text-pink-500">Pack Physique</span></h2>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez un ou plusieurs packs physiques à votre formule lors de l'inscription. Tout le matériel est imprimé et livré directement chez vous sous 72h.
+                    </p>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block">
+                        <p class="text-[11px] text-pink-400 font-black uppercase italic">Tarif : +40€ par pack</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez la quantité souhaitée directement dans le formulaire de configuration.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-3">
+                        <div class="text-3xl text-pink-500">📋</div>
+                        <h3 class="text-lg font-bold uppercase italic">5 Affichettes QR Code</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Prêtes à être disposées aux points stratégiques (bar, tables, entrée) pour permettre un accès instantané à l'application.</p>
+                    </div>
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-3">
+                        <div class="text-3xl text-pink-500">🏷️</div>
+                        <h3 class="text-lg font-bold uppercase italic">50 Étiquettes</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed">Badges autocollants numérotés pour identifier facilement et visuellement chaque participant de la soirée.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer class="w-full text-center py-12 text-xs text-gray-600 border-t border-white/5 space-y-3">
-        <p>© 2026 Club Match Pro | Entrepreneur Individuel (EI) | Contact : <a href="mailto:admclient@yahoo.fr" class="text-pink-500 hover:underline">admclient@yahoo.fr</a></p>
+        <p>© 2026 Club Match Pro | Entrepreneur Individuel (EI) | Contact : <a href="mailto:info@clubmatchpro.fr" class="text-pink-500 hover:underline">info@clubmatchpro.fr</a></p>
         <div class="flex justify-center space-x-4 text-[10px]">
             <a href="mentions-legales.html" class="text-gray-500 hover:text-white transition-colors underline">Mentions Légales</a>
             <span class="text-white/10">|</span>
