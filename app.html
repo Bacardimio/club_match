@@ -150,7 +150,8 @@
             <h3 class="flex-1 text-xl font-black italic text-white"><span data-i18n="chatWith">Chat</span> #<span id="chat-target-badge">--</span></h3>
         </header>
         <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
-        <div class="px-6 py-2 text-center">
+        <div class="px-6 py-2 flex justify-between items-center">
+            <p id="chat-remaining-count" class="text-gray-400 text-[10px] font-bold uppercase">Messages restants : --</p>
             <p id="chat-limit-warning" class="text-orange-500 text-[10px] font-bold uppercase hidden" data-i18n="errorLimitMsg">Limite de 10 messages atteinte !</p>
         </div>
         <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
@@ -232,6 +233,7 @@
                 chatWith: "Chat",
                 chatPlaceholder: "Message...",
                 errorLimitMsg: "Limite de 10 messages atteinte !",
+                remainingMessages: "Messages restants : _COUNT_ / 10",
                 sendBtn: "Envoyer",
                 adminTitle: "Administration",
                 adminIndicator: "Indicateur",
@@ -284,6 +286,7 @@
                 chatWith: "Chat",
                 chatPlaceholder: "Message...",
                 errorLimitMsg: "Limit of 10 messages reached!",
+                remainingMessages: "Remaining messages: _COUNT_ / 10",
                 sendBtn: "Send",
                 adminTitle: "Administration",
                 adminIndicator: "Indicator",
@@ -728,6 +731,11 @@
                     d.innerText = m.text;
                     container.appendChild(d);
                 });
+
+                // Mise à jour en temps réel du compteur de messages restants
+                const remaining = Math.max(0, 10 - currentChatMessagesSent);
+                document.getElementById('chat-remaining-count').innerText = translations[window.currentLang]['remainingMessages'].replace('_COUNT_', remaining);
+
                 localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
                 container.scrollTop = container.scrollHeight;
             });
@@ -755,7 +763,6 @@
         };
 
         document.getElementById('admin-trigger').onclick = () => {
-            // Modification du texte d'invite du code Admin pour utiliser le domaine clubmatchpro.fr
             if (prompt(translations[window.currentLang]['promptAdminCode']) === "2026") { 
                 updateAdminStats(); 
                 document.getElementById('admin-panel').classList.remove('hidden'); 
