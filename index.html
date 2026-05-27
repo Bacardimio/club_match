@@ -66,11 +66,6 @@
                     <input type="email" id="custEmail" required class="input-field" placeholder="nom@exemple.com">
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Date de début souhaitée</label>
-                    <input type="date" id="activationDate" required class="input-field">
-                </div>
-
                 <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 space-y-2">
                     <label class="block text-[10px] font-bold uppercase text-gray-500 ml-1">Packs Physiques Optionnels</label>
                     <select id="physicalPacksQty" class="input-field cursor-pointer">
@@ -86,6 +81,11 @@
                 <div id="addressFieldWrapper" class="hidden space-y-1 transition-all duration-300">
                     <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Adresse complète de livraison postale</label>
                     <textarea id="postalAddress" rows="2" class="input-field" placeholder="Nom de rue, Numéro, Code Postal, Ville, Pays..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Date de début souhaitée</label>
+                    <input type="date" id="activationDate" required class="input-field">
                 </div>
 
                 <div class="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/10">
@@ -130,7 +130,7 @@
                 </div>
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-colors">
                     <span class="text-pink-500 font-black text-xs block tracking-widest mb-1">02. CONNEXION</span>
-                    <p class="text-gray-400 text-xs leading-relaxed">Scan du QR code de l'événement pour accéder à la Web-App instantanément (sans installation)et rejoignez le jeu en saisissant le numéro du badge qui vous a été attribué.</p>
+                    <p class="text-gray-400 text-xs leading-relaxed">Scan du QR code de l'événement pour accéder à la Web-App instantanément (sans installation) et rejoignez le jeu en saisissant le numéro du badge qui vous a été attribué.</p>
                 </div>
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-colors">
                     <span class="text-pink-500 font-black text-xs block tracking-widest mb-1">03. CIBLAGE</span>
@@ -276,6 +276,9 @@
         appId: "1:975364560340:web:64fd827ced5c24b808f241"
     };
 
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
     // --- CONFIGURATION STRIPE ---
     const stripeLinks = {
         '48h_0': 'https://buy.stripe.com/eVq28s6IZb4P9eYgs1cQU08',
@@ -291,13 +294,74 @@
         '30j_4': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g'
     };
 
+    // --- VARIABLES DOM DU FORMULAIRE ---
+    const modal = document.getElementById('orderModal');
+    const modalTitle = document.getElementById('modalPlanTitle');
+    const priceDisplay = document.getElementById('totalPriceDisplay');
+    const physicalPacksQtyDropdown = document.getElementById('physicalPacksQty');
+    const addressFieldWrapper = document.getElementById('addressFieldWrapper');
+    const postalAddressInput = document.getElementById('postalAddress');
     const dateInput = document.getElementById('activationDate');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.setAttribute('min', today);
-    dateInput.value = today;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    // --- GESTION LOGIQUE DE LA DATE (+72H) ---
+    function getMinDateString(qty) {
+        const d = new Date();
+        if (qty > 0) {
+            d.setHours(d.getHours() + 72);
+        }
+        return d.toISOString().split('T')[0];
+    }
+
+    function updateDateConstraints() {
+        const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
+        const minDateStr = getMinDateString(qty);
+        dateInput.setAttribute('min', minDateStr);
+        
+        // Si l'utilisateur n'a pas encore choisi de date ou si la date choisie est invalide (antérieure au minimum requis)
+        if (!dateInput.value || dateInput.value < minDateStr) {
+            dateInput.value = minDateStr;
+        }
+    }
+
+    let currentBasePrice = 0;
+    let currentPlan = "";
+
+    window.openOrderModal = function(plan, price) {
+        currentPlan = plan;
+        currentBasePrice = price;
+        modalTitle.innerText = "Licence " + (plan === '48h' ? '48 Heures' : '30 Jours');
+        physicalPacksQtyDropdown.value = "0";
+        postalAddressInput.value = "";
+        
+        updateTotal(); // Ceci va aussi mettre à jour la date minimum (Aujourd'hui)
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closeModal = function() {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function updateTotal() {
+        const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
+        const total = currentBasePrice + (qty * 40);
+        
+        if (qty > 0) {
+            addressFieldWrapper.classList.remove('hidden');
+            postalAddressInput.required = true;
+        } else {
+            addressFieldWrapper.classList.add('hidden');
+            postalAddressInput.required = false;
+        }
+        priceDisplay.innerText = total + "€";
+        
+        // Mise à jour de la date dès qu'on change la quantité de packs
+        updateDateConstraints();
+    }
+
+    physicalPacksQtyDropdown.addEventListener('change', updateTotal);
 
     // Simulation Écran Mobile
     const screens = [
@@ -321,49 +385,6 @@
     }
     window.onload = runSimulation;
 
-    // Modale & Calcul Dynamique Prix
-    const modal = document.getElementById('orderModal');
-    const modalTitle = document.getElementById('modalPlanTitle');
-    const priceDisplay = document.getElementById('totalPriceDisplay');
-    const physicalPacksQtyDropdown = document.getElementById('physicalPacksQty');
-    const addressFieldWrapper = document.getElementById('addressFieldWrapper');
-    const postalAddressInput = document.getElementById('postalAddress');
-    
-    let currentBasePrice = 0;
-    let currentPlan = "";
-
-    window.openOrderModal = function(plan, price) {
-        currentPlan = plan;
-        currentBasePrice = price;
-        modalTitle.innerText = "Licence " + (plan === '48h' ? '48 Heures' : '30 Jours');
-        physicalPacksQtyDropdown.value = "0";
-        postalAddressInput.value = "";
-        updateTotal();
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    window.closeModal = function() {
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-
-    function updateTotal() {
-        const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
-        const total = currentBasePrice + (qty * 40);
-        
-        if (qty > 0) {
-            addressFieldWrapper.classList.remove('hidden');
-            postalAddressInput.required = true;
-        } else {
-            addressFieldWrapper.classList.add('hidden');
-            postalAddressInput.required = false;
-        }
-        priceDisplay.innerText = total + "€";
-    }
-
-    physicalPacksQtyDropdown.addEventListener('change', updateTotal);
-
     // Traitement Formulaire & Enregistrement Firebase avant Stripe
     document.getElementById('orderForm').onsubmit = async function(e) {
         e.preventDefault();
@@ -378,11 +399,14 @@
         
         const selectedDate = new Date(startDateStr);
         selectedDate.setHours(0, 0, 0, 0);
-        const todayCheck = new Date();
-        todayCheck.setHours(0, 0, 0, 0);
+        
+        const minDateRequiredStr = getMinDateString(selectedQty);
+        const minDateRequired = new Date(minDateRequiredStr);
+        minDateRequired.setHours(0, 0, 0, 0);
 
-        if (selectedDate < todayCheck) {
-            alert("Date de début invalide.");
+        // Validation stricte lors de la soumission
+        if (selectedDate < minDateRequired) {
+            alert(selectedQty > 0 ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "Date de début invalide.");
             btn.disabled = false;
             btn.innerText = "Valider et Payer avec Stripe";
             return;
