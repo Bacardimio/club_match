@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Match Pro - Notice Organisateur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --accent: #ff0055; }
+        body { background: #0a0a0a; color: white; font-family: -apple-system, system-ui, sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .glass-premium { background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(255, 94, 0, 0.05)); backdrop-filter: blur(25px); border: 1px solid rgba(255, 0, 85, 0.3); }
+        .btn-danger { background: linear-gradient(135deg, #dc2626, #ff0055); transition: all 0.3s ease; border: none; }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4); }
+        .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-admin { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-white antialiased min-h-screen flex flex-col justify-between">
+
+    <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-pink-600/5 blur-[120px] rounded-full -z-10"></div>
+    <div class="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-orange-600/5 blur-[120px] rounded-full -z-10"></div>
+
+    <header class="w-full max-w-5xl mx-auto px-6 py-8 flex justify-between items-center relative z-50">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
+        </div>
+        <div class="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-500 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+            Console Admin • Guide Exploitant
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto px-6 py-4 flex-grow space-y-8">
+        
+        <div class="space-y-2">
+            <h1 class="text-4xl font-black tracking-tight uppercase italic leading-none">
+                Gérer votre événement <br><span class="text-accent-gradient">en temps réel.</span>
+            </h1>
+            <p class="text-gray-400 text-xs max-w-xl">Notice simplifiée de configuration, de suivi et de modération de votre interface partenaire.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">01. Connexion</span>
+                    <span class="text-lg">📲</span>
+                </div>
+                <h3 class="text-lg font-black uppercase italic">Accès à l'interface</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">
+                    Connectez-vous à la web-app directement depuis votre smartphone personnel[cite: 1]. Pour activer instantanément vos privilèges d'administrateur, enregistrez-vous en saisissant le numéro <span class="badge-admin text-white px-2 py-0.5 rounded font-mono font-bold text-sm mx-0.5">0</span> lors de la création de votre profil joueur[cite: 1].
+                </p>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">02. Live Tracking</span>
+                    <span class="text-lg">📊</span>
+                </div>
+                <h3 class="text-lg font-black uppercase italic">Suivi de l'activité</h3>
+                <ul class="text-gray-400 text-xs space-y-2">
+                    <li class="flex items-start gap-2">
+                        <span class="text-pink-500 font-bold">•</span>
+                        <span><strong class="text-white">Tableau de bord :</strong> Visualisez instantanément le nombre de participants connectés à l'application[cite: 2].</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-pink-500 font-bold">•</span>
+                        <span><strong class="text-white">Statistiques :</strong> Suivez le volume total de "Flashs" envoyés (limités automatiquement à 5 max par personne) et le nombre de "Matchs" conclus en direct[cite: 3].</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">03. Messagerie</span>
+                    <span class="text-lg">💬</span>
+                </div>
+                <h3 class="text-lg font-black uppercase italic">Flux & Confidentialité</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">
+                    Les conversations privées générées par l'application sont volontairement limitées à <strong class="text-white">10 messages par Match</strong> et par utilisateur pour inciter à la rencontre physique[cite: 4]. Pour des raisons légales de respect de la vie privée, ces échanges restent <span class="text-pink-400 font-bold">strictement confidentiels</span> et ne sont pas consultables par l'administration[cite: 4].
+                </p>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">04. Sécurité</span>
+                    <span class="text-lg">🛡️</span>
+                </div>
+                <h3 class="text-lg font-black uppercase italic">Modération & Profils</h3>
+                <p class="text-gray-400 text-xs leading-relaxed">
+                    Gardez le contrôle sur l'environnement de votre établissement. En tant qu'organisateur, vous conservez à tout moment la possibilité technique d'<strong>annuler un numéro de participant</strong>[cite: 5]. Cette action s'applique principalement en cas d'erreur de saisie d'un client ou en cas de comportement inapproprié constaté[cite: 5].
+                </p>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4 md:col-span-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">05. Visibilité & Diffusion</span>
+                    <span class="text-lg">📢</span>
+                </div>
+                <h3 class="text-lg font-black uppercase italic">Maximiser l'engagement de votre public</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-gray-400 text-xs leading-relaxed">
+                    <p>
+                        Assurez-vous qu'une attention particulière est portée à l'affichage : le QR Code de l'événement doit être <strong class="text-white">parfaitement visible</strong> à l'entrée de votre établissement, ainsi que sur l'ensemble des tables et des comptoirs des bars[cite: 6].
+                    </p>
+                    <p class="border-l border-white/10 pl-4 italic text-gray-300">
+                        ⚡ <strong class="text-white">Règle d'or :</strong> Plus la communauté de participants connectés en simultané est importante, plus l'expérience de jeu devient fluide, immersive et réussie pour vos clients[cite: 7].
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-premium p-6 rounded-3xl space-y-4 md:col-span-2 border-pink-500/30">
+                <div class="flex items-center justify-between">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Attention • Action Critique</span>
+                    <span class="text-lg">⚠️</span>
+                </div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="space-y-1 max-w-xl">
+                        <h3 class="text-lg font-black uppercase italic text-pink-500">Réinitialisation de l'événement</h3>
+                        <p class="text-gray-300 text-xs leading-relaxed">
+                            Vous pouvez choisir de remettre à zéro l'ensemble des interactions de la soirée pour démarrer une nouvelle session[cite: 6]. Cliquer sur le bouton déclenche la suppression définitive et <span class="underline">irréversible</span> de toutes les données en cours[cite: 6].
+                        </p>
+                    </div>
+                    <button class="btn-danger text-[10px] font-black uppercase tracking-wider text-white px-5 py-3.5 rounded-xl flex-shrink-0 cursor-not-allowed">
+                        Tout Effacer [cite: 6]
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-white/10 space-y-4 md:col-span-2 text-center md:text-left">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <span class="text-gray-500 font-black text-[10px] tracking-widest uppercase block">06. Assistance Technique</span>
+                        <p class="text-gray-400 text-xs">
+                            En cas de difficulté d'accès ou de latence sur votre console admin, vérifiez en priorité que votre propre appareil dispose d'une <strong class="text-white">connexion internet stable</strong> (réseau cellulaire 4G/5G ou Wi-Fi) avant de solliciter notre support client[cite: 8].
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-8 text-[11px] text-gray-600 border-t border-white/5 mt-12">
+        <p>© 2026 Club Match Pro | Espace Organisateur Confidentiel | Support technique : <a href="mailto:info@clubmatchpro.fr" class="text-pink-500 hover:underline">info@clubmatchpro.fr</a></p>
+    </footer>
+
+</body>
+</html>
