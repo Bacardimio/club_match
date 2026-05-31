@@ -36,9 +36,13 @@ overflow-x: hidden;
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
- <!-- Sélecteur de Langue Flottant -->
- <div class="absolute top-4 left-4 z-50">
+ <!-- Conteneur pour les Notifications Toasts Flottantes -->
+ <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
+
+ <!-- Barre d'actions en haut à droite (Langue + Admin) -->
+ <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
  <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
+ <button id="admin-trigger" class="glass opacity-40 hover:opacity-100 p-1.5 rounded-xl text-sm transition-all">⚙️</button>
  </div>
 
  <div id="match-announcement">
@@ -72,11 +76,10 @@ overflow-x: hidden;
 
  <div id="main-app" class="hidden w-full max-w-md space-y-6">
  <header class="flex justify-between items-center py-4">
- <div class="pl-14"> <!-- Décale pour laisser la place au bouton de langue -->
+ <div>
  <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
  <h2 class="text-2xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
  </div>
- <button id="admin-trigger" class="opacity-20 hover:opacity-100 transition-opacity p-2 text-white text-xl">⚙️</button>
  </header>
 
  <div class="glass p-4 rounded-[2rem] shadow-2xl border-white/5">
@@ -133,7 +136,6 @@ overflow-x: hidden;
  <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
  <div class="px-6 py-2 text-center bg-white/5 border-t border-white/5">
  <p id="chat-limit-warning" class="text-red-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
- <!-- Affichage du compteur de messages requis -->
  <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider mt-1">Messages : 0 / 10</p>
  </div>
  <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
@@ -174,7 +176,8 @@ overflow-x: hidden;
  <div class="pt-6 border-t border-white/10 space-y-4 text-center">
  <div class="space-y-1">
  <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
- <a href="mailto:admclient@yahoo.fr" class="block text-sm text-pink-500 hover:underline font-bold">admclient@yahoo.fr</a>
+ <!-- CORRECTION SUPPORT TECHNIQUE -->
+ <a href="mailto:info@clubmatchpro.fr" class="block text-sm text-pink-500 hover:underline font-bold">info@clubmatchpro.fr</a>
  </div>
  </div>
 
@@ -209,6 +212,10 @@ overflow-x: hidden;
  let currentLikesSentCount = 0;
  let currentChatMessagesSent = 0;
  
+ // Variables pour suivre l'état précédent et déclencher les notifications au bon moment
+ let prevLikesRecusCount = null;
+ let prevMatchesCount = null;
+
  localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
  // --- DICTIONNAIRE DE TRADUCTION ---
@@ -246,7 +253,9 @@ overflow-x: hidden;
  chatPlaceholder: "Message...",
  sendBtn: "Envoyer",
  errLimitMsg: "Limite de 10 messages atteinte !",
- chatCounter: "Messages : {count} / 10"
+ chatCounter: "Messages : {count} / 10",
+ toastFlash: "Nouveau flash reçu ! 👀",
+ toastMatch: "Nouveau Match ! 🔥"
  },
  en: {
  toggleBtn: "🇫🇷 FR",
@@ -281,7 +290,9 @@ overflow-x: hidden;
  chatPlaceholder: "Type a message...",
  sendBtn: "Send",
  errLimitMsg: "Limit of 10 messages reached!",
- chatCounter: "Messages: {count} / 10"
+ chatCounter: "Messages: {count} / 10",
+ toastFlash: "New flash received! 👀",
+ toastMatch: "New Match! 🔥"
  }
  };
 
@@ -291,37 +302,52 @@ overflow-x: hidden;
  const t = i18n[currentLang];
  document.getElementById('lang-toggle-btn').innerText = t.toggleBtn;
  
- // Écran de connexion
  document.getElementById('user-badge').placeholder = t.badgePlaceholder;
  document.getElementById('btn-login-trigger').innerText = t.joinBtn;
  
- // Annonce Match
  document.querySelector('#match-announcement h2').innerText = t.incredible;
  document.querySelector('#match-announcement p.text-gray-400').innerText = t.flashedBadge;
  document.querySelector('#match-announcement p.mt-8').innerText = t.clickToContinue;
 
- // Écran Principal / En-têtes
  document.querySelector('#main-app header p').innerText = t.labelConnected;
  document.getElementById('enter-number-label').innerText = t.enterNumberLabel;
  document.getElementById('btn-like-trigger').innerText = t.flashBtn;
  document.getElementById('target-error').innerText = t.errTargetNotReg;
  document.getElementById('limit-warning').innerText = t.errLimitFlash;
 
- // Grille de Statistiques
  document.getElementById('label-likes-recus').innerText = t.statRecus;
  document.getElementById('label-matches').innerText = t.statMatches;
  document.getElementById('label-likes-envoyes').innerText = t.statEnvoyes;
 
- // Titres de sections
  document.getElementById('label-section-matches').innerText = t.secMatches;
  document.getElementById('label-section-likes-sent').innerText = t.secLikesSent;
 
- // Fenêtre de Chat
  document.getElementById('chat-title-text').innerText = t.chatTitle;
  document.getElementById('chat-input').placeholder = t.chatPlaceholder;
  document.getElementById('send-msg-trigger').innerText = t.sendBtn;
  document.getElementById('chat-limit-warning').innerText = t.errLimitMsg;
  document.getElementById('chat-counter-display').innerText = t.chatCounter.replace('{count}', currentChatMessagesSent);
+ }
+
+ // GESTIONNAIRE DE NOTIFICATIONS (TOASTS BANNER)
+ function showToastNotification(message, type) {
+ const container = document.getElementById('toast-container');
+ const toast = document.createElement('div');
+ toast.className = `glass px-4 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 transform translate-y-[-20px] opacity-0 transition-all duration-300 ${
+ type === 'match' ? 'border-pink-500 bg-pink-500/10 text-pink-400' : 'border-orange-500 bg-orange-500/10 text-orange-400'
+ }`;
+ toast.innerText = message;
+ container.appendChild(toast);
+ 
+ // Déclenchement de la transition
+ toast.offsetHeight; 
+ toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+ 
+ // Retrait automatique
+ setTimeout(() => {
+ toast.classList.add('translate-y-[-20px]', 'opacity-0');
+ setTimeout(() => toast.remove(), 300);
+ }, 3500);
  }
 
  document.getElementById('lang-toggle-btn').onclick = () => {
@@ -411,7 +437,6 @@ overflow-x: hidden;
  const badge = document.getElementById('user-badge').value.trim();
  if(!badge) return;
  
- // LIMITATION : Restriction stricte de 0 à 200 max du numéro d'utilisateur
  const badgeNum = parseInt(badge, 10);
  if (isNaN(badgeNum) || badgeNum < 0 || badgeNum > 200) {
  const errEl = document.getElementById('login-error');
@@ -476,6 +501,17 @@ return;
  document.getElementById('stat-likes-recus').innerText = likesRecus;
  document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
  document.getElementById('stat-matches').innerText = matches.length;
+
+ // DÉCLENCHEMENT INTELLIGENT DES NOTIFICATIONS TOASTS (FLASH ET MATCH)
+ if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
+ showToastNotification(i18n[currentLang].toastFlash, 'flash');
+ }
+ if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
+ showToastNotification(i18n[currentLang].toastMatch, 'match');
+ }
+ // Mise à jour des références courantes pour le prochain changement
+ prevLikesRecusCount = likesRecus;
+ prevMatchesCount = matches.length;
  
  const list = document.getElementById('match-list');
  list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${i18n[currentLang].noMatches}</p>`;
@@ -570,7 +606,6 @@ dot.classList.remove('hidden');
  localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
  container.scrollTop = container.scrollHeight;
  
- // Mise à jour de l'affichage du compteur de messages requis
  document.getElementById('chat-counter-display').innerText = i18n[currentLang].chatCounter.replace('{count}', currentChatMessagesSent);
  });
  }
@@ -581,7 +616,6 @@ dot.classList.remove('hidden');
  const warning = document.getElementById('chat-limit-warning');
  if(!input.value.trim() || !activeChatRoom) return;
  
- // LIMITATION : Blocage strict à 10 messages par utilisateur dans le salon
  if (currentChatMessagesSent >= 10) {
  warning.classList.remove('hidden');
  setTimeout(() => warning.classList.add('hidden'), 4000);
@@ -618,10 +652,13 @@ document.getElementById('admin-panel').classList.remove('hidden');
  };
 
  document.getElementById('reset-event-trigger').onclick = async () => {
- if (confirm("⚠ Supprimer TOUTES les données ?")) {
- await remove(ref(db, basePath)); 
-await set(ref(ref(db, `${basePath}/resetSignal`), Date.now())); 
-location.reload();
+ const confirmationText = currentLang === 'fr' ? "⚠ Supprimer TOUTES les données de jeu des utilisateurs ?" : "⚠ Delete ALL users gameplay data?";
+ if (confirm(confirmationText)) {
+ await remove(ref(db, `${basePath}/users`));
+ await remove(ref(db, `${basePath}/likes`));
+ await remove(ref(db, `${basePath}/messages`));
+ await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
+ location.reload();
  }
  };
 
