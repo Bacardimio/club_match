@@ -19,15 +19,16 @@
         .text-accent-gradient { background: linear-gradient(135deg, var(--accent), #ff5e00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
         /* Modal Style */
-        #orderModal { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 20px; }
+        #orderModal { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 12px; }
         #orderModal.active { display: flex; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
-        .input-field { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; outline: none; transition: border-color 0.3s; }
+        .input-field { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; outline: none; transition: border-color 0.3s; font-size: 14px; }
         .input-field:focus { border-color: var(--accent); }
         select.input-field option { background: #111; color: white; }
 
         /* Smartphone Animation */
-        .phone-frame { width: 280px; height: 500px; border: 8px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 50px rgba(255,0,85,0.1); }
+        .phone-frame { width: 260px; height: 460px; border: 8px solid #1a1a1a; border-radius: 36px; position: relative; overflow: hidden; background: #000; box-shadow: 0 0 40px rgba(255,0,85,0.1); }
+        @media (min-width: 640px) { .phone-frame { width: 280px; height: 500px; border-radius: 40px; } }
         .app-screen { position: absolute; inset: 0; padding: 20px; display: none; flex-direction: column; animation: slideUp 0.5s ease-out forwards; }
         .app-screen.active { display: flex; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -36,13 +37,13 @@
     </style>
 
     <div id="orderModal">
-        <div class="glass border-white/20 p-6 md:p-8 rounded-[2.5rem] max-w-lg w-full relative overflow-y-auto max-h-[95vh]">
-            <div class="absolute top-0 right-0 p-6">
+        <div class="glass border-white/20 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] max-w-lg w-full relative overflow-y-auto max-h-[90vh]">
+            <div class="absolute top-0 right-0 p-4 md:p-6">
                 <button onclick="closeModal()" class="text-gray-500 hover:text-white text-3xl leading-none">&times;</button>
             </div>
             
-            <h3 class="text-2xl font-black uppercase italic mb-1">Configurer <span class="text-pink-500">ma licence</span></h3>
-            <p id="modalPlanTitle" class="text-[10px] text-pink-500 mb-6 font-bold uppercase tracking-[0.2em]"></p>
+            <h3 class="text-xl md:text-2xl font-black uppercase italic mb-1 pr-6">Configurer <span class="text-pink-500">ma licence</span></h3>
+            <p id="modalPlanTitle" class="text-[10px] text-pink-500 mb-5 font-bold uppercase tracking-[0.2em]"></p>
             
             <form id="orderForm" class="space-y-4">
                 <div>
@@ -50,7 +51,7 @@
                     <input type="text" id="eventName" required class="input-field" placeholder="Ex: Club Le Palace">
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1.5 ml-1">Nom / Organisation</label>
                         <input type="text" id="custName" required class="input-field" placeholder="Votre nom">
@@ -95,33 +96,33 @@
                     </label>
                 </div>
 
-                <div class="pt-4 flex justify-between items-end border-t border-white/10">
+                <div class="pt-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-t border-white/10">
                     <div>
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Total à payer</p>
-                        <p id="totalPriceDisplay" class="text-4xl font-black italic text-white">0€</p>
+                        <p id="totalPriceDisplay" class="text-3xl md:text-4xl font-black italic text-white">0€</p>
                     </div>
-                    <button type="submit" id="btn-submit-order" class="btn-main px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-wider max-w-[240px] text-center leading-tight">Valider et Payer avec Stripe</button>
+                    <button type="submit" id="btn-submit-order" class="w-full sm:w-auto btn-main px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-wider text-center leading-tight sm:max-w-[240px]">Valider et Payer avec Stripe</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-50">
+    <header class="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 flex justify-between items-center relative z-50">
         <div class="flex items-center space-x-2">
-            <span class="text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
+            <span class="text-xl md:text-2xl font-black tracking-tighter italic uppercase">CLUB<span class="text-pink-600">MATCH</span> <span class="text-[10px] md:text-xs not-italic font-bold bg-white/10 px-2 py-0.5 rounded text-gray-400">PRO</span></span>
         </div>
         <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-400">
             <a href="#features" class="hover:text-white transition-colors">Concept</a>
             <a href="#pricing" class="hover:text-white transition-colors">Tarifs</a>
         </nav>
-        <a href="#pricing" class="btn-main px-5 py-2.5 rounded-xl font-bold text-sm tracking-wide">Commander</a>
+        <a href="#pricing" class="btn-main px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold text-xs md:text-sm tracking-wide">Commander</a>
     </header>
 
-    <section class="relative max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-12 items-center overflow-hidden">
-        <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-pink-600/10 blur-[120px] rounded-full -z-10"></div>
+    <section class="relative max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-12 pb-12 md:pb-24 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center overflow-hidden">
+        <div class="absolute top-0 left-1/4 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-pink-600/10 blur-[100px] md:blur-[120px] rounded-full -z-10"></div>
         
-        <div class="space-y-8 text-left">
-            <h1 class="text-5xl md:text-6xl font-black tracking-tight uppercase italic leading-tight">Brisez la glace <br><span class="text-accent-gradient">en un flash!</span></h1>
+        <div class="space-y-6 md:space-y-8 text-left order-2 md:order-1">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight uppercase italic leading-tight">Brisez la glace <br><span class="text-accent-gradient">en un flash!</span></h1>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-colors">
@@ -143,11 +144,11 @@
             </div>
 
             <div class="flex gap-4 pt-2">
-                <a href="#pricing" class="btn-main px-8 py-4 rounded-2xl font-black text-lg uppercase tracking-wider">Lancer mon événement</a>
+                <a href="#pricing" class="w-full sm:w-auto text-center btn-main px-6 py-4 md:px-8 md:py-4 rounded-2xl font-black text-base md:text-lg uppercase tracking-wider">Lancer mon événement</a>
             </div>
         </div>
 
-        <div class="flex justify-center">
+        <div class="flex justify-center order-1 md:order-2 py-4 md:py-0">
             <div class="phone-frame glass">
                 <div id="step-1" class="app-screen active justify-center space-y-6">
                     <h2 class="text-2xl font-black italic text-center uppercase">CLUB<span class="text-pink-500">MATCH</span></h2>
@@ -183,69 +184,69 @@
         </div>
     </section>
 
-    <section id="pricing" class="max-w-7xl mx-auto px-6 py-24 space-y-12">
-        <div class="text-center space-y-4">
+    <section id="pricing" class="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-24 space-y-8 md:space-y-12">
+        <div class="text-center space-y-3">
             <h2 class="text-3xl md:text-5xl font-black uppercase italic">Nos <span class="text-pink-500">Licences</span></h2>
-            <p class="text-gray-400">SaaS prêt à l'emploi pour vos événements.</p>
+            <p class="text-sm text-gray-400">SaaS prêt à l'emploi pour vos événements.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div class="glass p-8 rounded-[2.5rem] border-white/10 space-y-8 flex flex-col justify-between">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
+            <div class="glass p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-white/10 space-y-6 flex flex-col justify-between">
                 <div>
-                    <h3 class="text-2xl font-black uppercase italic">Licence 48h</h3>
+                    <h3 class="text-xl md:text-2xl font-black uppercase italic">Licence 48h</h3>
                     <p class="text-gray-400 text-sm">Idéal pour une soirée unique ou un week-end.</p>
-                    <div class="mt-4 text-5xl font-black">99€</div>
+                    <div class="mt-4 text-4xl md:text-5xl font-black">99€</div>
                     <ul class="mt-6 text-xs text-gray-400 space-y-3">
                         <li>✔ Lien Web-App fonctionnel et valide pendant 48h</li>
                         <li>✔ Accès Console Admin complète & Statistiques</li>
                         <li>✔ Utilisation instantanée sans friction pour les clients</li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('48h', 99)" class="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-bold transition-all uppercase text-sm mt-8">Configurer 48h</button>
+                <button onclick="openOrderModal('48h', 99)" class="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-bold transition-all uppercase text-sm mt-4">Configurer 48h</button>
             </div>
 
-            <div class="glass-premium p-8 rounded-[2.5rem] border-pink-500/30 space-y-8 flex flex-col justify-between">
+            <div class="glass-premium p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-pink-500/30 space-y-6 flex flex-col justify-between">
                 <div>
-                    <h3 class="text-2xl font-black uppercase italic text-pink-500">Licence 30 Jours</h3>
+                    <h3 class="text-xl md:text-2xl font-black uppercase italic text-pink-500">Licence 30 Jours</h3>
                     <p class="text-gray-400 text-sm">Idéal pour les établissements permanents, bars, clubs ou festivals.</p>
-                    <div class="mt-4 text-5xl font-black text-white">299€</div>
+                    <div class="mt-4 text-4xl md:text-5xl font-black text-white">299€</div>
                     <ul class="mt-6 text-xs text-gray-200 space-y-3">
                         <li>✔ Lien Web-App fonctionnel pendant 30 jours</li>
                         <li>✔ <span class="text-pink-400 font-bold uppercase">Renouvellement illimité de l'événement</span> pendant toute la durée de la licence</li>
                         <li>✔ Accès Console Admin complète & Statistiques en temps réel</li>
                     </ul>
                 </div>
-                <button onclick="openOrderModal('30j', 299)" class="w-full btn-main py-4 rounded-2xl font-bold shadow-xl shadow-pink-600/20 uppercase text-sm mt-8">Configurer 30 jours</button>
+                <button onclick="openOrderModal('30j', 299)" class="w-full btn-main py-4 rounded-2xl font-bold shadow-xl shadow-pink-600/20 uppercase text-sm mt-4">Configurer 30 jours</button>
             </div>
         </div>
     </section>
 
-    <section id="physical-packs-info" class="max-w-7xl mx-auto px-6 pb-24">
-        <div class="glass p-8 md:p-12 rounded-[2.5rem] border-white/10 max-w-5xl mx-auto relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-[300px] h-[300px] bg-pink-600/5 blur-[100px] rounded-full -z-10"></div>
+    <section id="physical-packs-info" class="max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-24">
+        <div class="glass p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-white/10 max-w-5xl mx-auto relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-[200px] md:w-[300px] h-[200px] md:h-[300px] bg-pink-600/5 blur-[80px] md:blur-[100px] rounded-full -z-10"></div>
             
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-                <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+                <div class="space-y-4 md:space-y-6">
                     <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Matériel Clé en Main</span>
-                    <h2 class="text-3xl font-black uppercase italic leading-tight">L'Option <span class="text-pink-500">Pack Physique</span></h2>
-                    <p class="text-gray-400 text-sm leading-relaxed">
+                    <h2 class="text-2xl md:text-3xl font-black uppercase italic leading-tight">L'Option <span class="text-pink-500">Pack Physique</span></h2>
+                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">
                         Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez un ou plusieurs packs physiques à votre formule lors de l'inscription. Tout le matériel est imprimé et livré directement chez vous sous 72h.
                     </p>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block w-full sm:w-auto">
                         <p class="text-[11px] text-pink-400 font-black uppercase italic">Tarif : +40€ par pack</p>
                         <p class="text-[10px] text-gray-500 mt-1">Sélectionnez la quantité souhaitée directement dans le formulaire de configuration.</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-3">
-                        <div class="text-3xl text-pink-500">📋</div>
-                        <h3 class="text-lg font-bold uppercase italic">5 Affichettes QR Code</h3>
+                    <div class="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-2.5">
+                        <div class="text-2xl md:text-3xl text-pink-500">📋</div>
+                        <h3 class="text-base md:text-lg font-bold uppercase italic">5 Affichettes QR Code</h3>
                         <p class="text-gray-400 text-xs leading-relaxed">Prêtes à être disposées aux points stratégiques (bar, tables, entrée) pour permettre un accès instantané à l'application.</p>
                     </div>
-                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-3">
-                        <div class="text-3xl text-pink-500">🏷️</div>
-                        <h3 class="text-lg font-bold uppercase italic">50 Étiquettes</h3>
+                    <div class="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-2.5">
+                        <div class="text-2xl md:text-3xl text-pink-500">🏷️</div>
+                        <h3 class="text-base md:text-lg font-bold uppercase italic">50 Étiquettes</h3>
                         <p class="text-gray-400 text-xs leading-relaxed">Badges autocollants numérotés pour identifier facilement et visuellement chaque participant de la soirée.</p>
                     </div>
                 </div>
@@ -253,12 +254,12 @@
         </div>
     </section>
 
-    <footer class="w-full text-center py-12 text-xs text-gray-600 border-t border-white/5 space-y-3">
-        <p>© 2026 Club Match Pro | Entrepreneur Individuel (EI) | Contact : <a href="mailto:info@clubmatchpro.fr" class="text-pink-500 hover:underline">info@clubmatchpro.fr</a></p>
-        <div class="flex justify-center space-x-4 text-[10px]">
+    <footer class="w-full text-center py-8 md:py-12 text-xs text-gray-600 border-t border-white/5 space-y-4 px-4">
+        <p class="leading-relaxed">© 2026 Club Match Pro | Entrepreneur Individuel (EI) <br class="sm:hidden">| Contact : <a href="mailto:info@clubmatchpro.fr" class="text-pink-500 hover:underline">info@clubmatchpro.fr</a></p>
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 text-[10px]">
             <a href="mentions-legales.html" class="text-gray-500 hover:text-white transition-colors underline">Mentions Légales</a>
-            <span class="text-white/10">|</span>
-            <a href="cgv.html" class="text-gray-500 hover:text-white transition-colors underline">Conditions Générales de Vente (CGV)</a>
+            <span class="text-white/10 hidden sm:inline">|</span>
+            <a href="cgv.html" class="text-gray-500 hover:text-white transition-colors underline w-full sm:w-auto">Conditions Générales de Vente (CGV)</a>
         </div>
     </footer>
 
@@ -317,7 +318,6 @@
         const minDateStr = getMinDateString(qty);
         dateInput.setAttribute('min', minDateStr);
         
-        // Si l'utilisateur n'a pas encore choisi de date ou si la date choisie est invalide (antérieure au minimum requis)
         if (!dateInput.value || dateInput.value < minDateStr) {
             dateInput.value = minDateStr;
         }
@@ -333,7 +333,7 @@
         physicalPacksQtyDropdown.value = "0";
         postalAddressInput.value = "";
         
-        updateTotal(); // Ceci va aussi mettre à jour la date minimum (Aujourd'hui)
+        updateTotal(); 
         
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -357,7 +357,6 @@
         }
         priceDisplay.innerText = total + "€";
         
-        // Mise à jour de la date dès qu'on change la quantité de packs
         updateDateConstraints();
     }
 
@@ -404,7 +403,6 @@
         const minDateRequired = new Date(minDateRequiredStr);
         minDateRequired.setHours(0, 0, 0, 0);
 
-        // Validation stricte lors de la soumission
         if (selectedDate < minDateRequired) {
             alert(selectedQty > 0 ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "Date de début invalide.");
             btn.disabled = false;
