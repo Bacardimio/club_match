@@ -36,8 +36,8 @@ overflow-x: hidden;
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
- <!-- Conteneur pour les Notifications Toasts Flottantes -->
- <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
+ <!-- CORRECTION : Conteneur déplacé à top-16 pour ne pas être masqué par le bouton de langue -->
+ <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
  <!-- Barre d'actions en haut à droite (Langue + Admin) -->
  <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
@@ -176,7 +176,6 @@ overflow-x: hidden;
  <div class="pt-6 border-t border-white/10 space-y-4 text-center">
  <div class="space-y-1">
  <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
- <!-- CORRECTION SUPPORT TECHNIQUE -->
  <a href="mailto:info@clubmatchpro.fr" class="block text-sm text-pink-500 hover:underline font-bold">info@clubmatchpro.fr</a>
  </div>
  </div>
@@ -212,7 +211,6 @@ overflow-x: hidden;
  let currentLikesSentCount = 0;
  let currentChatMessagesSent = 0;
  
- // Variables pour suivre l'état précédent et déclencher les notifications au bon moment
  let prevLikesRecusCount = null;
  let prevMatchesCount = null;
 
@@ -329,7 +327,46 @@ overflow-x: hidden;
  document.getElementById('chat-counter-display').innerText = t.chatCounter.replace('{count}', currentChatMessagesSent);
  }
 
- // GESTIONNAIRE DE NOTIFICATIONS (TOASTS BANNER)
+ // NOUVEAU : SYSTÈME SYNTHÉTISEUR AUDIO (Évite les bugs de fichiers manquants)
+ function playNotificationSound(type) {
+ try {
+ const AudioContext = window.AudioContext || window.webkitAudioContext;
+ if (!AudioContext) return;
+ const ctx = new AudioContext();
+ 
+ if (type === 'match') {
+ // Chime joyeux et ascendant pour un Match
+ const osc = ctx.createOscillator();
+ const gain = ctx.createGain();
+ osc.type = 'sine';
+ osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Do5
+ osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // Mi5
+ osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // Sol5
+ osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.24); // Do6
+ gain.gain.setValueAtTime(0.25, ctx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.55);
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ osc.start();
+ osc.stop(ctx.currentTime + 0.55);
+ } else {
+ // Blip court et subtil pour un Flash reçu
+ const osc = ctx.createOscillator();
+ const gain = ctx.createGain();
+ osc.type = 'sine';
+ osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Ré5
+ gain.gain.setValueAtTime(0.15, ctx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ osc.start();
+ osc.stop(ctx.currentTime + 0.15);
+ }
+ } catch (e) {
+ console.warn("L'audio n'a pas pu se lancer :", e);
+ }
+ }
+
  function showToastNotification(message, type) {
  const container = document.getElementById('toast-container');
  const toast = document.createElement('div');
@@ -339,11 +376,9 @@ overflow-x: hidden;
  toast.innerText = message;
  container.appendChild(toast);
  
- // Déclenchement de la transition
  toast.offsetHeight; 
  toast.classList.remove('translate-y-[-20px]', 'opacity-0');
  
- // Retrait automatique
  setTimeout(() => {
  toast.classList.add('translate-y-[-20px]', 'opacity-0');
  setTimeout(() => toast.remove(), 300);
@@ -502,14 +537,15 @@ return;
  document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
  document.getElementById('stat-matches').innerText = matches.length;
 
- // DÉCLENCHEMENT INTELLIGENT DES NOTIFICATIONS TOASTS (FLASH ET MATCH)
+ // DÉCLENCHEMENT AUDIO + TOAST (FLASH ET MATCH)
  if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
  showToastNotification(i18n[currentLang].toastFlash, 'flash');
+ playNotificationSound('flash');
  }
  if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
  showToastNotification(i18n[currentLang].toastMatch, 'match');
+ playNotificationSound('match');
  }
- // Mise à jour des références courantes pour le prochain changement
  prevLikesRecusCount = likesRecus;
  prevMatchesCount = matches.length;
  
