@@ -492,7 +492,7 @@
             else {
                 if (currentBadge) {
                     const badgeNum = parseInt(currentBadge, 10);
-                    if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
+                    if (isNaN(badgeNum) || badgeNum > 200 || badgeNum < 0) {
                         localStorage.removeItem(`myBadge_${eventID}`);
                         showUI('login-screen');
                     } else {
@@ -523,7 +523,7 @@
             loginError.classList.add('hidden');
             limitError.classList.add('hidden');
 
-            if (isNaN(badgeNum) || badgeNum > 200 || badgeNum <= 0) {
+            if (isNaN(targetNum) || targetNum > 200 || targetNum < 0) {
                 limitError.classList.remove('hidden');
                 return;
             }
