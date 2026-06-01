@@ -292,7 +292,7 @@
         '30j_1': 'https://buy.stripe.com/cNiaEY9Vb8WHaj2dfPcQU0d',
         '30j_2': 'https://buy.stripe.com/8x24gA9Vb4Gr62M1x7cQU0e',
         '30j_3': 'https://buy.stripe.com/9B67sMaZf2yj0Is7VvcQU0f',
-        '30j_4': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g'
+        '7sYeVegjz4Grbn63FfcQU0g': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g'
     };
 
     // --- VARIABLES DOM DU FORMULAIRE ---
@@ -304,11 +304,15 @@
     const postalAddressInput = document.getElementById('postalAddress');
     const dateInput = document.getElementById('activationDate');
 
-    // --- GESTION LOGIQUE DE LA DATE (+72H) ---
+    // --- GESTION LOGIQUE DE LA DATE (DEMAIN À MINUIT OU +72H SI PACK) ---
     function getMinDateString(qty) {
         const d = new Date();
         if (qty > 0) {
+            // Option packs physiques : délai postal standard de 72h
             d.setHours(d.getHours() + 72);
+        } else {
+            // Uniquement accès numérique : bloqué au lendemain à minuit (J+1)
+            d.setDate(d.getDate() + 1);
         }
         return d.toISOString().split('T')[0];
     }
@@ -404,7 +408,7 @@
         minDateRequired.setHours(0, 0, 0, 0);
 
         if (selectedDate < minDateRequired) {
-            alert(selectedQty > 0 ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "Date de début invalide.");
+            alert(selectedQty > 0 ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "La date de début doit être au minimum fixée au lendemain à minuit.");
             btn.disabled = false;
             btn.innerText = "Valider et Payer avec Stripe";
             return;
