@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Impression Affiche - ClubMatch Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <style>
+        /* Configuration stricte pour une impression ou un export PDF au format A4 */
         @page {
             size: A4 portrait;
             margin: 0;
         }
         
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
         
         body {
             margin: 0;
@@ -25,7 +29,7 @@
             print-color-adjust: exact;
         }
 
-        /* L'affiche d'origine sert de fond */
+        /* L'affiche d'origine sert de fond immuable plein écran */
         .poster-background {
             position: absolute;
             top: 0;
@@ -36,49 +40,35 @@
             z-index: 1;
         }
 
-        /* Conteneur du QR Code superposé */
+        /* Conteneur du QR Code superposé en absolu */
         .qr-overlay-container {
             position: absolute;
             z-index: 2;
-            top: 39.5%;         /* À ajuster si besoin */
-            left: 50%;
-            width: 200px;       /* À ajuster si besoin */
-            height: 200px;
+            
+            /* ================================================================= */
+            /* COORDONNÉES À AJUSTER POUR S'ALIGNER AVEC LE CADRE DE VOTRE PNG : */
+            top: 39.5%;         /* Position verticale depuis le haut (en %) */
+            left: 50%;          /* Centrage horizontal */
+            width: 200px;       /* Largeur du QR Code (à adapter selon le cadre) */
+            height: 200px;      /* Hauteur du QR Code */
+            /* ================================================================= */
+            
             transform: translate(-50%, -50%);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #ffffff;
+            background: #ffffff; /* Fond blanc de sécurité */
             padding: 8px;
-            border-radius: 24px;
+            border-radius: 24px; /* Arrondi pour correspondre au design ClubMatch */
         }
 
-        /* La balise image qui va recevoir le QR Code de Firebase */
-        #qr-image {
+        #qr-canvas {
             width: 100%;
             height: 100%;
-            object-fit: contain;
             display: block;
         }
 
-        /* Affichage du slug de l'événement sur l'affiche */
-        .event-slug-display {
-            position: absolute;
-            z-index: 2;
-            top: 48%; /* Positionné juste sous le QR Code */
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 14pt;
-            font-weight: 800;
-            color: #1a1a1a;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 4px 12px;
-            border-radius: 8px;
-        }
-
-        /* Interface d'administration éphémère */
+        /* Interface d'administration éphémère (masquée lors de l'impression) */
         .admin-bar {
             position: fixed;
             top: 15px;
@@ -89,7 +79,9 @@
             color: #ffffff;
             padding: 15px 20px;
             border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             font-size: 13px;
+            backdrop-filter: blur(10px);
         }
         
         .btn-print {
@@ -103,52 +95,49 @@
             margin-top: 10px;
             text-transform: uppercase;
             font-size: 11px;
+            letter-spacing: 0.5px;
         }
 
         @media print {
-            .admin-bar { display: none; }
+            .admin-bar {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
     <div class="admin-bar">
-        <p style="margin: 0 0 5px 0;"><strong>Générateur d'Affiche ClubMatch</strong></p>
-        <button class="btn-print" onclick="window.print()">Imprimer l'affiche</button>
+        <p style="margin: 0 0 5px 0;"><strong>Générateur d'Affiche ClubMatch Pro</strong></p>
+        <p style="margin: 0; color: #a3a3a3;">Événement détecté : <span id="event-slug-display" style="color: #ff0055; font-weight: bold;">--</span></p>
+        <button class="btn-print" onclick="window.print()">Imprimer l'affiche / Enregistrer en PDF</button>
     </div>
 
-    <!-- Image de fond -->
-    <img src="afficheQRnew.png" class="poster-background" alt="Fond Affiche">
+    <img src="afficheQRnew.png" class="poster-background" alt="Structure Affiche ClubMatch">
 
-    <!-- QR Code injecté ici -->
     <div class="qr-overlay-container">
-        <img id="qr-image" src="" alt="QR Code de l'événement">
+        <canvas id="qr-canvas"></canvas>
     </div>
-
-    <!-- Nom de l'événement affiché sous le QR Code -->
-    <div id="event-name" class="event-slug-display"></div>
 
     <script>
-        // Masquer la barre admin si chargé dans JetAdmin (Iframe)
-        if (window.self !== window.top) {
-            document.querySelector('.admin-bar').style.display = 'none';
-        }
-
-        // Récupération des paramètres envoyés par JetAdmin
+        // 1. Extraction dynamique de l'identifiant unique de la commande/événement depuis l'URL
+        // Exemple d'appel : affiche.html?event=camping-palace-4819
         const urlParams = new URLSearchParams(window.location.search);
-        const eventSlug = urlParams.get('event') || 'Événement inconnu';
-        const qrCodeUrl = urlParams.get('qr');
+        const eventSlug = urlParams.get('event') || 'session-demo';
         
-        // 1. Afficher le nom de l'événement sur l'affiche
-        document.getElementById('event-name').innerText = eventSlug;
+        // Mise à jour de l'affichage de contrôle
+        document.getElementById('event-slug-display').innerText = eventSlug;
 
-        // 2. Assigner l'image du QR Code
-        if (qrCodeUrl) {
-            // On décode l'URL au cas où JetAdmin l'ait encodée
-            document.getElementById('qr-image').src = decodeURIComponent(qrCodeUrl);
-        } else {
-            console.error("Aucun QR Code fourni dans l'URL");
-        }
+        // 2. Génération de l'URL cible de destination (identique à la logique de votre index.html)
+        const targetAppUrl = `https://clubmatchpro.fr/app.html?event=${eventSlug}`;
+
+        // 3. Rendu du QR Code haute définition adapté aux contraintes d'analyse en basse luminosité
+        const qr = new QRious({
+            element: document.getElementById('qr-canvas'),
+            value: targetAppUrl,
+            size: 400,    /* Résolution interne native du rendu */
+            level: 'H'    /* Niveau "High" : 30% de correction d'erreur pour un scan réactif en boîte ou bar */
+        });
     </script>
 </body>
 </html>
