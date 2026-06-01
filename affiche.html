@@ -82,20 +82,37 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             font-size: 13px;
             backdrop-filter: blur(10px);
+            width: 280px;
         }
         
         .btn-print {
             background: linear-gradient(135deg, #ff0055, #ff5e00);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 12px;
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.5px;
+            width: 100%;
+        }
+
+        .input-manual {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .input-manual:focus {
+            outline: none;
+            border-color: #ff0055;
         }
 
         @media print {
@@ -109,8 +126,14 @@
 
     <div class="admin-bar">
         <p style="margin: 0 0 5px 0;"><strong>Générateur d'Affiche ClubMatch Pro</strong></p>
-        <p style="margin: 0; color: #a3a3a3;">Événement détecté : <span id="eventslug" style="color: #ff0055; font-weight: bold;">--</span></p>
-        <button class="btn-print" onclick="window.print()">Imprimer l'affiche / Enregistrer en PDF</button>
+        <p style="margin: 0 0 10px 0; color: #a3a3a3;">Slug actif : <span id="eventslug" style="color: #ff0055; font-weight: bold;">--</span></p>
+        
+        <div style="margin-top: 10px;">
+            <label style="color: #a3a3a3; font-size: 11px;">Modifier / Forcer le Slug :</label>
+            <input type="text" id="manual-slug-input" class="input-manual" placeholder="Ex: camping-palace-4819">
+        </div>
+
+        <button class="btn-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
     </div>
 
     <img src="afficheQRnew.png" class="poster-background" alt="Structure Affiche ClubMatch">
@@ -120,33 +143,65 @@
     </div>
 
     <script>
-        // 1. Extraction dynamique de l'identifiant de l'événement depuis l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const eventSlug = urlParams.get('event') || 'session-demo';
-        
-        // 2. Mise à jour du champ de l'événement (gère les balises classiques et les inputs)
+        // 1. Récupération des éléments du DOM
         const eventField = document.getElementById('eventslug');
-        if (eventField) {
-            if (eventField.tagName === 'INPUT' || eventField.tagName === 'TEXTAREA') {
-                eventField.value = eventSlug;
-            } else {
-                eventField.innerText = eventSlug;
+        const manualInput = document.getElementById('manual-slug-input');
+        let qrInstance = null;
+
+        // 2. Fonction centrale de mise à jour du texte et du QR Code
+        function updatePoster(slug) {
+            const cleanSlug = slug.trim();
+            
+            // Évite de générer un QR code sur les accolades brutes de l'outil d'automatisation
+            if (cleanSlug.includes('{{') || cleanSlug === '') {
+                return; 
+            }
+
+            // Mise à jour de votre champ 'eventslug' existant
+            if (eventField) {
+                if (eventField.tagName === 'INPUT' || eventField.tagName === 'TEXTAREA') {
+                    eventField.value = cleanSlug;
+                } else {
+                    eventField.innerText = cleanSlug;
+                }
+            }
+
+            // Construction de l'URL cible
+            const targetAppUrl = `https://clubmatchpro.fr/app.html?event=${cleanSlug}`;
+
+            // Rendu adaptatif sur votre canvas 'qrcode' existant
+            const qrCanvas = document.getElementById('qrcode');
+            if (qrCanvas) {
+                if (!qrInstance) {
+                    qrInstance = new QRious({
+                        element: qrCanvas,
+                        value: targetAppUrl,
+                        size: 400,
+                        level: 'H'
+                    });
+                } else {
+                    qrInstance.value = targetAppUrl;
+                }
             }
         }
 
-        // 3. Génération de l'URL cible de destination
-        const targetAppUrl = `https://clubmatchpro.fr/app.html?event=${eventSlug}`;
+        // 3. Script d'initialisation au chargement de la page
+        const urlParams = new URLSearchParams(window.location.search);
+        let initialSlug = urlParams.get('event') || '';
 
-        // 4. Rendu du QR Code sur le champ 'qrcode' existant
-        const qrCanvas = document.getElementById('qrcode');
-        if (qrCanvas) {
-            const qr = new QRious({
-                element: qrCanvas,
-                value: targetAppUrl,
-                size: 400,    /* Résolution interne native du rendu */
-                level: 'H'    /* 30% de correction d'erreur pour basse luminosité */
-            });
+        // Si l'URL contient une vraie valeur (pas de {{...}}), on l'applique et on remplit le champ de saisie
+        if (initialSlug && !initialSlug.includes('{{')) {
+            manualInput.value = initialSlug;
+            updatePoster(initialSlug);
+        } else {
+            // Valeur visuelle temporaire en attendant la saisie de l'utilisateur
+            updatePoster('session-demo');
         }
+
+        // 4. Écouteur d'événement : génère le QR Code en temps réel à chaque touche tapée
+        manualInput.addEventListener('input', (e) => {
+            updatePoster(e.target.value);
+        });
     </script>
 </body>
 </html>
