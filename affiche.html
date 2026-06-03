@@ -68,6 +68,25 @@
             display: block;
         }
 
+        /* === AJOUT : Affichage du Slug sur l'affiche === */
+        .slug-poster-display {
+            position: absolute;
+            z-index: 2;
+            /* Positionné à 54% du haut pour être juste en dessous du QR Code (ajustable) */
+            top: 63%; 
+            left: 50%;
+            transform: translate(-50%, 0);
+            width: 100%;
+            text-align: center;
+            
+            /* Styles typographiques de l'affiche */
+            font-size: 16px;
+            font-weight: bold;
+            color: #000000; /* À changer en #000000 si le fond de votre affiche est clair */
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5); /* Améliore la lisibilité */
+            letter-spacing: 0.5px;
+        }
+
         /* Interface d'administration éphémère (masquée lors de l'impression) */
         .admin-bar {
             position: fixed;
@@ -142,9 +161,12 @@
         <canvas id="qrcode"></canvas>
     </div>
 
+    <div class="slug-poster-display" id="poster-slug-text">--</div>
+
     <script>
         // 1. Récupération des éléments du DOM
         const eventField = document.getElementById('eventslug');
+        const posterSlugText = document.getElementById('poster-slug-text'); // Ajouté
         const manualInput = document.getElementById('manual-slug-input');
         let qrInstance = null;
 
@@ -157,13 +179,18 @@
                 return; 
             }
 
-            // Mise à jour de votre champ 'eventslug' existant
+            // Mise à jour du champ dans la barre admin
             if (eventField) {
                 if (eventField.tagName === 'INPUT' || eventField.tagName === 'TEXTAREA') {
                     eventField.value = cleanSlug;
                 } else {
                     eventField.innerText = cleanSlug;
                 }
+            }
+
+            // === AJOUT : Mise à jour du texte imprimé sur l'affiche ===
+            if (posterSlugText) {
+                posterSlugText.innerText = cleanSlug;
             }
 
             // Construction de l'URL cible
