@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impression Double Affiche - ClubMatch Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <style>
+        /* Configuration pour une impression ou un export PDF au format A4 PAYSAGE */
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 297mm;
+            height: 210mm;
+            position: relative;
+            background-color: #ffffff;
+            font-family: -apple-system, system-ui, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            overflow: hidden;
+        }
+
+        /* Le fond de la double affiche passe en paysage */
+        .poster-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* Style commun pour les deux conteneurs de QR Codes */
+        .qr-overlay-container {
+            position: absolute;
+            z-index: 2;
+            top: 47.5%;          /* Aligné verticalement sur le milieu du cadre */
+            width: 195px;        /* Taille ajustée proportionnellement au format paysage */
+            height: 195px;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        /* Positionnement du QR code de GAUCHE */
+        .qr-left {
+            left: 24.8%;
+        }
+
+        /* Positionnement du QR code de DROITE */
+        .qr-right {
+            left: 75.5%;
+        }
+
+        .qrcode-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Style commun pour l'affichage des Slugs textuels */
+        .slug-poster-display {
+            position: absolute;
+            z-index: 2;
+            top: 64.5%;         /* Positionné juste sous les cadres des QR codes */
+            transform: translate(-50%, 0);
+            width: 40%;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000000;
+            letter-spacing: 0.5px;
+        }
+
+        .slug-left {
+            left: 25.1%;
+        }
+
+        .slug-right {
+            left: 74.9%;
+        }
+
+        /* Interface d'administration éphémère (masquée lors de l'impression) */
+        .admin-bar {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            width: 280px;
+        }
+        
+        .btn-print {
+            background: linear-gradient(135deg, #ff0055, #ff5e00);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            width: 100%;
+        }
+
+        .input-manual {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .input-manual:focus {
+            outline: none;
+            border-color: #ff0055;
+        }
+
+        @media print {
+            .admin-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-bar">
+        <p style="margin: 0 0 5px 0;"><strong>Générateur d'Affiche ClubMatch Pro</strong></p>
+        <p style="margin: 0 0 10px 0; color: #a3a3a3;">Slug actif : <span id="eventslug" style="color: #ff0055; font-weight: bold;">--</span></p>
+        
+        <div style="margin-top: 10px;">
+            <label style="color: #a3a3a3; font-size: 11px;">Modifier / Forcer le Slug :</label>
+            <input type="text" id="manual-slug-input" class="input-manual" placeholder="Ex: camping-palace-4819">
+        </div>
+
+        <button class="btn-print" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+    </div>
+
+    <img src="double afficheQR.png" class="poster-background" alt="Structure Double Affiche ClubMatch">
+
+    <div class="qr-overlay-container qr-left">
+        <canvas id="qrcode-left" class="qrcode-canvas"></canvas>
+    </div>
+    <div class="slug-poster-display slug-left" id="poster-slug-text-left">--</div>
+
+    <div class="qr-overlay-container qr-right">
+        <canvas id="qrcode-right" class="qrcode-canvas"></canvas>
+    </div>
+    <div class="slug-poster-display slug-right" id="poster-slug-text-right">--</div>
+
+    <script>
+        const eventField = document.getElementById('eventslug');
+        const manualInput = document.getElementById('manual-slug-input');
+        
+        const posterSlugLeft = document.getElementById('poster-slug-text-left');
+        const posterSlugRight = document.getElementById('poster-slug-text-right');
+
+        let qrInstanceLeft = null;
+        let qrInstanceRight = null;
+
+        function updatePoster(slug) {
+            const cleanSlug = slug.trim();
+            
+            if (cleanSlug.includes('{{') || cleanSlug === '') {
+                return; 
+            }
+
+            if (eventField) {
+                eventField.innerText = cleanSlug;
+            }
+
+            // Mise à jour des textes sur les deux affiches
+            if (posterSlugLeft) posterSlugLeft.innerText = cleanSlug;
+            if (posterSlugRight) posterSlugRight.innerText = cleanSlug;
+
+            const targetAppUrl = `https://clubmatchpro.fr/app.html?event=${cleanSlug}`;
+
+            // Génération du QR Code GAUCHE
+            const qrCanvasLeft = document.getElementById('qrcode-left');
+            if (qrCanvasLeft) {
+                if (!qrInstanceLeft) {
+                    qrInstanceLeft = new QRious({
+                        element: qrCanvasLeft,
+                        value: targetAppUrl,
+                        size: 300,
+                        level: 'H'
+                    });
+                } else {
+                    qrInstanceLeft.value = targetAppUrl;
+                }
+            }
+
+            // Génération du QR Code DROITE
+            const qrCanvasRight = document.getElementById('qrcode-right');
+            if (qrCanvasRight) {
+                if (!qrInstanceRight) {
+                    qrInstanceRight = new QRious({
+                        element: qrCanvasRight,
+                        value: targetAppUrl,
+                        size: 300,
+                        level: 'H'
+                    });
+                } else {
+                    qrInstanceRight.value = targetAppUrl;
+                }
+            }
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let initialSlug = urlParams.get('event') || '';
+
+        if (initialSlug && !initialSlug.includes('{{')) {
+            manualInput.value = initialSlug;
+            updatePoster(initialSlug);
+        } else {
+            updatePoster('session-demo');
+        }
+
+        manualInput.addEventListener('input', (e) => {
+            updatePoster(e.target.value);
+        });
+    </script>
+</body>
+</html>
