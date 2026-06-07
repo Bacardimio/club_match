@@ -73,56 +73,60 @@ overflow-x: hidden;
  </div>
 
  <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2">
- 
- <header class="flex flex-col items-center justify-center py-4">
- <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-2">Connecté</p>
- <div class="glass px-8 py-2 rounded-full border-pink-500/50 bg-pink-500/5 shadow-[0_0_20px_rgba(255,0,85,0.1)]">
- <h2 class="text-3xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+ <header class="flex flex-col items-center justify-center py-2 text-center">
+ <div>
+ <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1.5">Connecté</p>
+ <div class="glass px-6 py-2 rounded-full border-pink-500/30 bg-pink-500/5 shadow-[0_0_15px_rgba(255,0,85,0.05)]">
+ <h2 class="text-2xl font-black text-white italic tracking-wide">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+ </div>
  </div>
  </header>
 
  <div class="relative">
- <div class="absolute inset-0 bg-pink-500 blur-xl opacity-10 rounded-[2rem]"></div>
- <div class="glass relative p-6 rounded-[2rem] border-pink-500/30">
- <p id="enter-number-label" class="text-[10px] font-bold text-gray-300 uppercase tracking-widest text-center mb-4">Saisir un numéro à flasher</p>
+ <div class="absolute inset-0 bg-pink-500 blur-2xl opacity-5 rounded-[2.5rem]"></div>
+ <div class="glass relative p-5 rounded-[2.5rem] shadow-2xl border-white/5">
+ <p id="enter-number-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Saisir un numéro à flasher</p>
  <div class="flex space-x-3 items-center justify-center">
- <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/60 border border-pink-500/40 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white transition-all">
- <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-xl text-white uppercase tracking-widest shadow-lg shadow-pink-500/20">Flasher</button>
+ <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/60 border border-white/10 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white transition-all">
+ <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest shadow-lg shadow-pink-500/10">Flasher</button>
  </div>
  <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-3">Ce badge n'est pas enregistré !</p>
  <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-3">Limite de 5 flashs atteinte !</p>
  </div>
  </div>
 
- <div class="glass p-5 rounded-[2rem]">
- <div class="text-center mb-4">
- <span class="block text-4xl font-black text-pink-500" id="stat-matches">0</span>
+ <div class="glass p-5 rounded-[2.5rem] border-white/5 shadow-xl">
+ <div class="text-center pb-4 mb-4 border-b border-white/5">
+ <span class="block text-5xl font-black text-pink-500 tracking-tighter" id="stat-matches">0</span>
  <span id="label-matches" class="text-[11px] uppercase text-pink-400 font-bold tracking-widest">Matches 🔥</span>
  </div>
- <div class="flex justify-around border-t border-white/5 pt-4">
+ <div class="flex justify-around items-center">
  <div class="text-center w-1/2 border-r border-white/5">
  <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
- <span id="label-likes-recus" class="text-[9px] uppercase text-gray-500 font-bold tracking-widest">Flashs Reçus</span>
+ <span id="label-likes-recus" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Reçus</span>
  </div>
- <div class="text-center w-1/2">
+ <div class="text-center w-1/2 flex flex-col items-center justify-center">
  <span class="block text-2xl font-black text-white"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-sm">/5</span></span>
- <span id="label-likes-envoyes" class="text-[9px] uppercase text-gray-500 font-bold tracking-widest">Flashs Envoyés</span>
+ <span id="label-likes-envoyes" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Envoyés</span>
  </div>
  </div>
  </div>
 
- <div class="space-y-6 pt-2 pb-10">
  <div id="match-section" class="space-y-3">
- <h3 id="label-section-matches" class="text-sm font-black text-pink-500 uppercase tracking-widest italic pl-3 border-l-4 border-pink-500">Tes Matches 🔥</h3>
+ <div class="flex items-center space-x-2 px-1">
+ <span id="label-section-matches" class="text-xs font-black text-pink-500 uppercase tracking-widest italic pl-2 border-l-4 border-pink-500">Tes Matches 🔥</span>
+ <div class="h-px flex-1 bg-white/5"></div>
+ </div>
  <div id="match-list" class="space-y-3"></div>
  </div>
 
- <div id="likes-sent-section" class="space-y-3">
- <h3 id="label-section-likes-sent" class="text-xs font-black text-gray-500 uppercase tracking-widest italic pl-3 border-l-4 border-gray-600">Tes Flashs Envoyés</h3>
+ <div id="likes-sent-section" class="space-y-3 pb-10">
+ <div class="flex items-center space-x-2 px-1">
+ <span id="label-section-likes-sent" class="text-xs font-black text-gray-500 uppercase tracking-widest italic pl-2 border-l-4 border-gray-700">Tes Flashs Envoyés</span>
+ <div class="h-px flex-1 bg-white/5"></div>
+ </div>
  <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
  </div>
- </div>
-
  </div>
 
  <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
@@ -213,6 +217,7 @@ overflow-x: hidden;
 
  localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
+ // --- DICTIONNAIRE DE TRADUCTION ---
  const i18n = {
  fr: {
  toggleBtn: "🇬🇧 EN",
@@ -295,22 +300,27 @@ overflow-x: hidden;
  function applyLanguage() {
  const t = i18n[currentLang];
  document.getElementById('lang-toggle-btn').innerText = t.toggleBtn;
+ 
  document.getElementById('user-badge').placeholder = t.badgePlaceholder;
  document.getElementById('btn-login-trigger').innerText = t.joinBtn;
+ 
  document.querySelector('#match-announcement h2').innerText = t.incredible;
  document.querySelector('#match-announcement p.text-gray-400').innerText = t.flashedBadge;
  document.querySelector('#match-announcement p.mt-8').innerText = t.clickToContinue;
- 
- // Les textes de l'interface principale
+
+ document.querySelector('#main-app header p').innerText = t.labelConnected;
  document.getElementById('enter-number-label').innerText = t.enterNumberLabel;
  document.getElementById('btn-like-trigger').innerText = t.flashBtn;
  document.getElementById('target-error').innerText = t.errTargetNotReg;
  document.getElementById('limit-warning').innerText = t.errLimitFlash;
+
  document.getElementById('label-likes-recus').innerText = t.statRecus;
  document.getElementById('label-matches').innerText = t.statMatches;
  document.getElementById('label-likes-envoyes').innerText = t.statEnvoyes;
+
  document.getElementById('label-section-matches').innerText = t.secMatches;
  document.getElementById('label-section-likes-sent').innerText = t.secLikesSent;
+
  document.getElementById('chat-title-text').innerText = t.chatTitle;
  document.getElementById('chat-input').placeholder = t.chatPlaceholder;
  document.getElementById('send-msg-trigger').innerText = t.sendBtn;
@@ -318,13 +328,16 @@ overflow-x: hidden;
  document.getElementById('chat-counter-display').innerText = t.chatCounter.replace('{count}', currentChatMessagesSent);
  }
 
+ // SYSTEM SATELLITE SYNTHETISEUR AUDIO
  function playNotificationSound(type) {
  try {
  const AudioContext = window.AudioContext || window.webkitAudioContext;
  if (!AudioContext) return;
  const ctx = new AudioContext();
+ 
  if (type === 'match') {
- const osc = ctx.createOscillator(); const gain = ctx.createGain();
+ const osc = ctx.createOscillator();
+ const gain = ctx.createGain();
  osc.type = 'sine';
  osc.frequency.setValueAtTime(523.25, ctx.currentTime);
  osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
@@ -332,17 +345,25 @@ overflow-x: hidden;
  osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.24);
  gain.gain.setValueAtTime(0.25, ctx.currentTime);
  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.55);
- osc.connect(gain); gain.connect(ctx.destination);
- osc.start(); osc.stop(ctx.currentTime + 0.55);
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ osc.start();
+ osc.stop(ctx.currentTime + 0.55);
  } else {
- const osc = ctx.createOscillator(); const gain = ctx.createGain();
- osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+ const osc = ctx.createOscillator();
+ const gain = ctx.createGain();
+ osc.type = 'sine';
+ osc.frequency.setValueAtTime(587.33, ctx.currentTime);
  gain.gain.setValueAtTime(0.15, ctx.currentTime);
  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
- osc.connect(gain); gain.connect(ctx.destination);
- osc.start(); osc.stop(ctx.currentTime + 0.15);
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ osc.start();
+ osc.stop(ctx.currentTime + 0.15);
  }
- } catch (e) { console.warn("Audio ignoré", e); }
+ } catch (e) {
+ console.warn("L'audio n'a pas pu se lancer :", e);
+ }
  }
 
  function showToastNotification(message, type) {
@@ -353,8 +374,10 @@ overflow-x: hidden;
  }`;
  toast.innerText = message;
  container.appendChild(toast);
+ 
  toast.offsetHeight; 
  toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+ 
  setTimeout(() => {
  toast.classList.add('translate-y-[-20px]', 'opacity-0');
  setTimeout(() => toast.remove(), 300);
@@ -394,4 +417,293 @@ overflow-x: hidden;
  }
 
  async function deleteLike(target) {
- if(confirm(currentLang === 'fr' ? `Supprimer
+ if(confirm(currentLang === 'fr' ? `Supprimer le like/match avec #${target} ?` : `Delete like/match with #${target} ?`)) {
+ await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
+ }
+ }
+ window.deleteLike = deleteLike;
+
+ onValue(ref(db, `${basePath}/config`), (snap) => {
+ const config = snap.val();
+ const now = Date.now();
+ const closedScreen = document.getElementById('closed-screen');
+ const closedMsg = document.getElementById('closed-message');
+
+ applyLanguage();
+
+ if (!config) {
+ showUI('closed-screen');
+ closedMsg.innerText = i18n[currentLang].eventNotFound;
+ return;
+ }
+
+ document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+
+ if (config.active === false) {
+ showUI('closed-screen');
+ closedMsg.innerText = i18n[currentLang].eventDisabled;
+ } 
+ else if (now < config.startDate) {
+ showUI('closed-screen');
+ const dateDebut = new Date(config.startDate).toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-US');
+ closedMsg.innerHTML = i18n[currentLang].eventNotStarted.replace('{date}', dateDebut);
+ } 
+ else if (now > config.expiryDate) {
+ showUI('closed-screen');
+ closedMsg.innerText = i18n[currentLang].eventExpired;
+ } 
+ else {
+ if (currentBadge) loadApp(); 
+ else showUI('login-screen');
+ }
+ });
+
+ onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
+ const sig = snap.val();
+ if (sig && sig.toString() !== localStorage.getItem(`lastReset_${eventID}`)) {
+ localStorage.removeItem(`myBadge_${eventID}`);
+ localStorage.setItem(`lastReset_${eventID}`, sig.toString());
+ location.reload();
+ }
+ });
+
+ document.getElementById('btn-login-trigger').onclick = async () => {
+ const badge = document.getElementById('user-badge').value.trim();
+ if(!badge) return;
+ 
+ const badgeNum = parseInt(badge, 10);
+ if (isNaN(badgeNum) || badgeNum < 0 || badgeNum > 200) {
+ const errEl = document.getElementById('login-error');
+ errEl.innerText = i18n[currentLang].errBadgeRange;
+ errEl.classList.remove('hidden');
+ return;
+ }
+
+ const userRef = ref(db, `${basePath}/users/${badge}`);
+ const snapshot = await get(userRef);
+ if (snapshot.exists() && snapshot.val() !== deviceId) {
+ const errEl = document.getElementById('login-error');
+ errEl.innerText = i18n[currentLang].errBadgeUsed;
+ errEl.classList.remove('hidden');
+ } else {
+ await set(userRef, deviceId);
+ currentBadge = badge;
+ localStorage.setItem(`myBadge_${eventID}`, badge);
+ loadApp();
+ }
+ };
+
+ document.getElementById('btn-like-trigger').onclick = async () => {
+ const targetInput = document.getElementById('target-badge');
+ const target = targetInput.value.trim();
+ if(!target || target === currentBadge) return;
+ if (currentLikesSentCount >= 5) {
+ document.getElementById('limit-warning').classList.remove('hidden');
+ setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 3000);
+ return;
+ }
+ const userSnap = await get(ref(db, `${basePath}/users/${target}`));
+ if (!userSnap.exists()) { 
+document.getElementById('target-error').classList.remove('hidden'); 
+return; 
+}
+ document.getElementById('target-error').classList.add('hidden');
+ await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
+ const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
+ if(check.exists()) { launchFireworks(target); }
+ targetInput.value = "";
+ };
+
+ function loadApp() {
+ showUI('main-app');
+ document.getElementById('display-badge').innerText = currentBadge;
+ onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
+ if (!snapshot.exists()) { localStorage.removeItem(`myBadge_${eventID}`); location.reload(); }
+ });
+ onValue(ref(db, `${basePath}/likes`), (snapshot) => {
+ const data = snapshot.val() || {};
+ let matches = [];
+ let likesRecus = 0;
+ let myLikes = data[currentBadge] || {};
+ currentLikesSentCount = Object.keys(myLikes).length;
+ for (let user in data) {
+ if (data[user][currentBadge]) {
+ likesRecus++;
+ if (myLikes[user]) matches.push(user);
+ }
+ }
+ document.getElementById('stat-likes-recus').innerText = likesRecus;
+ document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
+ document.getElementById('stat-matches').innerText = matches.length;
+
+ // DÉCLENCHEMENT AUDIO + TOAST (FLASH ET MATCH)
+ if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
+ showToastNotification(i18n[currentLang].toastFlash, 'flash');
+ playNotificationSound('flash');
+ }
+ if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
+ showToastNotification(i18n[currentLang].toastMatch, 'match');
+ playNotificationSound('match');
+ }
+ prevLikesRecusCount = likesRecus;
+ prevMatchesCount = matches.length;
+ 
+ const list = document.getElementById('match-list');
+ list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${i18n[currentLang].noMatches}</p>`;
+ matches.forEach(id => {
+ const roomID = [currentBadge, id].sort().join('-');
+ const div = document.createElement('div');
+ div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+ div.innerHTML = `
+ <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
+ <span class="font-black italic text-white text-xl">${i18n[currentLang].chatWith}${id}</span>
+ <div id="dot-${roomID}" class="notification-dot hidden"></div>
+ </div>
+ <button onclick="deleteLike('${id}')" class="text-gray-500 px-2 text-xl">×</button>
+ `;
+ list.appendChild(div);
+ listenForNotifications(roomID);
+ });
+
+ const sentList = document.getElementById('likes-sent-list');
+ const myLikesArray = Object.keys(myLikes);
+ sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-gray-700 text-[10px] uppercase'>${i18n[currentLang].noLikesSent}</p>`;
+ myLikesArray.forEach(id => {
+ if (matches.includes(id)) return;
+ const div = document.createElement('div');
+ div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
+ div.innerHTML = `
+ <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo}${id}</span>
+ <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>
+ `;
+ sentList.appendChild(div);
+ });
+ updateAdminStats();
+ applyLanguage();
+ });
+ }
+
+ function listenForNotifications(roomID) {
+ onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
+ const messages = snap.val() || {};
+ const msgCount = Object.keys(messages).length;
+ const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
+ const dot = document.getElementById(`dot-${roomID}`);
+ if (dot && msgCount > lastSeen && activeChatRoom !== roomID) { 
+dot.classList.remove('hidden'); 
+}
+ });
+ }
+
+ async function updateAdminStats() {
+ const usersSnap = await get(ref(db, `${basePath}/users`));
+ const likesSnap = await get(ref(db, `${basePath}/likes`));
+ const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
+ let totalLikes = 0, totalMatches = 0;
+ if (likesSnap.exists()) {
+ const data = likesSnap.val();
+ const processedMatches = new Set();
+ for (const userA in data) {
+ for (const userB in data[userA]) {
+ totalLikes++;
+ const pair = [userA, userB].sort().join('-');
+ if (data[userB] && data[userB][userA] && !processedMatches.has(pair)) {
+ totalMatches++; processedMatches.add(pair);
+ }
+ }
+ }
+ }
+ document.getElementById('admin-total-users').innerText = totalUsers;
+ document.getElementById('admin-total-likes').innerText = totalLikes;
+ document.getElementById('admin-total-matches').innerText = totalMatches;
+ }
+
+ function openChat(target) {
+ activeChatRoom = [currentBadge, target].sort().join('-');
+ document.getElementById('chat-target-badge').innerText = target;
+ document.getElementById('chat-window').classList.remove('hidden');
+ const dot = document.getElementById(`dot-${activeChatRoom}`);
+ if (dot) dot.classList.add('hidden');
+ const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
+ onValue(chatRef, (snap) => {
+ const container = document.getElementById('chat-messages');
+ container.innerHTML = "";
+ const data = snap.val() || {};
+ currentChatMessagesSent = 0;
+ const entries = Object.values(data);
+ entries.forEach(m => {
+ if(m.sender === currentBadge) currentChatMessagesSent++;
+ const d = document.createElement('div');
+ d.className = `msg ${m.sender === currentBadge ? 'msg-me' : 'msg-them'}`;
+ d.innerText = m.text;
+ container.appendChild(d);
+ });
+ localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
+ container.scrollTop = container.scrollHeight;
+ 
+ document.getElementById('chat-counter-display').innerText = i18n[currentLang].chatCounter.replace('{count}', currentChatMessagesSent);
+ });
+ }
+ window.openChat = openChat;
+
+ document.getElementById('send-msg-trigger').onclick = async () => {
+ const input = document.getElementById('chat-input');
+ const warning = document.getElementById('chat-limit-warning');
+ if(!input.value.trim() || !activeChatRoom) return;
+ 
+ if (currentChatMessagesSent >= 10) {
+ warning.classList.remove('hidden');
+ setTimeout(() => warning.classList.add('hidden'), 4000);
+ return;
+ }
+ await push(ref(db, `${basePath}/messages/${activeChatRoom}`), {
+ sender: currentBadge, text: input.value.trim(), time: serverTimestamp()
+ });
+ input.value = "";
+ };
+
+ document.getElementById('close-chat-trigger').onclick = () => { 
+document.getElementById('chat-window').classList.add('hidden'); 
+activeChatRoom = null; 
+};
+
+ document.getElementById('admin-trigger').onclick = () => {
+ if (prompt("Code Admin :") === "2026") { 
+updateAdminStats(); 
+document.getElementById('admin-panel').classList.remove('hidden'); 
+}
+ };
+ document.getElementById('close-admin-trigger').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
+
+ document.getElementById('btn-admin-delete-user').onclick = async () => {
+ const badge = document.getElementById('admin-delete-badge-input').value.trim();
+ if(!badge) return;
+ if (confirm(`Réinitialiser le badge #${badge} ?`)) {
+ await remove(ref(db, `${basePath}/users/${badge}`));
+ alert(`Badge #${badge} libéré.`);
+ document.getElementById('admin-delete-badge-input').value = "";
+ updateAdminStats();
+ }
+ };
+
+ document.getElementById('reset-event-trigger').onclick = async () => {
+ const confirmationText = currentLang === 'fr' ? "⚠ Supprimer TOUTES les données de jeu des utilisateurs ?" : "⚠ Delete ALL users gameplay data?";
+ if (confirm(confirmationText)) {
+ await remove(ref(db, `${basePath}/users`));
+ await remove(ref(db, `${basePath}/likes`));
+ await remove(ref(db, `${basePath}/messages`));
+ await set(ref(db, `${basePath}/resetSignal`), Date.now()); 
+ location.reload();
+ }
+ };
+
+ document.addEventListener('keypress', (e) => {
+ if (e.key === 'Enter') {
+ if (!document.getElementById('chat-window').classList.contains('hidden')) document.getElementById('send-msg-trigger').click();
+ else if (!document.getElementById('login-screen').classList.contains('hidden')) document.getElementById('btn-login-trigger').click();
+ else if (!document.getElementById('main-app').classList.contains('hidden')) document.getElementById('btn-like-trigger').click();
+ }
+ });
+ </script>
+</body>
+</html>
