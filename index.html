@@ -70,11 +70,10 @@
                 <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 space-y-2">
                     <label class="block text-[10px] font-bold uppercase text-gray-500 ml-1">Packs Physiques Optionnels</label>
                     <select id="physicalPacksQty" class="input-field cursor-pointer">
-                        <option value="0">Aucun pack physique (Accès numérique uniquement)</option>
-                        <option value="1">1 Pack : 50 badges + 5 affichettes avec QR Code (+40€)</option>
-                        <option value="2">2 Packs : 100 badges + 10 affichettes avec QR Code (+80€)</option>
-                        <option value="3">3 Packs : 150 badges + 15 affichettes avec QR Code (+120€)</option>
-                        <option value="4">4 Packs : 200 badges + 20 affichettes avec QR Code (+160€)</option>
+                        <option value="none">Aucun pack physique (Accès numérique uniquement)</option>
+                        <option value="initial">Pack INITIAL : 50 badges + 5 affichettes plastifiées (+40€)</option>
+                        <option value="avantage">Pack AVANTAGE : 100 badges + 8 affichettes plastifiées (+70€)</option>
+                        <option value="max">Pack MAX : 200 badges + 12 affichettes plastifiées (+120€)</option>
                     </select>
                     <p class="text-[9px] text-pink-500/80 uppercase font-black italic mt-1">⚠️ Attention : Un délai d'envoi postal de 72h s'impose pour la livraison</p>
                 </div>
@@ -242,26 +241,34 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
                 <div class="space-y-4 md:space-y-6">
                     <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Matériel Clé en Main</span>
-                    <h2 class="text-2xl md:text-3xl font-black uppercase italic leading-tight">L'Option <span class="text-pink-500">Pack Physique</span></h2>
+                    <h2 class="text-2xl md:text-3xl font-black uppercase italic leading-tight">Nos Options <span class="text-pink-500">Packs Physiques</span></h2>
                     <p class="text-gray-400 text-xs md:text-sm leading-relaxed">
-                        Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez un ou plusieurs packs physiques à votre formule lors de l'inscription. Tout le matériel est imprimé et livré directement chez vous sous 72h.
+                        Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez l'un de nos packs physiques clés en main. Tout le matériel est imprimé et livré directement chez vous sous 72h.
                     </p>
                     <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block w-full sm:w-auto">
-                        <p class="text-[11px] text-pink-400 font-black uppercase italic">Tarif : +40€ par pack</p>
-                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez la quantité souhaitée directement dans le formulaire de configuration.</p>
+                        <p class="text-[11px] text-pink-400 font-black uppercase italic">Packs au choix lors de la configuration</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez la formule qui correspond à votre jauge directement dans le formulaire.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-2.5">
-                        <div class="text-2xl md:text-3xl text-pink-500">📋</div>
-                        <h3 class="text-base md:text-lg font-bold uppercase italic">5 Affichettes QR Code</h3>
-                        <p class="text-gray-400 text-xs leading-relaxed">Prêtes à être disposées aux points stratégiques (bar, tables, entrée) pour permettre un accès instantané à l'application.</p>
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack INITIAL (+40€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">50 badges autocollants + 5 affichettes plastifiées</p>
+                        </div>
                     </div>
-                    <div class="bg-white/5 p-5 md:p-6 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors space-y-2.5">
-                        <div class="text-2xl md:text-3xl text-pink-500">🏷️</div>
-                        <h3 class="text-base md:text-lg font-bold uppercase italic">50 Étiquettes</h3>
-                        <p class="text-gray-400 text-xs leading-relaxed">Badges autocollants numérotés pour identifier facilement et visuellement chaque participant de la soirée.</p>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack AVANTAGE (+70€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">100 badges autocollants + 8 affichettes plastifiées</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack MAX (+120€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">200 badges autocollants + 12 affichettes plastifiées</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -297,18 +304,16 @@
 
     // --- CONFIGURATION STRIPE ---
     const stripeLinks = {
-        '48h_0': 'https://buy.stripe.com/eVq28s6IZb4P9eYgs1cQU08',
-        '48h_1': 'https://buy.stripe.com/8x214od7n8WH8aU0t3cQU09',
-        '48h_2': 'https://buy.stripe.com/dRm4gAaZf8WH8aUgs1cQU0a',
-        '48h_3': 'https://buy.stripe.com/5kQ9AU9Vbc8Tezigs1cQU0b',
-        '48h_4': 'https://buy.stripe.com/14AfZigjzb4P9eY7VvcQU0c',
+        '48h_none': 'https://buy.stripe.com/eVq28s6IZb4P9eYgs1cQU08',
+        '48h_initial': 'https://buy.stripe.com/8x214od7n8WH8aU0t3cQU09',
+        '48h_avantage': 'https://buy.stripe.com/dRm4gAaZf8WH8aUgs1cQU0a',
+        '48h_max': 'https://buy.stripe.com/14AfZigjzb4P9eY7VvcQU0c',
         
-        '30j_0': 'https://buy.stripe.com/9B600kebreh10Is4JjcQU02',
-        '30j_1': 'https://buy.stripe.com/cNiaEY9Vb8WHaj2dfPcQU0d',
-        '30j_2': 'https://buy.stripe.com/8x24gA9Vb4Gr62M1x7cQU0e',
-        '30j_3': 'https://buy.stripe.com/9B67sMaZf2yj0Is7VvcQU0f',
-	'30j_4': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g',
-            };
+        '30j_none': 'https://buy.stripe.com/9B600kebreh10Is4JjcQU02',
+        '30j_initial': 'https://buy.stripe.com/cNiaEY9Vb8WHaj2dfPcQU0d',
+        '30j_avantage': 'https://buy.stripe.com/8x24gA9Vb4Gr62M1x7cQU0e',
+        '30j_max': 'https://buy.stripe.com/7sYeVegjz4Grbn63FfcQU0g',
+    };
 
     // --- VARIABLES DOM DU FORMULAIRE ---
     const modal = document.getElementById('orderModal');
@@ -320,9 +325,9 @@
     const dateInput = document.getElementById('activationDate');
 
     // --- GESTION LOGIQUE DE LA DATE (DEMAIN À MINUIT OU +72H SI PACK) ---
-    function getMinDateString(qty) {
+    function getMinDateString(packType) {
         const d = new Date();
-        if (qty > 0) {
+        if (packType !== 'none') {
             // Option packs physiques : délai postal standard de 72h
             d.setHours(d.getHours() + 72);
         } else {
@@ -333,8 +338,8 @@
     }
 
     function updateDateConstraints() {
-        const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
-        const minDateStr = getMinDateString(qty);
+        const packType = physicalPacksQtyDropdown.value || 'none';
+        const minDateStr = getMinDateString(packType);
         dateInput.setAttribute('min', minDateStr);
         
         if (!dateInput.value || dateInput.value < minDateStr) {
@@ -349,7 +354,7 @@
         currentPlan = plan;
         currentBasePrice = price;
         modalTitle.innerText = "Licence " + (plan === '48h' ? '48 Heures' : '30 Jours');
-        physicalPacksQtyDropdown.value = "0";
+        physicalPacksQtyDropdown.value = "none";
         postalAddressInput.value = "";
         
         updateTotal(); 
@@ -364,10 +369,16 @@
     }
 
     function updateTotal() {
-        const qty = parseInt(physicalPacksQtyDropdown.value) || 0;
-        const total = currentBasePrice + (qty * 40);
+        const packType = physicalPacksQtyDropdown.value || 'none';
         
-        if (qty > 0) {
+        let packPrice = 0;
+        if (packType === 'initial') packPrice = 40;
+        else if (packType === 'avantage') packPrice = 70;
+        else if (packType === 'max') packPrice = 120;
+
+        const total = currentBasePrice + packPrice;
+        
+        if (packType !== 'none') {
             addressFieldWrapper.classList.remove('hidden');
             postalAddressInput.required = true;
         } else {
@@ -413,17 +424,17 @@
         const eventName = document.getElementById('eventName').value;
         const startDateStr = document.getElementById('activationDate').value;
         const customerEmail = document.getElementById('custEmail').value;
-        const selectedQty = parseInt(physicalPacksQtyDropdown.value) || 0;
+        const selectedPack = physicalPacksQtyDropdown.value || 'none';
         
         const selectedDate = new Date(startDateStr);
         selectedDate.setHours(0, 0, 0, 0);
         
-        const minDateRequiredStr = getMinDateString(selectedQty);
+        const minDateRequiredStr = getMinDateString(selectedPack);
         const minDateRequired = new Date(minDateRequiredStr);
         minDateRequired.setHours(0, 0, 0, 0);
 
         if (selectedDate < minDateRequired) {
-            alert(selectedQty > 0 ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "La date de début doit être au minimum fixée au lendemain à minuit.");
+            alert(selectedPack !== 'none' ? "La date d'activation doit inclure le délai de livraison de 72h pour les packs." : "La date de début doit être au minimum fixée au lendemain à minuit.");
             btn.disabled = false;
             btn.innerText = "Valider et Payer avec Stripe";
             return;
@@ -447,6 +458,11 @@
             return;
         }
 
+        let packPrice = 0;
+        if (selectedPack === 'initial') packPrice = 40;
+        else if (selectedPack === 'avantage') packPrice = 70;
+        else if (selectedPack === 'max') packPrice = 120;
+
         const orderData = {
             eventSlug: eventSlug,
             eventName: eventName,
@@ -454,10 +470,10 @@
             email: customerEmail,
             phone: document.getElementById('custPhone').value,
             plan: currentPlan,
-            totalAmount: `${currentBasePrice + (selectedQty * 40)}€`,
-            physicalPacksOrdered: selectedQty > 0 ? "Oui" : "Non",
-            physicalPacksQuantity: selectedQty,
-            postalAddress: selectedQty > 0 ? postalAddressInput.value : "Aucune livraison physique",
+            totalAmount: `${currentBasePrice + packPrice}€`,
+            physicalPacksOrdered: selectedPack !== 'none' ? "Oui" : "Non",
+            physicalPacksType: selectedPack,
+            postalAddress: selectedPack !== 'none' ? postalAddressInput.value : "Aucune livraison physique",
             createdAt: serverTimestamp(),
             paymentStatus: "pending"
         };
@@ -470,14 +486,14 @@
             plan: currentPlan,
             appUrl: appUrl,
             qrCode: qrCodeBase64,
-            physicalPacksQuantity: selectedQty
+            physicalPacksType: selectedPack
         };
 
         try {
             await set(ref(db, `orders/${eventSlug}`), orderData);
             await set(ref(db, `events/${eventSlug}/config`), configData);
 
-            const targetKey = `${currentPlan}_${selectedQty}`;
+            const targetKey = `${currentPlan}_${selectedPack}`;
             const targetUrl = stripeLinks[targetKey];
 
             if (!targetUrl || targetUrl.includes('votre_lien_stripe')) {
