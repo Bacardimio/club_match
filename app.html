@@ -36,10 +36,8 @@ overflow-x: hidden;
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
- <!-- CORRECTION : Conteneur déplacé à top-16 pour ne pas être masqué par le bouton de langue -->
  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
- <!-- Barre d'actions en haut à droite (Langue + Admin) -->
  <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
  <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
  <button id="admin-trigger" class="glass opacity-40 hover:opacity-100 p-1.5 rounded-xl text-sm transition-all">⚙️</button>
@@ -74,55 +72,58 @@ overflow-x: hidden;
  </div>
  </div>
 
- <div id="main-app" class="hidden w-full max-w-md space-y-6">
- <header class="flex justify-between items-center py-4">
+ <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2">
+ <header class="flex flex-col items-center justify-center py-2 text-center">
  <div>
- <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Connecté</p>
- <h2 class="text-2xl font-black text-white italic">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+ <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1.5">Connecté</p>
+ <div class="glass px-6 py-2 rounded-full border-pink-500/30 bg-pink-500/5 shadow-[0_0_15px_rgba(255,0,85,0.05)]">
+ <h2 class="text-2xl font-black text-white italic tracking-wide">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+ </div>
  </div>
  </header>
 
- <div class="glass p-4 rounded-[2rem] shadow-2xl border-white/5">
- <p id="enter-number-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">Saisir un numéro à flasher</p>
- <div class="flex space-x-2 items-center justify-center">
- <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/40 border border-white/10 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white">
- <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest">Flasher</button>
+ <div class="relative">
+ <div class="absolute inset-0 bg-pink-500 blur-2xl opacity-5 rounded-[2.5rem]"></div>
+ <div class="glass relative p-5 rounded-[2.5rem] shadow-2xl border-white/5">
+ <p id="enter-number-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Saisir un numéro à flasher</p>
+ <div class="flex space-x-3 items-center justify-center">
+ <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/60 border border-white/10 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white transition-all">
+ <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest shadow-lg shadow-pink-500/10">Flasher</button>
  </div>
- <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-2">Ce badge n'est pas enregistré !</p>
- <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-2">Limite de 5 flashs atteinte !</p>
+ <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-3">Ce badge n'est pas enregistré !</p>
+ <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-3">Limite de 5 flashs atteinte !</p>
+ </div>
  </div>
 
- <div class="grid grid-cols-3 gap-2">
- <div class="glass py-4 rounded-2xl text-center">
+ <div class="glass p-5 rounded-[2.5rem] border-white/5 shadow-xl">
+ <div class="text-center pb-4 mb-4 border-b border-white/5">
+ <span class="block text-5xl font-black text-pink-500 tracking-tighter" id="stat-matches">0</span>
+ <span id="label-matches" class="text-[11px] uppercase text-pink-400 font-bold tracking-widest">Matches 🔥</span>
+ </div>
+ <div class="flex justify-around items-center">
+ <div class="text-center w-1/2 border-r border-white/5">
  <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
- <span id="label-likes-recus" class="text-[11px] uppercase text-gray-500 font-bold tracking-tight">Flashs Reçus</span>
+ <span id="label-likes-recus" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Reçus</span>
  </div>
- <div class="glass py-4 rounded-2xl text-center border-pink-500/20 bg-pink-500/5">
- <span class="block text-2xl font-black text-pink-500" id="stat-matches">0</span>
- <span id="label-matches" class="text-[11px] uppercase text-pink-400 font-bold tracking-tight">Matches 🔥</span>
- </div>
- <div class="glass py-4 rounded-2xl text-center">
- <div class="flex flex-col items-center">
+ <div class="text-center w-1/2 flex flex-col items-center justify-center">
  <span class="block text-2xl font-black text-white"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-sm">/5</span></span>
- <span id="label-likes-envoyes" class="text-[11px] uppercase text-gray-500 font-bold tracking-tight">Flashs Envoyés</span>
+ <span id="label-likes-envoyes" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Envoyés</span>
  </div>
  </div>
  </div>
 
- <div id="match-section" class="space-y-4">
- <div class="flex items-center space-x-2 px-2">
- <div class="h-px flex-1 bg-white/10"></div>
- <span id="label-section-matches" class="text-sm font-black text-pink-500 uppercase tracking-widest italic">Tes Matches 🔥</span>
- <div class="h-px flex-1 bg-white/10"></div>
+ <div id="match-section" class="space-y-3">
+ <div class="flex items-center space-x-2 px-1">
+ <span id="label-section-matches" class="text-xs font-black text-pink-500 uppercase tracking-widest italic pl-2 border-l-4 border-pink-500">Tes Matches 🔥</span>
+ <div class="h-px flex-1 bg-white/5"></div>
  </div>
  <div id="match-list" class="space-y-3"></div>
  </div>
 
- <div id="likes-sent-section" class="space-y-4 pb-10">
- <div class="flex items-center space-x-2 px-2">
- <div class="h-px flex-1 bg-white/10"></div>
- <span id="label-section-likes-sent" class="text-sm font-black text-gray-500 uppercase tracking-widest italic">Tes Flashs Envoyés</span>
- <div class="h-px flex-1 bg-white/10"></div>
+ <div id="likes-sent-section" class="space-y-3 pb-10">
+ <div class="flex items-center space-x-2 px-1">
+ <span id="label-section-likes-sent" class="text-xs font-black text-gray-500 uppercase tracking-widest italic pl-2 border-l-4 border-gray-700">Tes Flashs Envoyés</span>
+ <div class="h-px flex-1 bg-white/5"></div>
  </div>
  <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
  </div>
@@ -327,7 +328,7 @@ overflow-x: hidden;
  document.getElementById('chat-counter-display').innerText = t.chatCounter.replace('{count}', currentChatMessagesSent);
  }
 
- // NOUVEAU : SYSTÈME SYNTHÉTISEUR AUDIO (Évite les bugs de fichiers manquants)
+ // SYSTEM SATELLITE SYNTHETISEUR AUDIO
  function playNotificationSound(type) {
  try {
  const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -335,14 +336,13 @@ overflow-x: hidden;
  const ctx = new AudioContext();
  
  if (type === 'match') {
- // Chime joyeux et ascendant pour un Match
  const osc = ctx.createOscillator();
  const gain = ctx.createGain();
  osc.type = 'sine';
- osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Do5
- osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // Mi5
- osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // Sol5
- osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.24); // Do6
+ osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+ osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+ osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16);
+ osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.24);
  gain.gain.setValueAtTime(0.25, ctx.currentTime);
  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.55);
  osc.connect(gain);
@@ -350,11 +350,10 @@ overflow-x: hidden;
  osc.start();
  osc.stop(ctx.currentTime + 0.55);
  } else {
- // Blip court et subtil pour un Flash reçu
  const osc = ctx.createOscillator();
  const gain = ctx.createGain();
  osc.type = 'sine';
- osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Ré5
+ osc.frequency.setValueAtTime(587.33, ctx.currentTime);
  gain.gain.setValueAtTime(0.15, ctx.currentTime);
  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
  osc.connect(gain);
