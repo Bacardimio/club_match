@@ -69,7 +69,7 @@
 
                 <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 space-y-2">
                     <label class="block text-[10px] font-bold uppercase text-gray-500 ml-1">Packs Physiques Optionnels</label>
-                    <select id="physicalPacksQty" class="input-field cursor-pointer">
+                    <select id="physicalPacksType" class="input-field cursor-pointer">
                         <option value="none">Aucun pack physique (Accès numérique uniquement)</option>
                         <option value="initial">Pack INITIAL : 50 badges + 5 affichettes plastifiées (+40€)</option>
                         <option value="avantage">Pack AVANTAGE : 100 badges + 8 affichettes plastifiées (+70€)</option>
@@ -247,7 +247,48 @@
                     </p>
                     <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block w-full sm:w-auto">
                         <p class="text-[11px] text-pink-400 font-black uppercase italic">Packs au choix lors de la configuration</p>
-                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez la formule qui correspond à votre jauge directement dans le formulaire.</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez le type de pack qui correspond à votre jauge directement dans le formulaire.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack INITIAL (+40€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">50 badges autocollants + 5 affichettes plastifiées</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack AVANTAGE (+70€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">100 badges autocollants + 8 affichettes plastifiées</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack MAX (+120€)</h3>
+                            <p class="text-gray-400 text-xs mt-0.5">200 badges autocollants + 12 affichettes plastifiées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="physical-packs-info" class="max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-24">
+        <div class="glass p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-white/10 max-w-5xl mx-auto relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-[200px] md:w-[300px] h-[200px] md:h-[300px] bg-pink-600/5 blur-[80px] md:blur-[100px] rounded-full -z-10"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+                <div class="space-y-4 md:space-y-6">
+                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Matériel Clé en Main</span>
+                    <h2 class="text-2xl md:text-3xl font-black uppercase italic leading-tight">Nos Options <span class="text-pink-500">Packs Physiques</span></h2>
+                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">
+                        Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez l'un de nos packs physiques clés en main. Tout le matériel est imprimé et livré directement chez vous sous 72h.
+                    </p>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block w-full sm:w-auto">
+                        <p class="text-[11px] text-pink-400 font-black uppercase italic">Packs au choix lors de la configuration</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez le type de pack qui correspond à votre jauge directement dans le formulaire.</p>
                     </div>
                 </div>
 
@@ -319,7 +360,7 @@
     const modal = document.getElementById('orderModal');
     const modalTitle = document.getElementById('modalPlanTitle');
     const priceDisplay = document.getElementById('totalPriceDisplay');
-    const physicalPacksQtyDropdown = document.getElementById('physicalPacksQty');
+    const physicalPacksTypeDropdown = document.getElementById('physicalPacksType');
     const addressFieldWrapper = document.getElementById('addressFieldWrapper');
     const postalAddressInput = document.getElementById('postalAddress');
     const dateInput = document.getElementById('activationDate');
@@ -328,17 +369,15 @@
     function getMinDateString(packType) {
         const d = new Date();
         if (packType !== 'none') {
-            // Option packs physiques : délai postal standard de 72h
             d.setHours(d.getHours() + 72);
         } else {
-            // Uniquement accès numérique : bloqué au lendemain à minuit (J+1)
             d.setDate(d.getDate() + 1);
         }
         return d.toISOString().split('T')[0];
     }
 
     function updateDateConstraints() {
-        const packType = physicalPacksQtyDropdown.value || 'none';
+        const packType = physicalPacksTypeDropdown.value || 'none';
         const minDateStr = getMinDateString(packType);
         dateInput.setAttribute('min', minDateStr);
         
@@ -354,7 +393,7 @@
         currentPlan = plan;
         currentBasePrice = price;
         modalTitle.innerText = "Licence " + (plan === '48h' ? '48 Heures' : '30 Jours');
-        physicalPacksQtyDropdown.value = "none";
+        physicalPacksTypeDropdown.value = "none";
         postalAddressInput.value = "";
         
         updateTotal(); 
@@ -369,7 +408,7 @@
     }
 
     function updateTotal() {
-        const packType = physicalPacksQtyDropdown.value || 'none';
+        const packType = physicalPacksTypeDropdown.value || 'none';
         
         let packPrice = 0;
         if (packType === 'initial') packPrice = 40;
@@ -390,7 +429,7 @@
         updateDateConstraints();
     }
 
-    physicalPacksQtyDropdown.addEventListener('change', updateTotal);
+    physicalPacksTypeDropdown.addEventListener('change', updateTotal);
 
     // Simulation Écran Mobile
     const screens = [
@@ -424,7 +463,7 @@
         const eventName = document.getElementById('eventName').value;
         const startDateStr = document.getElementById('activationDate').value;
         const customerEmail = document.getElementById('custEmail').value;
-        const selectedPack = physicalPacksQtyDropdown.value || 'none';
+        const selectedPack = physicalPacksTypeDropdown.value || 'none';
         
         const selectedDate = new Date(startDateStr);
         selectedDate.setHours(0, 0, 0, 0);
@@ -469,13 +508,11 @@
             clientName: document.getElementById('custName').value,
             email: customerEmail,
             phone: document.getElementById('custPhone').value,
-            plan: currentPlan,
+            plan: currentPlan, // Conservé dans la commande
             totalAmount: `${currentBasePrice + packPrice}€`,
-            physicalPacksOrdered: selectedPack !== 'none' ? "Oui" : "Non",
             physicalPacksType: selectedPack,
             postalAddress: selectedPack !== 'none' ? postalAddressInput.value : "Aucune livraison physique",
-            createdAt: serverTimestamp(),
-            suivi: "ATTENTE PAIEMENT"
+            createdAt: serverTimestamp()
         };
 
         const configData = {
@@ -483,7 +520,7 @@
             active: true, 
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
-            plan: currentPlan,
+            // Le champ 'plan' a été supprimé ici (dans la configuration de l'événement)
             appUrl: appUrl,
             qrCode: qrCodeBase64,
             physicalPacksType: selectedPack
