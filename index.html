@@ -275,47 +275,6 @@
         </div>
     </section>
 
-    <section id="physical-packs-info" class="max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-24">
-        <div class="glass p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-white/10 max-w-5xl mx-auto relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-[200px] md:w-[300px] h-[200px] md:h-[300px] bg-pink-600/5 blur-[80px] md:blur-[100px] rounded-full -z-10"></div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
-                <div class="space-y-4 md:space-y-6">
-                    <span class="text-pink-500 font-black text-xs tracking-widest uppercase block">Matériel Clé en Main</span>
-                    <h2 class="text-2xl md:text-3xl font-black uppercase italic leading-tight">Nos Options <span class="text-pink-500">Packs Physiques</span></h2>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">
-                        Pour maximiser l'impact visuel et l'engagement de vos participants au sein de votre établissement, ajoutez l'un de nos packs physiques clés en main. Tout le matériel est imprimé et livré directement chez vous sous 72h.
-                    </p>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-dashed border-white/10 inline-block w-full sm:w-auto">
-                        <p class="text-[11px] text-pink-400 font-black uppercase italic">Packs au choix lors de la configuration</p>
-                        <p class="text-[10px] text-gray-500 mt-1">Sélectionnez le type de pack qui correspond à votre jauge directement dans le formulaire.</p>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-4">
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack INITIAL (+40€)</h3>
-                            <p class="text-gray-400 text-xs mt-0.5">50 badges autocollants + 5 affichettes plastifiées</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack AVANTAGE (+70€)</h3>
-                            <p class="text-gray-400 text-xs mt-0.5">100 badges autocollants + 8 affichettes plastifiées</p>
-                        </div>
-                    </div>
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-pink-500/20 transition-colors flex items-center justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase italic text-pink-500">Pack MAX (+120€)</h3>
-                            <p class="text-gray-400 text-xs mt-0.5">200 badges autocollants + 12 affichettes plastifiées</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <footer class="w-full text-center py-8 md:py-12 text-xs text-gray-600 border-t border-white/5 space-y-6 px-4">
         <p class="leading-relaxed">© 2026 Club Match Pro | Entrepreneur Individuel (EI) <br class="sm:hidden">| Contact : <a href="mailto:info@clubmatchpro.fr" class="text-pink-500 hover:underline">info@clubmatchpro.fr</a></p>
         
@@ -508,7 +467,7 @@
             clientName: document.getElementById('custName').value,
             email: customerEmail,
             phone: document.getElementById('custPhone').value,
-            plan: currentPlan, // Conservé dans la commande
+            plan: currentPlan,
             totalAmount: `${currentBasePrice + packPrice}€`,
             physicalPacksType: selectedPack,
             postalAddress: selectedPack !== 'none' ? postalAddressInput.value : "Aucune livraison physique",
@@ -520,7 +479,6 @@
             active: true, 
             startDate: startTimestamp,
             expiryDate: expiryTimestamp,
-            // Le champ 'plan' a été supprimé ici (dans la configuration de l'événement)
             appUrl: appUrl,
             qrCode: qrCodeBase64,
             physicalPacksType: selectedPack
