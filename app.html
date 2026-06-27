@@ -101,7 +101,7 @@ overflow-x: hidden;
  <span id="label-matches" class="text-[11px] uppercase text-pink-400 font-bold tracking-widest">Matches 🔥</span>
  </div>
  <div class="flex justify-around items-center">
- <div class="text-center w-1/2 border-r border-white/5">
+ <div class="text-center w-1/2 border-r border-white/5 cursor-pointer hover:bg-white/5 transition-all p-2 rounded-xl" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
  <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
  <span id="label-likes-recus" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Reçus</span>
  </div>
@@ -126,6 +126,18 @@ overflow-x: hidden;
  <div class="h-px flex-1 bg-white/5"></div>
  </div>
  <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
+ </div>
+ </div>
+
+ <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+ <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-pink-500/30 shadow-[0_0_30px_rgba(255,0,85,0.15)]">
+ <div class="text-5xl mb-4">🤫</div>
+ <p id="secret-flash-text" class="text-white font-black text-lg italic uppercase tracking-wider mb-6">
+ Impossible de connaître ton flash avant que tu Matches !
+ </p>
+ <button id="btn-understood" onclick="document.getElementById('secret-flash-popup').classList.add('hidden')" class="btn-main py-4 px-8 rounded-2xl font-black text-white uppercase tracking-widest w-full">
+ J'ai compris
+ </button>
  </div>
  </div>
 
@@ -254,7 +266,9 @@ overflow-x: hidden;
  errLimitMsg: "Limite de 10 messages atteinte !",
  chatCounter: "Messages : {count} / 10",
  toastFlash: "Nouveau flash reçu ! 👀",
- toastMatch: "Nouveau Match ! 🔥"
+ toastMatch: "Nouveau Match ! 🔥",
+ secretFlash: "Impossible de connaître ton flash avant que tu Matches !",
+ btnUnderstood: "J'ai compris"
  },
  en: {
  toggleBtn: "🇫🇷 FR",
@@ -291,7 +305,9 @@ overflow-x: hidden;
  errLimitMsg: "Limit of 10 messages reached!",
  chatCounter: "Messages: {count} / 10",
  toastFlash: "New flash received! 👀",
- toastMatch: "New Match! 🔥"
+ toastMatch: "New Match! 🔥",
+ secretFlash: "Impossible to know your flash before you Match!",
+ btnUnderstood: "Understood"
  }
  };
 
@@ -326,6 +342,11 @@ overflow-x: hidden;
  document.getElementById('send-msg-trigger').innerText = t.sendBtn;
  document.getElementById('chat-limit-warning').innerText = t.errLimitMsg;
  document.getElementById('chat-counter-display').innerText = t.chatCounter.replace('{count}', currentChatMessagesSent);
+
+ if (document.getElementById('secret-flash-text')) {
+ document.getElementById('secret-flash-text').innerText = t.secretFlash;
+ document.getElementById('btn-understood').innerText = t.btnUnderstood;
+ }
  }
 
  // SYSTEM SATELLITE SYNTHETISEUR AUDIO
