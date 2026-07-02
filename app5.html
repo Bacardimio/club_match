@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IceBreaker - App</title>
+    <title>Club Match - App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -94,7 +94,6 @@
     <!-- Cancel Flash Popup -->
     <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
         <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
-            <!-- FIX: Ajout de l'ID cancel-flash-title pour éviter le crash JS -->
             <p id="cancel-flash-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Annuler ce flash fait par erreur ?</p>
             <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20">
                 <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
@@ -106,9 +105,23 @@
         </div>
     </div>
 
+    <!-- Unmatch Popup -->
+    <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+            <p id="unmatch-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Supprimer ce match ?</p>
+            <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20 border-red-500/50">
+                <img id="unmatch-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('unmatch-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Annuler</button>
+                <button id="btn-confirm-unmatch" class="flex-1 bg-red-600 py-4 rounded-2xl font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Supprimer ❌</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Closed Screen -->
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
-        <h1 class="text-5xl font-black mb-4 uppercase italic">ICE<span class="text-pink-600">BREAKER</span></h1>
+        <h1 class="text-5xl font-black mb-4 uppercase italic">CLUB<span class="text-pink-600">MATCH</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
             <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
         </div>
@@ -117,7 +130,7 @@
     <!-- Login / Capture Screen -->
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-6 animate-pop text-center mt-8">
         <div>
-            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">ICE<br><span class="text-pink-600">BREAKER</span></h1>
+            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
             <p id="event-name-display" class="text-pink-500 mt-1 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
         </div>
         
@@ -154,17 +167,20 @@
     <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2 pb-10">
         
         <!-- Header Profile -->
-        <header class="flex items-center justify-between py-2 px-2 bg-black/40 rounded-3xl p-3 border border-white/5 sticky top-2 z-30 backdrop-blur-md pr-24">
-            <div class="flex items-center space-x-3">
-                <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
+        <header class="flex items-center justify-between py-2 px-4 bg-black/40 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md">
+            <div class="flex items-center space-x-4">
+                <!-- Profil + Stat Match Combinés -->
+                <div class="flex flex-col items-center">
+                    <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
+                    <div class="flex items-center space-x-1 mt-1 bg-white/10 px-2 py-0.5 rounded-full border border-white/5">
+                        <span class="text-[10px] font-black text-pink-500" id="stat-matches">0</span>
+                        <span id="label-matches" class="text-[8px] uppercase text-gray-300 font-bold tracking-widest">Matchs</span>
+                    </div>
+                </div>
                 <div class="text-left">
                     <p class="text-pink-500 text-[10px] uppercase font-black tracking-widest">En ligne</p>
                     <p class="text-white text-xs font-bold opacity-70">Prêt à flasher</p>
                 </div>
-            </div>
-            <div class="text-right">
-                <span class="block text-2xl font-black text-pink-500 tracking-tighter" id="stat-matches">0</span>
-                <span id="label-matches" class="text-[9px] uppercase text-gray-400 font-bold tracking-widest">Matches 🔥</span>
             </div>
         </header>
 
@@ -300,6 +316,7 @@
         let prevMatchesCount = null;
         let targetToFlash = null;
         let targetToCancel = null;
+        let targetToUnmatch = null;
 
         const i18n = {
             fr: {
@@ -310,7 +327,7 @@
                 eventNotStarted: "La soirée n'a pas encore commencé.<br><span class='text-pink-500'>Ouverture le {date}</span>",
                 eventExpired: "Cet événement est terminé.",
                 statRecus: "Flashs Reçus",
-                statMatches: "Matches 🔥",
+                statMatches: "Matchs",
                 statEnvoyes: "Flashs Envoyés",
                 secMatches: "Tes Matches 🔥",
                 labelWall: "Live Photo Wall 📸",
@@ -332,7 +349,9 @@
                 btnCancel: "Annuler",
                 btnFlash: "Flasher 🔥",
                 cancelFlashTitle: "Annuler ce flash fait par erreur ?",
-                btnKeep: "Garder"
+                btnKeep: "Garder",
+                unmatchTitle: "Supprimer ce match ?",
+                btnDelete: "Supprimer"
             },
             en: {
                 toggleBtn: "🇫🇷 FR",
@@ -342,7 +361,7 @@
                 eventNotStarted: "Party hasn't started yet.<br><span class='text-pink-500'>Opening on {date}</span>",
                 eventExpired: "This event has ended.",
                 statRecus: "Flashes Received",
-                statMatches: "Matches 🔥",
+                statMatches: "Matches",
                 statEnvoyes: "Flashes Sent",
                 secMatches: "Your Matches 🔥",
                 labelWall: "Live Photo Wall 📸",
@@ -364,7 +383,9 @@
                 btnCancel: "Cancel",
                 btnFlash: "Flash 🔥",
                 cancelFlashTitle: "Cancel this flash sent by mistake?",
-                btnKeep: "Keep"
+                btnKeep: "Keep",
+                unmatchTitle: "Delete this match?",
+                btnDelete: "Delete"
             }
         };
 
@@ -387,6 +408,7 @@
             document.getElementById('label-btn-take').innerText = t.btnTakeSnapshot;
             document.getElementById('label-btn-validate').innerText = t.btnValidateJoin;
             document.getElementById('btn-retake-photo').innerText = t.btnRetakePhoto;
+            
             document.querySelector('#confirm-flash-popup p').innerText = t.confirmFlashTitle;
             document.querySelector('#confirm-flash-popup button.glass').innerText = t.btnCancel;
             document.getElementById('btn-confirm-flash').innerText = t.btnFlash;
@@ -394,6 +416,10 @@
             document.getElementById('cancel-flash-title').innerText = t.cancelFlashTitle;
             document.querySelector('#cancel-flash-popup button.glass').innerText = t.btnKeep;
             document.getElementById('btn-confirm-cancel').innerText = t.btnCancel + " ❌";
+
+            document.getElementById('unmatch-title').innerText = t.unmatchTitle;
+            document.querySelector('#unmatch-popup button.glass').innerText = t.btnCancel;
+            document.getElementById('btn-confirm-unmatch').innerText = t.btnDelete + " ❌";
 
             if (document.getElementById('secret-flash-text')) {
                 document.getElementById('secret-flash-text').innerText = t.secretFlash;
@@ -667,6 +693,29 @@
             targetToCancel = null;
         };
 
+        // Supprimer un match existant
+        window.askUnmatch = (uid) => {
+            targetToUnmatch = uid;
+            const user = allUsersData[uid];
+            document.getElementById('unmatch-target-photo').src = user ? user.photo : '';
+            document.getElementById('unmatch-popup').classList.remove('hidden');
+        };
+
+        document.getElementById('btn-confirm-unmatch').onclick = async () => {
+            document.getElementById('unmatch-popup').classList.add('hidden');
+            if(!targetToUnmatch) return;
+            
+            // On supprime notre "like" pour casser la condition de réciprocité du Match
+            await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToUnmatch}`));
+            
+            // On purge la conversation par sécurité
+            const roomID = [myUserId, targetToUnmatch].sort().join('-');
+            await remove(ref(db, `${basePath}/messages/${roomID}`));
+
+            showToastNotification(currentLang === 'fr' ? "Match supprimé 🗑️" : "Match deleted 🗑️", "sent");
+            targetToUnmatch = null;
+        };
+
         function loadApp() {
             showUI('main-app');
             if(myPhotoData) {
@@ -725,9 +774,14 @@
                     div.innerHTML = `
                         <div class="flex items-center space-x-4 cursor-pointer flex-1" onclick="openChat('${uid}')">
                             <img src="${userPhoto}" class="w-12 h-12 rounded-full object-cover border border-white/20">
-                            <span class="font-black italic text-white text-lg">Chat privé</span>
+                            <div class="flex flex-col">
+                                <span class="font-black italic text-white text-lg">Chat privé</span>
+                            </div>
                             <div id="dot-${roomID}" class="notification-dot hidden"></div>
                         </div>
+                        <button onclick="askUnmatch('${uid}')" class="ml-3 p-3 bg-red-500/10 hover:bg-red-500/30 rounded-xl transition-all border border-red-500/20 text-red-500 shadow-md">
+                            🗑️
+                        </button>
                     `;
                     list.appendChild(div);
                     listenForNotifications(roomID);
