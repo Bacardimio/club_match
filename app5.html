@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Club Match Pro - App</title>
+    <title>IceBreaker - App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -94,7 +94,8 @@
     <!-- Cancel Flash Popup -->
     <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
         <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Annuler ce flash fait par erreur ?</p>
+            <!-- FIX: Ajout de l'ID cancel-flash-title pour éviter le crash JS -->
+            <p id="cancel-flash-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Annuler ce flash fait par erreur ?</p>
             <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20">
                 <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
             </div>
@@ -107,7 +108,7 @@
 
     <!-- Closed Screen -->
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
-        <h1 class="text-5xl font-black mb-4 uppercase italic">CLUB<span class="text-pink-600">MATCH</span></h1>
+        <h1 class="text-5xl font-black mb-4 uppercase italic">ICE<span class="text-pink-600">BREAKER</span></h1>
         <div class="glass p-8 rounded-[2.5rem]">
             <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
         </div>
@@ -116,7 +117,7 @@
     <!-- Login / Capture Screen -->
     <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-6 animate-pop text-center mt-8">
         <div>
-            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
+            <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">ICE<br><span class="text-pink-600">BREAKER</span></h1>
             <p id="event-name-display" class="text-pink-500 mt-1 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
         </div>
         
@@ -298,9 +299,8 @@
         let prevLikesRecusCount = null;
         let prevMatchesCount = null;
         let targetToFlash = null;
-        let targetToCancel = null; // Cible pour annulation de flash
+        let targetToCancel = null;
 
-        // --- DICTIONNAIRE DE TRADUCTION ---
         const i18n = {
             fr: {
                 toggleBtn: "🇬🇧 EN",
@@ -619,7 +619,6 @@
                     card.innerHTML += `<div class="absolute bottom-1 right-1 bg-pink-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-lg">🔥</div>`;
                     card.onclick = () => openChat(uid);
                 } else if(hasLikedAlready) {
-                    // Flash envoyé mais pas encore réciproque : Ajout de l'interaction d'annulation au clic
                     card.innerHTML += `<div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-1"><span class="text-white text-xl opacity-70">⏳</span><span class="text-[9px] uppercase font-black tracking-tighter text-red-400 mt-1 bg-black/40 px-1.5 py-0.5 rounded-md">Annuler ?</span></div>`;
                     card.onclick = () => {
                         targetToCancel = uid;
@@ -637,7 +636,6 @@
             });
         }
 
-        // Action : Confirmer l'envoi du flash
         document.getElementById('btn-confirm-flash').onclick = async () => {
             document.getElementById('confirm-flash-popup').classList.add('hidden');
             if(!targetToFlash) return;
@@ -659,12 +657,10 @@
             targetToFlash = null;
         };
 
-        // Action : Confirmer l'annulation du flash
         document.getElementById('btn-confirm-cancel').onclick = async () => {
             document.getElementById('cancel-flash-popup').classList.add('hidden');
             if(!targetToCancel) return;
             
-            // Suppression de la node dans Firebase Realtime Database
             await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
             showToastNotification(currentLang === 'fr' ? "Flash annulé ❌" : "Flash canceled ❌", "sent");
             
