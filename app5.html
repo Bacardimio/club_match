@@ -91,6 +91,20 @@
         </div>
     </div>
 
+    <!-- Cancel Flash Popup -->
+    <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Annuler ce flash fait par erreur ?</p>
+            <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20">
+                <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('cancel-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Garder</button>
+                <button id="btn-confirm-cancel" class="flex-1 bg-red-600 py-4 rounded-2xl font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Annuler ❌</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Closed Screen -->
     <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
         <h1 class="text-5xl font-black mb-4 uppercase italic">CLUB<span class="text-pink-600">MATCH</span></h1>
@@ -138,7 +152,7 @@
     <!-- Main App Dashboard -->
     <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2 pb-10">
         
-        <!-- Header Profile avec pr-24 pour éviter la superposition de l'admin et de la langue -->
+        <!-- Header Profile -->
         <header class="flex items-center justify-between py-2 px-2 bg-black/40 rounded-3xl p-3 border border-white/5 sticky top-2 z-30 backdrop-blur-md pr-24">
             <div class="flex items-center space-x-3">
                 <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
@@ -274,7 +288,7 @@
 
         let isRegistered = localStorage.getItem(`isRegistered_${eventID}`) === 'true';
         let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
-        let tempPhotoBase64 = null; // Stockage temporaire avant validation
+        let tempPhotoBase64 = null; 
         
         let activeChatRoom = null;
         let currentLikesSentCount = 0;
@@ -284,6 +298,7 @@
         let prevLikesRecusCount = null;
         let prevMatchesCount = null;
         let targetToFlash = null;
+        let targetToCancel = null; // Cible pour annulation de flash
 
         // --- DICTIONNAIRE DE TRADUCTION ---
         const i18n = {
@@ -315,7 +330,9 @@
                 btnRetakePhoto: "🔄 Refaire la photo",
                 confirmFlashTitle: "Envoyer un flash à cette personne ?",
                 btnCancel: "Annuler",
-                btnFlash: "Flasher 🔥"
+                btnFlash: "Flasher 🔥",
+                cancelFlashTitle: "Annuler ce flash fait par erreur ?",
+                btnKeep: "Garder"
             },
             en: {
                 toggleBtn: "🇫🇷 FR",
@@ -345,7 +362,9 @@
                 btnRetakePhoto: "🔄 Retake photo",
                 confirmFlashTitle: "Send a flash to this person?",
                 btnCancel: "Cancel",
-                btnFlash: "Flash 🔥"
+                btnFlash: "Flash 🔥",
+                cancelFlashTitle: "Cancel this flash sent by mistake?",
+                btnKeep: "Keep"
             }
         };
 
@@ -371,6 +390,10 @@
             document.querySelector('#confirm-flash-popup p').innerText = t.confirmFlashTitle;
             document.querySelector('#confirm-flash-popup button.glass').innerText = t.btnCancel;
             document.getElementById('btn-confirm-flash').innerText = t.btnFlash;
+            
+            document.getElementById('cancel-flash-title').innerText = t.cancelFlashTitle;
+            document.querySelector('#cancel-flash-popup button.glass').innerText = t.btnKeep;
+            document.getElementById('btn-confirm-cancel').innerText = t.btnCancel + " ❌";
 
             if (document.getElementById('secret-flash-text')) {
                 document.getElementById('secret-flash-text').innerText = t.secretFlash;
@@ -487,7 +510,6 @@
             }
         }
 
-        // Action : Déclencher l'obturateur (Prendre la photo)
         document.getElementById('btn-take-snapshot').onclick = () => {
             const video = document.getElementById('camera-feed');
             const canvas = document.getElementById('photo-canvas');
@@ -506,7 +528,6 @@
             
             tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
             
-            // Permuter les affichages
             video.classList.add('hidden');
             canvas.classList.remove('hidden');
             
@@ -514,13 +535,11 @@
             document.getElementById('capture-confirm-controls').classList.remove('hidden');
         };
 
-        // Action : Annuler et refaire la photo
         document.getElementById('btn-retake-photo').onclick = () => {
             tempPhotoBase64 = null;
             initCamera();
         };
 
-        // Action : Valider la photo et entrer dans la base
         document.getElementById('btn-validate-join').onclick = async () => {
             if(!tempPhotoBase64) return;
             
@@ -600,7 +619,13 @@
                     card.innerHTML += `<div class="absolute bottom-1 right-1 bg-pink-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-lg">🔥</div>`;
                     card.onclick = () => openChat(uid);
                 } else if(hasLikedAlready) {
-                    card.innerHTML += `<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-white text-2xl opacity-70">⏳</span></div>`;
+                    // Flash envoyé mais pas encore réciproque : Ajout de l'interaction d'annulation au clic
+                    card.innerHTML += `<div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-1"><span class="text-white text-xl opacity-70">⏳</span><span class="text-[9px] uppercase font-black tracking-tighter text-red-400 mt-1 bg-black/40 px-1.5 py-0.5 rounded-md">Annuler ?</span></div>`;
+                    card.onclick = () => {
+                        targetToCancel = uid;
+                        document.getElementById('cancel-target-photo').src = user.photo;
+                        document.getElementById('cancel-flash-popup').classList.remove('hidden');
+                    };
                 } else {
                     card.onclick = () => {
                         targetToFlash = uid;
@@ -612,6 +637,7 @@
             });
         }
 
+        // Action : Confirmer l'envoi du flash
         document.getElementById('btn-confirm-flash').onclick = async () => {
             document.getElementById('confirm-flash-popup').classList.add('hidden');
             if(!targetToFlash) return;
@@ -628,9 +654,21 @@
             if(check.exists()) { 
                 launchFireworks(allUsersData[targetToFlash].photo); 
             } else {
-                showToastNotification("Flash envoyé ! ⚡", "sent");
+                showToastNotification(currentLang === 'fr' ? "Flash envoyé ! ⚡" : "Flash sent! ⚡", "sent");
             }
             targetToFlash = null;
+        };
+
+        // Action : Confirmer l'annulation du flash
+        document.getElementById('btn-confirm-cancel').onclick = async () => {
+            document.getElementById('cancel-flash-popup').classList.add('hidden');
+            if(!targetToCancel) return;
+            
+            // Suppression de la node dans Firebase Realtime Database
+            await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
+            showToastNotification(currentLang === 'fr' ? "Flash annulé ❌" : "Flash canceled ❌", "sent");
+            
+            targetToCancel = null;
         };
 
         function loadApp() {
