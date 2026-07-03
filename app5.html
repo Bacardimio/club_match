@@ -279,8 +279,6 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  <script type="module">
  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
  import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
- // AJOUT : Importations nécessaires pour manipuler Firebase Storage
- import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
  const firebaseConfig = {
  apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
@@ -294,8 +292,6 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
 
  const app = initializeApp(firebaseConfig);
  const db = getDatabase(app);
- // AJOUT : Initialisation de l'instance Storage
- const storage = getStorage(app);
 
  const urlParams = new URLSearchParams(window.location.search);
  const eventID = urlParams.get('event') || 'default';
@@ -311,13 +307,14 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
  let tempPhotoBase64 = null; 
 
-let activeChatRoom = null;
+ let activeChatRoom = null;
  let currentLikesSentCount = 0;
  let currentChatMessagesSent = 0;
  let allUsersData = {};
  
-let prevLikesRecusCount = null;
+ let prevLikesRecusCount = null;
  let prevMatchesCount = null;
+ let prevMatchesList = []; // NOUVEAU: Pour identifier le nouveau match et lancer l'animation
  let targetToFlash = null;
  let targetToCancel = null;
  let targetToUnmatch = null;
@@ -570,44 +567,23 @@ document.getElementById('capture-initial-controls').classList.add('hidden');
  initCamera();
  };
 
- // MODIFICATION : Processus d'inscription réécrit pour passer par Cloud Storage
  document.getElementById('btn-validate-join').onclick = async () => {
  if(!tempPhotoBase64) return;
  
- const btn = document.getElementById('btn-validate-join');
- btn.innerHTML = '<span class="animate-pulse">Envoi du selfie... 🚀</span>';
- btn.disabled = true;
+document.getElementById('btn-validate-join').innerHTML = '<span class="animate-pulse">Création du profil...</span>';
  
- try {
- // 1. Création d'une référence unique pour le fichier dans Storage (écrasée si l'utilisateur change de photo)
- const fileRef = storageRef(storage, `${basePath}/selfies/${myUserId}.jpg`);
- 
- // 2. Upload de la string Base64 (au format 'data_url')
- await uploadString(fileRef, tempPhotoBase64, 'data_url');
- 
- // 3. Récupération de l'URL publique générée par Firebase
- const downloadURL = await getDownloadURL(fileRef);
- 
- btn.innerHTML = '<span class="animate-pulse">Création du profil...</span>';
- 
- // 4. Envoi dans la Realtime Database uniquement de l'URL HTTP compacte
- await set(ref(db, `${basePath}/users/${myUserId}`), {
- photo: downloadURL,
+await set(ref(db, `${basePath}/users/${myUserId}`), {
+ photo: tempPhotoBase64,
  joinedAt: serverTimestamp()
  });
  
- myPhotoData = downloadURL;
- localStorage.setItem(`myPhoto_${eventID}`, downloadURL);
+myPhotoData = tempPhotoBase64;
+ localStorage.setItem(`myPhoto_${eventID}`, tempPhotoBase64);
  localStorage.setItem(`isRegistered_${eventID}`, 'true');
  isRegistered = true;
  
- stopCamera();
+stopCamera();
  loadApp();
- } catch (error) {
- console.error("Erreur lors de l'upload du selfie :", error);
- btn.innerHTML = '<span>Erreur. Réessaye ❌</span>';
- btn.disabled = false;
- }
  };
 
  // --- INITIALIZATION ---
@@ -700,11 +676,11 @@ if (currentLikesSentCount >= 5) {
 await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
  
 const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
- if(check.exists()) { 
-launchFireworks(allUsersData[targetToFlash].photo); 
-} else {
+ if(!check.exists()) { 
  showToastNotification(currentLang === 'fr' ? "Flash envoyé ! ⚡" : "Flash sent! ⚡", "sent");
  }
+ // NOUVEAU: Le feu d'artifice n'est plus appelé ici, il est géré par l'écouteur `onValue` pour les deux utilisateurs !
+ 
  targetToFlash = null;
  };
 
@@ -784,9 +760,16 @@ document.getElementById('stat-likes-recus').innerText = likesRecus;
  if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
  showToastNotification(i18n[currentLang].toastMatch, 'match');
  playNotificationSound('match');
+ 
+ // NOUVEAU: Trouve qui est le nouveau match et lance le feu d'artifice !
+ const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
+ if (newMatchUid && allUsersData[newMatchUid]) {
+ launchFireworks(allUsersData[newMatchUid].photo);
+ }
  }
  prevLikesRecusCount = likesRecus;
  prevMatchesCount = matches.length;
+ prevMatchesList = [...matches];
  
 const list = document.getElementById('match-list');
  list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${i18n[currentLang].noMatches}</p>`;
@@ -889,13 +872,6 @@ if (currentChatMessagesSent >= 10) {
  sender: myUserId, text: input.value.trim(), time: serverTimestamp()
  });
  input.value = "";
- };
-
- document.getElementById('chat-window').onclick = (e) => {
- if (e.target === document.getElementById('chat-window')) {
- document.getElementById('chat-window').classList.add('hidden');
- activeChatRoom = null;
- }
  };
 
  document.getElementById('close-chat-trigger').onclick = () => { 
