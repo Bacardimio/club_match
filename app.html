@@ -129,6 +129,7 @@ overflow-x: hidden;
  </div>
  </div>
 
+ <!-- Popup Secret Flash -->
  <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
  <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-pink-500/30 shadow-[0_0_30px_rgba(255,0,85,0.15)]">
  <div class="text-5xl mb-4">🤫</div>
@@ -225,7 +226,7 @@ overflow-x: hidden;
  let currentChatMessagesSent = 0;
  
  let prevLikesRecusCount = null;
- let prevMatchesCount = null;
+ let prevMatches = null; // Modification ici: On garde la liste des matches précédents plutôt qu'un compte
 
  localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
@@ -525,13 +526,15 @@ overflow-x: hidden;
  }
  const userSnap = await get(ref(db, `${basePath}/users/${target}`));
  if (!userSnap.exists()) { 
-document.getElementById('target-error').classList.remove('hidden'); 
-return; 
-}
+  document.getElementById('target-error').classList.remove('hidden'); 
+  return; 
+ }
  document.getElementById('target-error').classList.add('hidden');
+ 
+ // Enregistrement du flash. La détection du match et le feu d'artifice 
+ // sont maintenant gérés par le onValue juste en dessous !
  await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
- const check = await get(ref(db, `${basePath}/likes/${target}/${currentBadge}`));
- if(check.exists()) { launchFireworks(target); }
+ 
  targetInput.value = "";
  };
 
@@ -557,17 +560,25 @@ return;
  document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
  document.getElementById('stat-matches').innerText = matches.length;
 
- // DÉCLENCHEMENT AUDIO + TOAST (FLASH ET MATCH)
+ // DÉCLENCHEMENT AUDIO + TOAST + FEU D'ARTIFICE (pour les DEUX utilisateurs)
  if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
  showToastNotification(i18n[currentLang].toastFlash, 'flash');
  playNotificationSound('flash');
  }
- if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
+ 
+ if (prevMatches !== null) {
+ // On trouve les NOUVEAUX matches en comparant avec l'état précédent
+ const newMatches = matches.filter(id => !prevMatches.includes(id));
+ if (newMatches.length > 0) {
  showToastNotification(i18n[currentLang].toastMatch, 'match');
  playNotificationSound('match');
+ // On lance le feu d'artifice pour le premier nouveau match détecté
+ launchFireworks(newMatches[0]);
  }
+ }
+ 
  prevLikesRecusCount = likesRecus;
- prevMatchesCount = matches.length;
+ prevMatches = [...matches]; // On sauvegarde l'état actuel des matches
  
  const list = document.getElementById('match-list');
  list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${i18n[currentLang].noMatches}</p>`;
