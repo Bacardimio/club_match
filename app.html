@@ -9,29 +9,44 @@
  <style>
  :root { --accent: #ff0055; }
  body { 
-background: #0a0a0a; 
-color: white; 
-font-family: 'Inter', -apple-system, system-ui, sans-serif; 
-overflow-x: hidden; 
-}
- .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
- .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
- .btn-main:active { transform: scale(0.95); }
+    background: #0a0a0a; 
+    color: white; 
+    font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+    overflow-x: hidden; 
+ }
+ /* Amélioration du contraste des conteneurs "glass" */
+ .glass { 
+    background: rgba(255, 255, 255, 0.05); 
+    backdrop-filter: blur(20px); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+ }
+ /* Bouton principal avec effet lumineux */
+ .btn-main { 
+    background: linear-gradient(135deg, var(--accent), #ff5e00); 
+    box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+ }
+ .btn-main:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(255, 0, 85, 0.3); }
  .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
  @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
  
-#match-announcement {
- position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.9);
- display: none; flex-direction: column; align-items: center; justify-content: center;
- text-align: center; animation: fadeIn 0.5s ease;
+ #match-announcement {
+    position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; animation: fadeIn 0.5s ease;
  }
  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
  .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
- .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
- .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+ .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; box-shadow: 0 2px 10px rgba(255,0,85,0.2); }
+ .msg-them { align-self: flex-start; background: rgba(255,255,255,0.15); border-bottom-left-radius: 4px; }
  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
- .notification-dot { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+ .notification-dot { width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981; }
+ 
+ /* Effet de brillance pour les textes importants */
+ .text-glow-pink { text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
+ .text-glow-white { text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
  </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
@@ -39,162 +54,162 @@ overflow-x: hidden;
  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
  <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
- <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
- <button id="admin-trigger" class="glass opacity-40 hover:opacity-100 p-1.5 rounded-xl text-sm transition-all">⚙️</button>
+ <button id="lang-toggle-btn" class="glass px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase text-white hover:bg-white/20 transition-all border-white/20">🇬🇧 EN</button>
+ <button id="admin-trigger" class="glass opacity-50 hover:opacity-100 p-2 rounded-xl text-sm transition-all border-white/20">⚙️</button>
  </div>
 
  <div id="match-announcement">
- <h2 class="text-pink-500 text-2xl font-black italic uppercase tracking-tighter mb-2">Incroyable !</h2>
- <h1 class="text-7xl font-black italic uppercase text-white mb-4">MATCH 🔥</h1>
- <div class="glass p-10 rounded-[3rem] border-pink-500 shadow-[0_0_50px_rgba(255,0,85,0.3)]">
- <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Tu as flashé le badge</p>
- <span id="match-number-display" class="text-8xl font-black text-white">--</span>
+ <h2 class="text-pink-500 text-3xl font-black italic uppercase tracking-tighter mb-2 text-glow-pink">Incroyable !</h2>
+ <h1 class="text-8xl font-black italic uppercase text-white mb-6 text-glow-white">MATCH 🔥</h1>
+ <div class="glass p-12 rounded-[3rem] border-2 border-pink-500 shadow-[0_0_80px_rgba(255,0,85,0.5)]">
+ <p class="text-white font-bold uppercase tracking-widest mb-3 opacity-90">Tu as flashé le badge</p>
+ <span id="match-number-display" class="text-8xl font-black text-white text-glow-white">--</span>
  </div>
- <p class="mt-8 text-gray-500 font-bold animate-pulse">Appuie n'importe où pour continuer</p>
+ <p class="mt-10 text-white text-lg font-bold animate-pulse uppercase tracking-widest">Appuie n'importe où pour continuer</p>
  </div>
 
  <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
- <h1 class="text-4xl font-black mb-4 uppercase italic">Club <span class="text-pink-600">Match</span></h1>
- <div class="glass p-8 rounded-[2.5rem]">
- <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
+ <h1 class="text-5xl font-black mb-6 uppercase italic tracking-tighter">Club <span class="text-pink-500 text-glow-pink">Match</span></h1>
+ <div class="glass p-8 rounded-[2.5rem] border-red-500/30">
+ <p id="closed-message" class="text-red-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
  </div>
  </div>
 
  <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-10 animate-pop text-center">
  <div>
- <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
- <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-70">CHARGEMENT...</p>
+ <h1 class="text-7xl font-black tracking-tighter italic uppercase text-white leading-none">CLUB<br><span class="text-pink-500 text-glow-pink">MATCH</span></h1>
+ <p id="event-name-display" class="text-white mt-4 text-sm font-black tracking-[0.2em] uppercase opacity-80 bg-white/10 py-1.5 px-4 rounded-full inline-block">CHARGEMENT...</p>
  </div>
- <div class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
- <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-white/5 border-none rounded-2xl p-6 text-center text-4xl font-bold focus:ring-2 focus:ring-pink-500 outline-none text-white transition-all">
- <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white">Rejoindre</button>
- <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden">Badge déjà utilisé sur un autre appareil.</p>
+ <div class="glass p-8 rounded-[2.5rem] space-y-6 shadow-2xl border-white/20">
+ <input type="number" id="user-badge" placeholder="N° DE BADGE" class="w-full bg-black/60 border-2 border-white/10 rounded-2xl p-6 text-center text-4xl font-black focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-white transition-all placeholder:text-gray-600">
+ <button id="btn-login-trigger" class="w-full btn-main py-5 rounded-2xl font-black text-xl uppercase tracking-widest text-white shadow-[0_0_20px_rgba(255,0,85,0.3)]">Rejoindre</button>
+ <p id="login-error" class="text-red-500 text-center text-xs font-bold hidden bg-red-500/10 p-2 rounded-lg border border-red-500/20">Badge déjà utilisé sur un autre appareil.</p>
  </div>
  </div>
 
- <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2">
+ <div id="main-app" class="hidden w-full max-w-md space-y-8 pt-4">
  <header class="flex flex-col items-center justify-center py-2 text-center">
  <div>
- <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1.5">Connecté</p>
- <div class="glass px-6 py-2 rounded-full border-pink-500/30 bg-pink-500/5 shadow-[0_0_15px_rgba(255,0,85,0.05)]">
- <h2 class="text-2xl font-black text-white italic tracking-wide">Badge <span id="display-badge" class="text-pink-500">--</span></h2>
+ <p class="text-gray-400 text-[11px] uppercase font-black tracking-widest mb-2">Connecté en tant que</p>
+ <div class="glass px-8 py-3 rounded-full border border-pink-500/50 bg-pink-500/10 shadow-[0_0_25px_rgba(255,0,85,0.15)]">
+ <h2 class="text-3xl font-black text-white italic tracking-wide">Badge <span id="display-badge" class="text-pink-500 text-glow-pink">--</span></h2>
  </div>
  </div>
  </header>
 
  <div class="relative">
- <div class="absolute inset-0 bg-pink-500 blur-2xl opacity-5 rounded-[2.5rem]"></div>
- <div class="glass relative p-5 rounded-[2.5rem] shadow-2xl border-white/5">
- <p id="enter-number-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Saisir un numéro à flasher</p>
+ <div class="absolute inset-0 bg-pink-500 blur-[40px] opacity-10 rounded-[2.5rem]"></div>
+ <div class="glass relative p-6 rounded-[2.5rem] shadow-2xl border-white/20">
+ <p id="enter-number-label" class="text-xs font-black text-white opacity-80 uppercase tracking-widest text-center mb-5">Saisir un numéro à flasher</p>
  <div class="flex space-x-3 items-center justify-center">
- <input type="number" id="target-badge" placeholder="N°" class="w-24 bg-black/60 border border-white/10 rounded-2xl p-4 text-center text-3xl font-black focus:border-pink-500 outline-none text-white transition-all">
- <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-lg text-white uppercase tracking-widest shadow-lg shadow-pink-500/10">Flasher</button>
+ <input type="number" id="target-badge" placeholder="N°" class="w-28 bg-black/80 border-2 border-white/20 rounded-2xl p-4 text-center text-4xl font-black focus:border-pink-500 focus:bg-black outline-none text-white transition-all placeholder:text-gray-600">
+ <button id="btn-like-trigger" class="flex-1 btn-main py-5 rounded-2xl font-black text-xl text-white uppercase tracking-widest">Flasher</button>
  </div>
- <p id="target-error" class="text-center text-red-500 text-[10px] font-bold uppercase hidden italic mt-3">Ce badge n'est pas enregistré !</p>
- <p id="limit-warning" class="text-center text-orange-500 text-[10px] font-bold uppercase hidden mt-3">Limite de 5 flashs atteinte !</p>
+ <p id="target-error" class="text-center text-red-500 text-xs font-bold uppercase hidden italic mt-4 bg-red-500/10 py-2 rounded-lg border border-red-500/20">Ce badge n'est pas enregistré !</p>
+ <p id="limit-warning" class="text-center text-orange-500 text-xs font-bold uppercase hidden mt-4 bg-orange-500/10 py-2 rounded-lg border border-orange-500/20">Limite de 5 flashs atteinte !</p>
  </div>
  </div>
 
- <div class="glass p-5 rounded-[2.5rem] border-white/5 shadow-xl">
- <div class="text-center pb-4 mb-4 border-b border-white/5">
- <span class="block text-5xl font-black text-pink-500 tracking-tighter" id="stat-matches">0</span>
- <span id="label-matches" class="text-[11px] uppercase text-pink-400 font-bold tracking-widest">Matches 🔥</span>
+ <div class="glass p-6 rounded-[2.5rem] border-white/20 shadow-2xl">
+ <div class="text-center pb-6 mb-6 border-b border-white/10">
+ <span class="block text-7xl font-black text-pink-500 tracking-tighter text-glow-pink mb-1" id="stat-matches">0</span>
+ <span id="label-matches" class="text-sm uppercase text-white font-black tracking-widest bg-pink-500/20 px-4 py-1.5 rounded-full border border-pink-500/30">Matches 🔥</span>
  </div>
  <div class="flex justify-around items-center">
- <div class="text-center w-1/2 border-r border-white/5 cursor-pointer hover:bg-white/5 transition-all p-2 rounded-xl" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
- <span class="block text-2xl font-black text-white" id="stat-likes-recus">0</span>
- <span id="label-likes-recus" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Reçus</span>
+ <div class="text-center w-1/2 border-r border-white/10 cursor-pointer hover:bg-white/10 transition-all p-3 rounded-2xl" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
+ <span class="block text-3xl font-black text-white text-glow-white mb-1" id="stat-likes-recus">0</span>
+ <span id="label-likes-recus" class="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Flashs Reçus</span>
  </div>
- <div class="text-center w-1/2 flex flex-col items-center justify-center">
- <span class="block text-2xl font-black text-white"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-sm">/5</span></span>
- <span id="label-likes-envoyes" class="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Flashs Envoyés</span>
+ <div class="text-center w-1/2 flex flex-col items-center justify-center p-3">
+ <span class="block text-3xl font-black text-white text-glow-white mb-1"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-xl font-bold ml-1">/5</span></span>
+ <span id="label-likes-envoyes" class="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Flashs Envoyés</span>
  </div>
  </div>
  </div>
 
- <div id="match-section" class="space-y-3">
- <div class="flex items-center space-x-2 px-1">
- <span id="label-section-matches" class="text-xs font-black text-pink-500 uppercase tracking-widest italic pl-2 border-l-4 border-pink-500">Tes Matches 🔥</span>
- <div class="h-px flex-1 bg-white/5"></div>
+ <div id="match-section" class="space-y-4">
+ <div class="flex items-center space-x-3 px-2">
+ <span id="label-section-matches" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-pink-500">Tes Matches 🔥</span>
+ <div class="h-px flex-1 bg-gradient-to-r from-pink-500/50 to-transparent"></div>
  </div>
  <div id="match-list" class="space-y-3"></div>
  </div>
 
- <div id="likes-sent-section" class="space-y-3 pb-10">
- <div class="flex items-center space-x-2 px-1">
- <span id="label-section-likes-sent" class="text-xs font-black text-gray-500 uppercase tracking-widest italic pl-2 border-l-4 border-gray-700">Tes Flashs Envoyés</span>
- <div class="h-px flex-1 bg-white/5"></div>
+ <div id="likes-sent-section" class="space-y-4 pb-12">
+ <div class="flex items-center space-x-3 px-2">
+ <span id="label-section-likes-sent" class="text-sm font-black text-gray-400 uppercase tracking-widest italic pl-3 border-l-4 border-gray-600">Tes Flashs Envoyés</span>
+ <div class="h-px flex-1 bg-gradient-to-r from-gray-600/50 to-transparent"></div>
  </div>
- <div id="likes-sent-list" class="space-y-2 opacity-80"></div>
+ <div id="likes-sent-list" class="space-y-2"></div>
  </div>
  </div>
 
  <!-- Popup Secret Flash -->
- <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
- <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-pink-500/30 shadow-[0_0_30px_rgba(255,0,85,0.15)]">
- <div class="text-5xl mb-4">🤫</div>
- <p id="secret-flash-text" class="text-white font-black text-lg italic uppercase tracking-wider mb-6">
+ <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+ <div class="glass p-10 rounded-[3rem] text-center max-w-sm w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_50px_rgba(255,0,85,0.2)]">
+ <div class="text-6xl mb-6">🤫</div>
+ <p id="secret-flash-text" class="text-white font-black text-xl italic uppercase tracking-wider mb-8 leading-relaxed">
  Impossible de connaître ton flash avant que tu Matches !
  </p>
- <button id="btn-understood" onclick="document.getElementById('secret-flash-popup').classList.add('hidden')" class="btn-main py-4 px-8 rounded-2xl font-black text-white uppercase tracking-widest w-full">
+ <button id="btn-understood" onclick="document.getElementById('secret-flash-popup').classList.add('hidden')" class="btn-main py-4 px-8 rounded-2xl font-black text-white uppercase tracking-widest w-full text-lg shadow-[0_0_20px_rgba(255,0,85,0.4)]">
  J'ai compris
  </button>
  </div>
  </div>
 
  <div id="chat-window" class="hidden fixed inset-0 bg-black z-40 flex flex-col">
- <header class="p-6 border-b border-white/10 flex items-center space-x-4 bg-black/50 backdrop-blur-md">
- <button id="close-chat-trigger" class="text-2xl text-white opacity-50">←</button>
- <h3 class="flex-1 text-xl font-black italic text-white"><span id="chat-title-text">Chat</span> #<span id="chat-target-badge">--</span></h3>
+ <header class="p-6 border-b border-white/10 flex items-center space-x-4 bg-black/80 backdrop-blur-xl">
+ <button id="close-chat-trigger" class="text-3xl text-white opacity-60 hover:opacity-100 transition-all">←</button>
+ <h3 class="flex-1 text-2xl font-black italic text-white"><span id="chat-title-text">Chat</span> #<span id="chat-target-badge" class="text-pink-500">--</span></h3>
  </header>
- <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
- <div class="px-6 py-2 text-center bg-white/5 border-t border-white/5">
- <p id="chat-limit-warning" class="text-red-500 text-[10px] font-bold uppercase hidden">Limite de 10 messages atteinte !</p>
- <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider mt-1">Messages : 0 / 10</p>
+ <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col space-y-2 bg-[#0a0a0a]"></div>
+ <div class="px-6 py-3 text-center bg-black/80 border-t border-white/10 backdrop-blur-xl">
+ <p id="chat-limit-warning" class="text-red-500 text-xs font-bold uppercase hidden bg-red-500/10 py-1.5 rounded-lg border border-red-500/20 mb-2">Limite de 10 messages atteinte !</p>
+ <p id="chat-counter-display" class="text-gray-400 text-xs font-black uppercase tracking-wider">Messages : 0 / 10</p>
  </div>
  <div class="p-6 bg-black border-t border-white/10 flex space-x-3">
- <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none">
- <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
+ <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-2 border-transparent focus:border-pink-500 rounded-2xl px-6 py-4 text-white outline-none transition-all placeholder:text-gray-500 font-medium">
+ <button id="send-msg-trigger" class="btn-main px-8 rounded-2xl font-black text-white uppercase tracking-widest shadow-[0_0_15px_rgba(255,0,85,0.3)]">Envoyer</button>
  </div>
  </div>
 
- <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-50 p-6 overflow-y-auto">
+ <div id="admin-panel" class="hidden fixed inset-0 bg-black/95 z-50 p-6 overflow-y-auto backdrop-blur-xl">
  <div class="w-full max-w-sm mx-auto space-y-8 py-10">
- <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
+ <h2 class="text-4xl font-black text-red-500 text-center uppercase italic tracking-tighter text-glow-pink">Administration</h2>
  
- <div class="glass rounded-3xl overflow-hidden border-white/10 text-white">
+ <div class="glass rounded-3xl overflow-hidden border-white/20 text-white shadow-2xl">
  <table class="w-full text-left text-sm">
- <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
+ <thead class="bg-white/10 text-white uppercase text-[10px] font-black tracking-widest">
  <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
  </thead>
- <tbody class="divide-y divide-white/5">
- <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Utilisateurs</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
- <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
- <tr class="bg-pink-500/5"><td class="px-6 py-4 font-medium text-pink-500 italic">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
+ <tbody class="divide-y divide-white/10">
+ <tr><td class="px-6 py-5 font-bold text-gray-300 uppercase text-xs">Utilisateurs</td><td id="admin-total-users" class="px-6 py-5 text-right font-black text-xl">0</td></tr>
+ <tr><td class="px-6 py-5 font-bold text-gray-300 uppercase text-xs">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-5 text-right font-black text-xl">0</td></tr>
+ <tr class="bg-pink-500/10"><td class="px-6 py-5 font-bold text-pink-500 uppercase text-xs">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-5 text-right font-black text-pink-500 text-xl text-glow-pink">0</td></tr>
  </tbody>
  </table>
  </div>
 
- <div class="glass p-5 rounded-3xl space-y-3">
- <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Réinitialiser un badge</p>
- <div class="flex space-x-2 items-center justify-center">
- <input type="number" id="admin-delete-badge-input" placeholder="N°" class="w-20 bg-white/10 border-none rounded-xl p-3 text-center text-xl font-bold text-white outline-none">
- <button id="btn-admin-delete-user" class="flex-1 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white py-3 rounded-xl font-bold transition-all uppercase text-xs">Supprimer</button>
+ <div class="glass p-6 rounded-3xl space-y-4 border-white/20">
+ <p class="text-xs font-black text-white opacity-80 uppercase tracking-widest text-center">Réinitialiser un badge</p>
+ <div class="flex space-x-3 items-center justify-center">
+ <input type="number" id="admin-delete-badge-input" placeholder="N°" class="w-24 bg-black/80 border border-white/20 rounded-xl p-4 text-center text-xl font-black text-white outline-none focus:border-red-500">
+ <button id="btn-admin-delete-user" class="flex-1 bg-red-600/20 border border-red-500/30 hover:bg-red-600 text-red-500 hover:text-white py-4 rounded-xl font-black transition-all uppercase text-sm tracking-wider">Supprimer</button>
  </div>
  </div>
 
  <div class="space-y-4">
- <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest">Tout effacer</button>
+ <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-[0_0_20px_rgba(220,38,38,0.4)] uppercase tracking-widest text-lg">Tout effacer</button>
  </div>
 
- <div class="pt-6 border-t border-white/10 space-y-4 text-center">
- <div class="space-y-1">
- <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Support Technique</p>
- <a href="mailto:info@clubmatchpro.fr" class="block text-sm text-pink-500 hover:underline font-bold">info@clubmatchpro.fr</a>
+ <div class="pt-8 border-t border-white/20 space-y-4 text-center">
+ <div class="space-y-2">
+ <p class="text-xs text-gray-400 font-black uppercase tracking-widest">Support Technique</p>
+ <a href="mailto:info@clubmatchpro.fr" class="block text-base text-pink-500 hover:text-pink-400 hover:underline font-bold">info@clubmatchpro.fr</a>
  </div>
  </div>
 
- <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
+ <button id="close-admin-trigger" class="block w-full text-center text-white/50 hover:text-white font-black uppercase text-xs tracking-widest py-6 transition-all">Fermer l'administration</button>
  </div>
  </div>
 
@@ -226,11 +241,10 @@ overflow-x: hidden;
  let currentChatMessagesSent = 0;
  
  let prevLikesRecusCount = null;
- let prevMatches = null; // Modification ici: On garde la liste des matches précédents plutôt qu'un compte
+ let prevMatches = null; 
 
  localStorage.setItem(`deviceId_${eventID}`, deviceId);
 
- // --- DICTIONNAIRE DE TRADUCTION ---
  const i18n = {
  fr: {
  toggleBtn: "🇬🇧 EN",
@@ -246,7 +260,7 @@ overflow-x: hidden;
  joinBtn: "Rejoindre",
  errBadgeUsed: "Badge déjà utilisé sur un autre appareil.",
  errBadgeRange: "Le numéro de badge doit être compris entre 0 et 200 maximum.",
- labelConnected: "Connecté",
+ labelConnected: "Connecté en tant que",
  labelBadge: "Badge",
  enterNumberLabel: "Saisir un numéro à flasher",
  flashBtn: "Flasher",
@@ -285,7 +299,7 @@ overflow-x: hidden;
  joinBtn: "Join",
  errBadgeUsed: "Badge already used on another device.",
  errBadgeRange: "Badge number must be between 0 and 200 maximum.",
- labelConnected: "Connected",
+ labelConnected: "Connected as",
  labelBadge: "Badge",
  enterNumberLabel: "Enter a number to flash",
  flashBtn: "Flash",
@@ -322,8 +336,8 @@ overflow-x: hidden;
  document.getElementById('btn-login-trigger').innerText = t.joinBtn;
  
  document.querySelector('#match-announcement h2').innerText = t.incredible;
- document.querySelector('#match-announcement p.text-gray-400').innerText = t.flashedBadge;
- document.querySelector('#match-announcement p.mt-8').innerText = t.clickToContinue;
+ document.querySelector('#match-announcement p.opacity-90').innerText = t.flashedBadge;
+ document.querySelector('#match-announcement p.animate-pulse').innerText = t.clickToContinue;
 
  document.querySelector('#main-app header p').innerText = t.labelConnected;
  document.getElementById('enter-number-label').innerText = t.enterNumberLabel;
@@ -350,7 +364,6 @@ overflow-x: hidden;
  }
  }
 
- // SYSTEM SATELLITE SYNTHETISEUR AUDIO
  function playNotificationSound(type) {
  try {
  const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -391,8 +404,8 @@ overflow-x: hidden;
  function showToastNotification(message, type) {
  const container = document.getElementById('toast-container');
  const toast = document.createElement('div');
- toast.className = `glass px-4 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 transform translate-y-[-20px] opacity-0 transition-all duration-300 ${
- type === 'match' ? 'border-pink-500 bg-pink-500/10 text-pink-400' : 'border-orange-500 bg-orange-500/10 text-orange-400'
+ toast.className = `glass px-6 py-4 rounded-2xl shadow-2xl text-sm font-black uppercase tracking-wider border-l-4 transform translate-y-[-20px] opacity-0 transition-all duration-300 ${
+ type === 'match' ? 'border-pink-500 bg-pink-500/20 text-white' : 'border-orange-500 bg-orange-500/20 text-white'
  }`;
  toast.innerText = message;
  container.appendChild(toast);
@@ -531,8 +544,6 @@ overflow-x: hidden;
  }
  document.getElementById('target-error').classList.add('hidden');
  
- // Enregistrement du flash. La détection du match et le feu d'artifice 
- // sont maintenant gérés par le onValue juste en dessous !
  await set(ref(db, `${basePath}/likes/${currentBadge}/${target}`), true);
  
  targetInput.value = "";
@@ -560,38 +571,35 @@ overflow-x: hidden;
  document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
  document.getElementById('stat-matches').innerText = matches.length;
 
- // DÉCLENCHEMENT AUDIO + TOAST + FEU D'ARTIFICE (pour les DEUX utilisateurs)
  if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
  showToastNotification(i18n[currentLang].toastFlash, 'flash');
  playNotificationSound('flash');
  }
  
  if (prevMatches !== null) {
- // On trouve les NOUVEAUX matches en comparant avec l'état précédent
  const newMatches = matches.filter(id => !prevMatches.includes(id));
  if (newMatches.length > 0) {
  showToastNotification(i18n[currentLang].toastMatch, 'match');
  playNotificationSound('match');
- // On lance le feu d'artifice pour le premier nouveau match détecté
  launchFireworks(newMatches[0]);
  }
  }
  
  prevLikesRecusCount = likesRecus;
- prevMatches = [...matches]; // On sauvegarde l'état actuel des matches
+ prevMatches = [...matches]; 
  
  const list = document.getElementById('match-list');
- list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-600 italic text-xs py-10'>${i18n[currentLang].noMatches}</p>`;
+ list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-500 font-bold uppercase tracking-widest text-[10px] py-10 bg-white/5 rounded-2xl border border-white/5'>${i18n[currentLang].noMatches}</p>`;
  matches.forEach(id => {
  const roomID = [currentBadge, id].sort().join('-');
  const div = document.createElement('div');
- div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500";
+ div.className = "glass p-5 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500 shadow-lg border-white/10";
  div.innerHTML = `
- <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
- <span class="font-black italic text-white text-xl">${i18n[currentLang].chatWith}${id}</span>
+ <div class="flex items-center space-x-4 cursor-pointer flex-1" onclick="openChat('${id}')">
+ <span class="font-black italic text-white text-2xl">${i18n[currentLang].chatWith}<span class="text-pink-500">${id}</span></span>
  <div id="dot-${roomID}" class="notification-dot hidden"></div>
  </div>
- <button onclick="deleteLike('${id}')" class="text-gray-500 px-2 text-xl">×</button>
+ <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-3 text-2xl font-bold transition-all">×</button>
  `;
  list.appendChild(div);
  listenForNotifications(roomID);
@@ -599,14 +607,14 @@ overflow-x: hidden;
 
  const sentList = document.getElementById('likes-sent-list');
  const myLikesArray = Object.keys(myLikes);
- sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-gray-700 text-[10px] uppercase'>${i18n[currentLang].noLikesSent}</p>`;
+ sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-gray-600 text-[10px] uppercase font-bold bg-white/5 rounded-2xl py-6 border border-white/5'>${i18n[currentLang].noLikesSent}</p>`;
  myLikesArray.forEach(id => {
  if (matches.includes(id)) return;
  const div = document.createElement('div');
- div.className = "glass px-4 py-2 rounded-xl flex justify-between items-center";
+ div.className = "glass px-5 py-3 rounded-xl flex justify-between items-center border-white/10";
  div.innerHTML = `
- <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo}${id}</span>
- <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-lg">×</button>
+ <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo}<span class="text-white">${id}</span></span>
+ <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-xl transition-all">×</button>
  `;
  sentList.appendChild(div);
  });
