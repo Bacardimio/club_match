@@ -14,14 +14,12 @@
     font-family: 'Inter', -apple-system, system-ui, sans-serif; 
     overflow-x: hidden; 
  }
- /* Amélioration du contraste des conteneurs "glass" */
  .glass { 
     background: rgba(255, 255, 255, 0.05); 
     backdrop-filter: blur(20px); 
     border: 1px solid rgba(255, 255, 255, 0.15); 
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
  }
- /* Bouton principal avec effet lumineux */
  .btn-main { 
     background: linear-gradient(135deg, var(--accent), #ff5e00); 
     box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
@@ -44,7 +42,6 @@
  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
  .notification-dot { width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981; }
  
- /* Effet de brillance pour les textes importants */
  .text-glow-pink { text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
  .text-glow-white { text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
  </style>
@@ -53,8 +50,13 @@
 
  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
- <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
+ <!-- Bouton de langue positionné complètement à gauche -->
+ <div class="absolute top-4 left-4 z-50">
  <button id="lang-toggle-btn" class="glass px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase text-white hover:bg-white/20 transition-all border-white/20">🇬🇧 EN</button>
+ </div>
+
+ <!-- Bouton d'administration restant à droite -->
+ <div class="absolute top-4 right-4 z-50">
  <button id="admin-trigger" class="glass opacity-50 hover:opacity-100 p-2 rounded-xl text-sm transition-all border-white/20">⚙️</button>
  </div>
 
