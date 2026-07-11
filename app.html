@@ -14,12 +14,15 @@
     font-family: 'Inter', -apple-system, system-ui, sans-serif; 
     overflow-x: hidden; 
  }
+ 
+ /* Conteneur par défaut pour l'effet de verre */
  .glass { 
     background: rgba(255, 255, 255, 0.05); 
     backdrop-filter: blur(20px); 
     border: 1px solid rgba(255, 255, 255, 0.15); 
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
  }
+ 
  .btn-main { 
     background: linear-gradient(135deg, var(--accent), #ff5e00); 
     box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
@@ -44,18 +47,18 @@
  
  .text-glow-pink { text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
  .text-glow-white { text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
+ .text-glow-purple { text-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
+ .text-glow-blue { text-shadow: 0 0 15px rgba(59, 130, 246, 0.6); }
  </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
- <!-- Bouton de langue positionné complètement à gauche -->
  <div class="absolute top-4 left-4 z-50">
  <button id="lang-toggle-btn" class="glass px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase text-white hover:bg-white/20 transition-all border-white/20">🇬🇧 EN</button>
  </div>
 
- <!-- Bouton d'administration restant à droite -->
  <div class="absolute top-4 right-4 z-50">
  <button id="admin-trigger" class="glass opacity-50 hover:opacity-100 p-2 rounded-xl text-sm transition-all border-white/20">⚙️</button>
  </div>
@@ -89,7 +92,8 @@
  </div>
  </div>
 
- <div id="main-app" class="hidden w-full max-w-md space-y-8 pt-4">
+ <div id="main-app" class="hidden w-full max-w-md space-y-8 pt-4 pb-12">
+ <!-- Header -->
  <header class="flex flex-col items-center justify-center py-2 text-center">
  <div>
  <p class="text-gray-400 text-[11px] uppercase font-black tracking-widest mb-2">Connecté en tant que</p>
@@ -99,7 +103,8 @@
  </div>
  </header>
 
- <div class="relative">
+ <!-- Section 1 : Action principale -->
+ <div class="relative mt-2">
  <div class="absolute inset-0 bg-pink-500 blur-[40px] opacity-10 rounded-[2.5rem]"></div>
  <div class="glass relative p-6 rounded-[2.5rem] shadow-2xl border-white/20">
  <p id="enter-number-label" class="text-xs font-black text-white opacity-80 uppercase tracking-widest text-center mb-5">Saisir un numéro à flasher</p>
@@ -112,45 +117,54 @@
  </div>
  </div>
 
- <div class="glass p-6 rounded-[2.5rem] border-white/20 shadow-2xl">
- <div class="text-center pb-6 mb-6 border-b border-white/10">
- <span class="block text-7xl font-black text-pink-500 tracking-tighter text-glow-pink mb-1" id="stat-matches">0</span>
- <span id="label-matches" class="text-sm uppercase text-white font-black tracking-widest bg-pink-500/20 px-4 py-1.5 rounded-full border border-pink-500/30">Matches 🔥</span>
+ <!-- Section 2 : Statistiques (Matches vs Flashs) -->
+ <div class="space-y-4">
+ <!-- Statut principal : Matches (Rose) -->
+ <div class="relative overflow-hidden p-6 rounded-[2rem] bg-pink-500/10 border border-pink-500/30 text-center shadow-[0_0_30px_rgba(255,0,85,0.1)] backdrop-blur-md">
+ <div class="absolute inset-0 bg-gradient-to-b from-pink-500/5 to-transparent"></div>
+ <span class="relative block text-7xl font-black text-pink-500 tracking-tighter text-glow-pink mb-3" id="stat-matches">0</span>
+ <span id="label-matches" class="relative inline-block text-[11px] uppercase text-white font-black tracking-widest bg-pink-500/30 px-5 py-2 rounded-full border border-pink-500/50">Matches 🔥</span>
  </div>
- <div class="flex justify-around items-center">
- <div class="text-center w-1/2 border-r border-white/10 cursor-pointer hover:bg-white/10 transition-all p-3 rounded-2xl" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
- <span class="block text-3xl font-black text-white text-glow-white mb-1" id="stat-likes-recus">0</span>
- <span id="label-likes-recus" class="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Flashs Reçus</span>
+ 
+ <!-- Statut secondaire : Flashs (Divisé en 2 blocs, Violet et Bleu) -->
+ <div class="flex space-x-4">
+ <!-- Flashs Reçus (Violet) -->
+ <div class="glass flex-1 p-5 rounded-[2rem] text-center border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/30 cursor-pointer transition-all flex flex-col justify-center" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
+ <span class="block text-4xl font-black text-purple-400 text-glow-purple mb-2" id="stat-likes-recus">0</span>
+ <span id="label-likes-recus" class="text-[10px] uppercase text-purple-300 font-bold tracking-widest">Flashs Reçus</span>
  </div>
- <div class="text-center w-1/2 flex flex-col items-center justify-center p-3">
- <span class="block text-3xl font-black text-white text-glow-white mb-1"><span id="stat-likes-envoyes">0</span><span class="text-gray-600 text-xl font-bold ml-1">/5</span></span>
- <span id="label-likes-envoyes" class="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Flashs Envoyés</span>
+ <!-- Flashs Envoyés (Bleu) -->
+ <div class="glass flex-1 p-5 rounded-[2rem] text-center border-blue-500/30 bg-blue-900/10 flex flex-col justify-center">
+ <span class="block text-4xl font-black text-blue-400 text-glow-blue mb-2"><span id="stat-likes-envoyes">0</span><span class="text-blue-700 text-xl font-bold ml-1">/5</span></span>
+ <span id="label-likes-envoyes" class="text-[10px] uppercase text-blue-300 font-bold tracking-widest">Flashs Envoyés</span>
  </div>
  </div>
  </div>
 
- <div id="match-section" class="space-y-4">
- <div class="flex items-center space-x-3 px-2">
- <span id="label-section-matches" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-pink-500">Tes Matches 🔥</span>
- <div class="h-px flex-1 bg-gradient-to-r from-pink-500/50 to-transparent"></div>
+ <!-- Section 3 : Liste des Matches (Rose) -->
+ <div id="match-section" class="bg-pink-900/20 border border-pink-500/30 p-6 rounded-[2.5rem] shadow-xl backdrop-blur-sm space-y-4 mt-6">
+ <div class="flex items-center space-x-3 pb-2 border-b border-pink-500/20">
+ <span class="text-xl">🔥</span>
+ <span id="label-section-matches" class="text-sm font-black text-white uppercase tracking-widest italic">Tes Matches</span>
  </div>
- <div id="match-list" class="space-y-3"></div>
+ <div id="match-list" class="space-y-3 pt-2"></div>
  </div>
 
- <div id="likes-sent-section" class="space-y-4 pb-12">
- <div class="flex items-center space-x-3 px-2">
- <span id="label-section-likes-sent" class="text-sm font-black text-gray-400 uppercase tracking-widest italic pl-3 border-l-4 border-gray-600">Tes Flashs Envoyés</span>
- <div class="h-px flex-1 bg-gradient-to-r from-gray-600/50 to-transparent"></div>
+ <!-- Section 4 : Liste des Flashs Envoyés (Bleu) -->
+ <div id="likes-sent-section" class="bg-blue-900/10 border border-blue-500/30 p-6 rounded-[2.5rem] shadow-xl backdrop-blur-sm space-y-4 mt-6">
+ <div class="flex items-center space-x-3 pb-2 border-b border-blue-500/20">
+ <span class="text-xl">📤</span>
+ <span id="label-section-likes-sent" class="text-sm font-black text-blue-400 uppercase tracking-widest italic">Tes Flashs Envoyés</span>
  </div>
- <div id="likes-sent-list" class="space-y-2"></div>
+ <div id="likes-sent-list" class="space-y-2 pt-2"></div>
  </div>
  </div>
 
  <!-- Popup Secret Flash -->
  <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-10 rounded-[3rem] text-center max-w-sm w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_50px_rgba(255,0,85,0.2)]">
+ <div class="glass p-10 rounded-[3rem] text-center max-w-sm w-full animate-pop border-2 border-purple-500/50 shadow-[0_0_50px_rgba(168,85,247,0.2)]">
  <div class="text-6xl mb-6">🤫</div>
- <p id="secret-flash-text" class="text-white font-black text-xl italic uppercase tracking-wider mb-8 leading-relaxed">
+ <p id="secret-flash-text" class="text-purple-200 font-black text-xl italic uppercase tracking-wider mb-8 leading-relaxed">
  Impossible de connaître ton flash avant que tu Matches !
  </p>
  <button id="btn-understood" onclick="document.getElementById('secret-flash-popup').classList.add('hidden')" class="btn-main py-4 px-8 rounded-2xl font-black text-white uppercase tracking-widest w-full text-lg shadow-[0_0_20px_rgba(255,0,85,0.4)]">
@@ -186,7 +200,7 @@
  </thead>
  <tbody class="divide-y divide-white/10">
  <tr><td class="px-6 py-5 font-bold text-gray-300 uppercase text-xs">Utilisateurs</td><td id="admin-total-users" class="px-6 py-5 text-right font-black text-xl">0</td></tr>
- <tr><td class="px-6 py-5 font-bold text-gray-300 uppercase text-xs">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-5 text-right font-black text-xl">0</td></tr>
+ <tr><td class="px-6 py-5 font-bold text-blue-300 uppercase text-xs">Flashs envoyés</td><td id="admin-total-likes" class="px-6 py-5 text-right font-black text-blue-400 text-xl">0</td></tr>
  <tr class="bg-pink-500/10"><td class="px-6 py-5 font-bold text-pink-500 uppercase text-xs">Matchs 🔥</td><td id="admin-total-matches" class="px-6 py-5 text-right font-black text-pink-500 text-xl text-glow-pink">0</td></tr>
  </tbody>
  </table>
@@ -271,7 +285,7 @@
  statRecus: "Flashs Reçus",
  statMatches: "Matches 🔥",
  statEnvoyes: "Flashs Envoyés",
- secMatches: "Tes Matches 🔥",
+ secMatches: "Tes Matches",
  secLikesSent: "Tes Flashs Envoyés",
  noMatches: "Aucun match pour le moment...",
  noLikesSent: "Aucun flash envoyé",
@@ -310,7 +324,7 @@
  statRecus: "Flashes Received",
  statMatches: "Matches 🔥",
  statEnvoyes: "Flashes Sent",
- secMatches: "Your Matches 🔥",
+ secMatches: "Your Matches",
  secLikesSent: "Your Sent Flashes",
  noMatches: "No matches yet...",
  noLikesSent: "No flashes sent",
@@ -407,7 +421,7 @@
  const container = document.getElementById('toast-container');
  const toast = document.createElement('div');
  toast.className = `glass px-6 py-4 rounded-2xl shadow-2xl text-sm font-black uppercase tracking-wider border-l-4 transform translate-y-[-20px] opacity-0 transition-all duration-300 ${
- type === 'match' ? 'border-pink-500 bg-pink-500/20 text-white' : 'border-orange-500 bg-orange-500/20 text-white'
+ type === 'match' ? 'border-pink-500 bg-pink-500/20 text-white' : 'border-purple-500 bg-purple-500/20 text-white'
  }`;
  toast.innerText = message;
  container.appendChild(toast);
@@ -591,17 +605,17 @@
  prevMatches = [...matches]; 
  
  const list = document.getElementById('match-list');
- list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-500 font-bold uppercase tracking-widest text-[10px] py-10 bg-white/5 rounded-2xl border border-white/5'>${i18n[currentLang].noMatches}</p>`;
+ list.innerHTML = matches.length ? "" : `<p class='text-center text-white/50 font-bold uppercase tracking-widest text-xs py-6'>${i18n[currentLang].noMatches}</p>`;
  matches.forEach(id => {
  const roomID = [currentBadge, id].sort().join('-');
  const div = document.createElement('div');
- div.className = "glass p-5 rounded-2xl flex justify-between items-center animate-pop border-l-4 border-pink-500 shadow-lg border-white/10";
+ div.className = "bg-black/40 p-4 rounded-2xl flex justify-between items-center animate-pop border border-pink-500/30 shadow-lg";
  div.innerHTML = `
  <div class="flex items-center space-x-4 cursor-pointer flex-1" onclick="openChat('${id}')">
- <span class="font-black italic text-white text-2xl">${i18n[currentLang].chatWith}<span class="text-pink-500">${id}</span></span>
+ <span class="font-black italic text-white text-xl tracking-wide">${i18n[currentLang].chatWith}<span class="text-pink-500">${id}</span></span>
  <div id="dot-${roomID}" class="notification-dot hidden"></div>
  </div>
- <button onclick="deleteLike('${id}')" class="text-gray-500 hover:text-red-500 px-3 text-2xl font-bold transition-all">×</button>
+ <button onclick="deleteLike('${id}')" class="text-white/40 hover:text-red-500 px-3 text-2xl font-bold transition-all">×</button>
  `;
  list.appendChild(div);
  listenForNotifications(roomID);
@@ -609,14 +623,14 @@
 
  const sentList = document.getElementById('likes-sent-list');
  const myLikesArray = Object.keys(myLikes);
- sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-gray-600 text-[10px] uppercase font-bold bg-white/5 rounded-2xl py-6 border border-white/5'>${i18n[currentLang].noLikesSent}</p>`;
+ sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-white/40 text-[10px] uppercase font-bold py-6'>${i18n[currentLang].noLikesSent}</p>`;
  myLikesArray.forEach(id => {
  if (matches.includes(id)) return;
  const div = document.createElement('div');
- div.className = "glass px-5 py-3 rounded-xl flex justify-between items-center border-white/10";
+ div.className = "bg-blue-950/40 px-4 py-3 rounded-xl flex justify-between items-center border border-blue-500/20";
  div.innerHTML = `
- <span class="font-bold text-gray-300 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo}<span class="text-white">${id}</span></span>
- <button onclick="deleteLike('${id}')" class="text-gray-600 hover:text-red-500 font-bold text-xl transition-all">×</button>
+ <span class="font-bold text-blue-200 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo}<span class="text-white">${id}</span></span>
+ <button onclick="deleteLike('${id}')" class="text-blue-500/50 hover:text-red-500 font-bold text-xl transition-all">×</button>
  `;
  sentList.appendChild(div);
  });
