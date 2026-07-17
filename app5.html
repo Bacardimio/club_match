@@ -55,10 +55,10 @@
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
- <!-- Initial Loader (Évite l'écran noir pendant l'auth) -->
+ <!-- Initial Loader -->
  <div id="app-loading-fallback" class="fixed inset-0 bg-[#0a0a0a] z-[200] flex flex-col items-center justify-center p-6 text-center">
   <div class="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-  <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Connexion sécurisée à la soirée...</p>
+  <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Connexion au serveur Firebase...</p>
  </div>
 
  <!-- Audio & Toast Context -->
@@ -149,6 +149,13 @@
     <button id="btn-switch-camera" class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white p-2.5 rounded-full text-xs hover:bg-black/80 transition-all z-10">🔄</button>
    </div>
  
+   <!-- Instructions dynamiques si blocage caméra -->
+   <div id="camera-error" class="hidden glass border-red-500/30 p-4 rounded-2xl bg-red-500/5 text-left">
+    <p class="text-red-500 text-xs font-black uppercase mb-1">🚨 Accès caméra bloqué</p>
+    <p id="camera-error-hint" class="text-gray-400 text-[11px] leading-relaxed">Clique sur l'icône de cadenas ou caméra tout en haut dans la barre d'adresse de ton navigateur pour autoriser la caméra, puis actualise la page.</p>
+    <button onclick="location.reload()" class="mt-2 w-full bg-white/10 text-white text-[10px] font-bold py-1.5 rounded-lg uppercase tracking-wider">Réessayer 🔄</button>
+   </div>
+
    <!-- Etape 1 : Prendre la photo -->
    <div id="capture-initial-controls">
     <button id="btn-take-snapshot" class="w-full btn-main py-5 rounded-2xl font-black text-lg uppercase tracking-widest text-white mt-4 flex items-center justify-center space-x-2">
@@ -165,15 +172,11 @@
      🔄 Refaire la photo
     </button>
    </div>
-
-   <p id="camera-error" class="text-red-500 text-center text-xs font-bold hidden">Accès caméra requis pour participer.</p>
   </div>
  </div>
 
  <!-- Main App Dashboard -->
  <div id="main-app" class="hidden w-full max-w-md space-y-6 pt-2 pb-10">
- 
-  <!-- Header Profile -->
   <header class="flex items-center justify-between py-2 px-4 bg-black/40 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md">
    <div class="flex items-center space-x-4">
     <div class="flex flex-col items-center">
@@ -258,7 +261,6 @@
  <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-[120] p-6 overflow-y-auto">
   <div class="w-full max-w-sm mx-auto space-y-8 py-10">
    <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
- 
    <div class="glass rounded-3xl overflow-hidden border-white/10 text-white">
     <table class="w-full text-left text-sm">
      <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
@@ -271,11 +273,9 @@
      </tbody>
     </table>
    </div>
-
    <div class="space-y-4">
     <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest">Tout réinitialiser (Purge BDD)</button>
    </div>
-
    <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
   </div>
  </div>
@@ -283,7 +283,6 @@
  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-  // Importation explicite du module Auth pour résoudre les blocages de règles de base de données
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -304,7 +303,9 @@
   const eventID = urlParams.get('event') || 'default';
   const basePath = `events/${eventID}`;
 
+  // DECLARATIONS GLOBALES (Correction majeure du crash de module)
   let myUserId = null; 
+  let videoStream = null; 
   let isRegistered = localStorage.getItem(`isRegistered_${eventID}`) === 'true';
   let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
   let tempPhotoBase64 = null; 
@@ -439,7 +440,6 @@
   }
 
   function showUI(id) {
-   // Masque l'écran de chargement initial en premier dès qu'une vue doit s'ouvrir
    document.getElementById('app-loading-fallback').classList.add('hidden');
    ['closed-screen', 'login-screen', 'main-app'].forEach(s => {
     document.getElementById(s).classList.add('hidden');
@@ -465,30 +465,57 @@
    overlay.onclick = () => { overlay.style.display = 'none'; clearInterval(interval); };
   }
 
+  // FORCE ET CONTROLE DE L'ACCES CAMERA
   function initCamera() {
    const video = document.getElementById('camera-feed');
    const canvas = document.getElementById('photo-canvas');
+   const errorContainer = document.getElementById('camera-error');
+   const errorHint = document.getElementById('camera-error-hint');
+   
    video.classList.remove('hidden');
    canvas.classList.add('hidden');
+   errorContainer.classList.add('hidden');
    document.getElementById('btn-switch-camera').classList.remove('hidden');
    document.getElementById('capture-initial-controls').classList.remove('hidden');
    document.getElementById('capture-confirm-controls').classList.add('hidden');
 
    video.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
 
+   const constraints = { 
+    video: { 
+     facingMode: currentFacingMode,
+     width: { ideal: 640 },
+     height: { ideal: 640 }
+    }, 
+    audio: false 
+   };
+
    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode }, audio: false })
+    navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
      videoStream = stream;
      video.srcObject = stream;
      video.onloadedmetadata = () => {
-      video.play().catch(e => console.error(e));
+      video.play().catch(e => console.error("Échec lecture vidéo active:", e));
      };
     })
     .catch(function(err) {
-     document.getElementById('camera-error').classList.remove('hidden');
-     console.error("Erreur caméra: ", err);
+     console.error("Erreur d'accès matériel caméra: ", err);
+     errorContainer.classList.remove('hidden');
+     document.getElementById('capture-initial-controls').classList.add('hidden');
+     
+     // Diagnostic précis pour aider l'utilisateur à forcer l'autorisation
+     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      errorHint.innerHTML = "Tu as **refusé** l'accès. Pour participer, clique sur l'icône de **cadenas** ou de **caméra** à gauche de l'URL du site en haut, active l'autorisation, puis actualise la page.";
+     } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      errorHint.innerHTML = "Aucune caméra détectée sur cet appareil ou elle est déjà utilisée en arrière-plan par une autre application (Zoom, Teams, etc.).";
+     } else {
+      errorHint.innerHTML = "Erreur système caméra : " + err.message + ". Essaye d'ouvrir ce lien directement dans **Safari** (iOS) ou **Chrome** (Android).";
+     }
     });
+   } else {
+    errorContainer.classList.remove('hidden');
+    errorHint.innerHTML = "Ton navigateur ne supporte pas l'accès natif caméra, ou tu es en mode HTTP non sécurisé. Le HTTPS ou localhost est obligatoire.";
    }
   }
 
@@ -516,18 +543,21 @@
     ctx.translate(size, 0); ctx.scale(-1, 1);
    }
  
-   const minDim = Math.min(video.videoWidth, video.videoHeight);
-   const startX = (video.videoWidth - minDim) / 2;
-   const startY = (video.videoHeight - minDim) / 2;
+   const minDim = Math.min(video.videoWidth, video.videoHeight || video.videoHeight === 0 ? video.videoHeight : minDim);
+   const startX = video.videoWidth ? (video.videoWidth - minDim) / 2 : 0;
+   const startY = video.videoHeight ? (video.videoHeight - minDim) / 2 : 0;
  
-   ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, size, size);
-   tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
- 
-   video.classList.add('hidden');
-   canvas.classList.remove('hidden');
-   document.getElementById('btn-switch-camera').classList.add('hidden');
-   document.getElementById('capture-initial-controls').classList.add('hidden');
-   document.getElementById('capture-confirm-controls').classList.remove('hidden');
+   try {
+    ctx.drawImage(video, startX, startY, minDim || video.videoWidth, minDim || video.videoHeight, 0, 0, size, size);
+    tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+    video.classList.add('hidden');
+    canvas.classList.remove('hidden');
+    document.getElementById('btn-switch-camera').classList.add('hidden');
+    document.getElementById('capture-initial-controls').classList.add('hidden');
+    document.getElementById('capture-confirm-controls').classList.remove('hidden');
+   } catch(e) {
+    console.error("Erreur capture canvas:", e);
+   }
   };
 
   document.getElementById('btn-retake-photo').onclick = () => {
@@ -550,26 +580,23 @@
    stopCamera(); loadApp();
   };
 
-  // --- CORRECTION AUTHENTIFICATION ---
-  // On commence par s'authentifier anonymement auprès de Firebase AVANT de charger les données.
+  // AUTHENTIFICATION ET LANCEMENT INITIAL
   signInAnonymously(auth)
    .then((result) => {
-    myUserId = result.user.uid; // ID utilisateur Firebase officiel sécurisé
+    myUserId = result.user.uid; 
     initFirebaseStructure();
    })
    .catch((error) => {
     console.error("Erreur d'authentification Firebase:", error);
     const fallback = document.getElementById('app-loading-fallback');
     fallback.innerHTML = `
-      <div class="glass p-6 rounded-3xl border-red-500/30 max-w-sm">
-        <p class="text-red-500 font-black text-sm uppercase mb-2">Erreur d'Authentification Firebase</p>
+      <div class="glass p-6 rounded-3xl border-red-500/30 max-w-sm m-auto text-center">
+        <p class="text-red-500 font-black text-sm uppercase mb-2">Erreur Connexion</p>
         <p class="text-gray-400 text-xs">${error.message}</p>
-        <p class="text-gray-500 text-[10px] mt-4 uppercase">Vérifie que l'onglet 'Anonymous' est bien activé dans la section Authentication de ta console Firebase.</p>
       </div>`;
    });
 
   function initFirebaseStructure() {
-   // Écouteur principal de configuration de l'événement (avec gestion explicite des erreurs de droits d'accès)
    onValue(ref(db, `${basePath}/config`), (snap) => {
     const config = snap.val();
     const now = Date.now();
@@ -598,14 +625,7 @@
      }
     }
    }, (dbError) => {
-     console.error("Erreur Firebase Rules Database :", dbError);
-     const fallback = document.getElementById('app-loading-fallback');
-     fallback.innerHTML = `
-       <div class="glass p-6 rounded-3xl border-red-500/30 max-w-sm">
-         <p class="text-red-500 font-black text-sm uppercase mb-2">Accès BDD Refusé</p>
-         <p class="text-gray-400 text-xs">${dbError.message}</p>
-         <p class="text-gray-500 text-[10px] mt-4 uppercase">Vérifie tes règles de sécurité Realtime Database (les droits d'écriture/lecture pour les utilisateurs connectés).</p>
-       </div>`;
+     console.error("Erreur Règles Firebase:", dbError);
    });
 
    onValue(ref(db, `${basePath}/resetSignal`), (snap) => {
@@ -658,13 +678,11 @@
   document.getElementById('btn-confirm-flash').onclick = async () => {
    document.getElementById('confirm-flash-popup').classList.add('hidden');
    if(!targetToFlash) return;
- 
    if (currentLikesSentCount >= 5) {
     document.getElementById('limit-warning').classList.remove('hidden');
     setTimeout(() => document.getElementById('limit-warning').classList.add('hidden'), 4000);
     return;
    }
- 
    await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
    const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
    if(!check.exists()) { 
@@ -676,7 +694,6 @@
   document.getElementById('btn-confirm-cancel').onclick = async () => {
    document.getElementById('cancel-flash-popup').classList.add('hidden');
    if(!targetToCancel) return;
- 
    await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
    showToastNotification(currentLang === 'fr' ? "Flash annulé ❌" : "Flash canceled ❌", "sent");
    targetToCancel = null;
@@ -692,11 +709,9 @@
   document.getElementById('btn-confirm-unmatch').onclick = async () => {
    document.getElementById('unmatch-popup').classList.add('hidden');
    if(!targetToUnmatch) return;
- 
    await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToUnmatch}`));
    const roomID = [myUserId, targetToUnmatch].sort().join('-');
    await remove(ref(db, `${basePath}/messages/${roomID}`));
-
    showToastNotification(currentLang === 'fr' ? "Match supprimé 🗑️" : "Match deleted 🗑️", "sent");
    targetToUnmatch = null;
   };
@@ -743,7 +758,6 @@
     if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
      showToastNotification(i18n[currentLang].toastMatch, 'match');
      playNotificationSound('match');
- 
      const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
      if (newMatchUid && allUsersData[newMatchUid]) {
       launchFireworks(allUsersData[newMatchUid].photo);
@@ -774,7 +788,6 @@
      list.appendChild(div);
      listenForNotifications(roomID);
     });
-
     updateAdminStats(Object.keys(allUsersData).length, currentLikesData);
    });
   }
@@ -782,7 +795,6 @@
   function listenForNotifications(roomID) {
    if (attachedNotificationListeners.has(roomID)) return;
    attachedNotificationListeners.add(roomID);
-
    onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
     const messages = snap.val() || {};
     const msgCount = Object.keys(messages).length;
@@ -844,7 +856,6 @@
    const input = document.getElementById('chat-input');
    const warning = document.getElementById('chat-limit-warning');
    if(!input.value.trim() || !activeChatRoom) return;
- 
    if (currentChatMessagesSent >= 10) {
     warning.classList.remove('hidden');
     setTimeout(() => warning.classList.add('hidden'), 4000); return;
@@ -867,7 +878,7 @@
   document.getElementById('close-admin-trigger').onclick = () => document.getElementById('admin-panel').classList.add('hidden');
 
   document.getElementById('reset-event-trigger').onclick = async () => {
-   if (confirm("⚠ Supprimer TOUTES les données de jeu des utilisateurs ?")) {
+   if (confirm("⚠ Supprimer TOUTES les données ?")) {
     await remove(ref(db, `${basePath}/users`));
     await remove(ref(db, `${basePath}/likes`));
     await remove(ref(db, `${basePath}/messages`));
