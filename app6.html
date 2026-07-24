@@ -11,7 +11,6 @@
  body { 
    background: #0a0a0a; 
    color: white; 
-   /* Police d'origine strictement conservée */
    font-family: 'Inter', -apple-system, system-ui, sans-serif; 
    overflow-x: hidden; 
    -webkit-tap-highlight-color: transparent;
@@ -45,7 +44,8 @@
  @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
  .user-card img { width: 100%; height: 100%; object-fit: cover; }
  .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
- .my-profile-pic { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+ .my-profile-pic { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; transition: opacity 0.2s; }
+ .my-profile-pic:hover { opacity: 0.8; }
 
  #match-announcement {
    position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95);
@@ -201,7 +201,7 @@
    <header class="flex items-center justify-between py-3 px-5 bg-black/60 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md shadow-lg">
      <div class="flex items-center space-x-4">
        <div class="flex flex-col items-center relative">
-         <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
+         <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic" title="Cliquer pour refaire ta photo 📸">
          <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
        </div>
        <div class="text-left">
@@ -266,7 +266,7 @@
 
  <!-- Admin Panel -->
  <div id="admin-panel" class="hidden fixed inset-0 bg-gray-950 z-[120] p-6 overflow-y-auto flex flex-col justify-center backdrop-blur-xl">
-   <div class="w-full max-w-sm mx-auto space-y-8">
+   <div class="w-full max-w-sm mx-auto space-y-6 my-auto">
      <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
      <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
        <table class="w-full text-left text-sm">
@@ -280,10 +280,19 @@
          </tbody>
        </table>
      </div>
+
+     <!-- Admin Users Management List for Deletion -->
+     <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
+       <div class="px-6 py-3 bg-white/5 uppercase text-xs font-bold tracking-widest text-gray-400">Gestion des utilisateurs</div>
+       <div id="admin-users-list" class="divide-y divide-white/5 max-h-48 overflow-y-auto p-2 space-y-2">
+         <!-- Injected via JS -->
+       </div>
+     </div>
+
      <div class="space-y-4">
        <button id="reset-event-trigger" class="bg-red-600 text-white py-4 rounded-2xl text-sm font-black w-full shadow-xl uppercase tracking-widest">Tout réinitialiser</button>
      </div>
-     <button id="close-admin-trigger" class="block w-full text-center text-gray-400 font-bold uppercase text-xs tracking-widest py-4 mt-4 hover:text-white transition-colors">Fermer</button>
+     <button id="close-admin-trigger" class="block w-full text-center text-gray-400 font-bold uppercase text-xs tracking-widest py-4 hover:text-white transition-colors">Fermer</button>
    </div>
  </div>
 
@@ -350,24 +359,70 @@
    document.getElementById('admin-panel').classList.add('hidden');
  };
 
+ // Correction de la remise à zéro
+ document.getElementById('reset-event-trigger').onclick = async () => {
+   if (confirm("Voulez-vous vraiment tout réinitialiser pour cet événement ?")) {
+     await remove(ref(db, basePath));
+     localStorage.clear();
+     location.reload();
+   }
+ };
+
+ // Fonction pour supprimer un utilisateur indésirable depuis l'admin
+ window.adminDeleteUser = async (uid) => {
+   if (confirm("Supprimer cet utilisateur indésirable ?")) {
+     await remove(ref(db, `${basePath}/users/${uid}`));
+     await remove(ref(db, `${basePath}/likes/${uid}`));
+     // Nettoyer ses likes reçus chez les autres
+     for (let otherUid in currentLikesData) {
+       if (currentLikesData[otherUid] && currentLikesData[otherUid][uid]) {
+         await remove(ref(db, `${basePath}/likes/${otherUid}/${uid}`));
+       }
+     }
+     showToastNotification("Utilisateur supprimé ❌");
+   }
+ };
+
+ // Permettre de refaire sa photo en cliquant sur son profil
+ document.getElementById('my-profile-image').onclick = () => {
+   stopCamera();
+   showUI('login-screen');
+   initCamera();
+ };
+
  // Initialisation UI Vibes
  function initVibesUI() {
    const capContainer = document.getElementById('vibe-selector-capture');
    const chgContainer = document.getElementById('vibe-change-list');
    const fltContainer = document.getElementById('vibe-filters');
    
-   capContainer.innerHTML = ''; chgContainer.innerHTML = '';
-   fltContainer.innerHTML = `<button class="filter-btn active bg-white/20 px-5 py-2 rounded-full text-xs font-bold border border-white/20 whitespace-nowrap transition-all" data-vibe="all">Tout le monde</button>`;
+   capContainer.innerHTML = ''; 
+   chgContainer.innerHTML = '';
+   fltContainer.innerHTML = '';
+
+   const btnAll = document.createElement('button');
+   btnAll.className = "filter-btn active bg-white/20 px-5 py-2 rounded-full text-xs font-bold border border-white/20 whitespace-nowrap transition-all opacity-100";
+   btnAll.innerHTML = `🌍 Tout le monde`;
+   btnAll.dataset.vibe = 'all';
+   btnAll.onclick = () => {
+     document.querySelectorAll('.filter-btn').forEach(b => {
+       b.classList.remove('bg-white/20', 'border-white/20', 'opacity-100'); 
+       b.classList.add('glass', 'opacity-60');
+     });
+     btnAll.classList.remove('glass', 'opacity-60'); 
+     btnAll.classList.add('bg-white/20', 'border-white/20', 'opacity-100');
+     currentFilter = 'all';
+     renderPhotoWall();
+   };
+   fltContainer.appendChild(btnAll);
 
    Object.values(VIBES).forEach(v => {
-     // Boutons de capture (Modifiés pour tailles homogènes)
      const btnCap = document.createElement('div');
      btnCap.className = "cursor-pointer rounded-2xl p-3 border-2 border-white/10 text-center transition-all opacity-70 hover:opacity-100 flex flex-col items-center justify-center space-y-2 capture-vibe-btn";
      btnCap.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="text-xs font-black uppercase" style="color:${v.color}">${v.title}</span>`;
      btnCap.onclick = () => selectVibeForCapture(v.id, btnCap);
      capContainer.appendChild(btnCap);
 
-     // Changement in-app (Modifiés pour tailles homogènes)
      const btnChg = document.createElement('div');
      btnChg.className = "cursor-pointer rounded-2xl p-4 border border-white/10 flex items-center space-x-4 transition-all hover:bg-white/5";
      btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-black uppercase tracking-widest flex-1 text-left text-sm" style="color:${v.color}">${v.title}</span>`;
@@ -377,7 +432,6 @@
      };
      chgContainer.appendChild(btnChg);
 
-     // Filtres (Modifiés pour tailles homogènes)
      const btnFlt = document.createElement('button');
      btnFlt.className = "filter-btn glass px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap opacity-60 hover:opacity-100 transition-all border-transparent";
      btnFlt.innerHTML = `${v.icon} ${v.title.split('&')[0]}`;
@@ -589,7 +643,6 @@
      allUsersData = snapshot.val() || {};
      if (!allUsersData[myUserId]) { localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return; }
      
-     // Update Header Info
      const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
      const vInfo = VIBES[myCurrentVibe];
      document.getElementById('my-vibe-badge-header').innerText = vInfo.icon;
@@ -597,9 +650,25 @@
      document.getElementById('my-vibe-text-header').style.color = vInfo.color;
      document.getElementById('my-profile-image').style.borderColor = vInfo.color;
      
-     // Update admin stats
      document.getElementById('admin-total-users').innerText = Object.keys(allUsersData).length;
      
+     // Render Admin Users List
+     const adminUsersList = document.getElementById('admin-users-list');
+     adminUsersList.innerHTML = '';
+     Object.keys(allUsersData).forEach(uid => {
+       const u = allUsersData[uid];
+       const row = document.createElement('div');
+       row.className = "flex items-center justify-between p-2 hover:bg-white/5 rounded-xl";
+       row.innerHTML = `
+         <div class="flex items-center space-x-3">
+           <img src="${u.photo}" class="w-10 h-10 rounded-full object-cover">
+           <span class="text-xs font-mono text-gray-300">${uid.substring(0, 6)}...</span>
+         </div>
+         <button onclick="adminDeleteUser('${uid}')" class="bg-red-500/20 text-red-400 p-2 rounded-lg text-xs font-bold hover:bg-red-500/30">Supprimer ❌</button>
+       `;
+       adminUsersList.appendChild(row);
+     });
+
      renderPhotoWall();
    });
 
@@ -622,7 +691,6 @@
      document.getElementById('stat-matches').innerText = matches.length;
      document.getElementById('admin-total-likes').innerText = totalLikesNetwork;
      
-     // Calcul simplifié des matchs totaux pour le panel admin (divisé par 2 car mutuel)
      let totalMatchesNetwork = 0;
      for (let uid1 in currentLikesData) {
        for (let uid2 in currentLikesData[uid1]) {
