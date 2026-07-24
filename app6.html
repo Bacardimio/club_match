@@ -9,11 +9,13 @@
  <style>
  :root { --accent: #ff0055; }
  body { 
-background: #0a0a0a; 
-color: white; 
-font-family: 'Inter', -apple-system, system-ui, sans-serif; 
-overflow-x: hidden; 
-}
+   background: #0a0a0a; 
+   color: white; 
+   /* Police d'origine strictement conservée */
+   font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+   overflow-x: hidden; 
+   -webkit-tap-highlight-color: transparent;
+ }
  .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
  .btn-main { background: linear-gradient(135deg, var(--accent), #ff5e00); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
  .btn-main:active { transform: scale(0.95); }
@@ -23,264 +25,266 @@ overflow-x: hidden;
  .hide-scrollbar::-webkit-scrollbar { display: none; }
  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Camera UI */
+ /* Camera UI */
  .camera-wrapper {
- width: 220px; height: 220px; border-radius: 50%; overflow: hidden; margin: 0 auto;
- border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
- position: relative; background: #111;
+   width: 240px; height: 240px; border-radius: 50%; overflow: hidden; margin: 0 auto;
+   border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
+   position: relative; background: #111;
  }
  #camera-feed { width: 100%; height: 100%; object-fit: cover; }
  #photo-canvas { width: 100%; height: 100%; object-fit: cover; }
  
-/* Photo Wall & Vibes */
- .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+ /* Photo Wall & Vibes */
+ .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
  .user-card { 
-aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; cursor: pointer;
- transition: transform 0.2s; border: 3px solid transparent;
+   aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; cursor: pointer;
+   transition: transform 0.2s; border: 3px solid transparent;
  }
- .user-card:active { transform: scale(0.9); }
+ .user-card:active { transform: scale(0.95); }
  .user-card.matched { animation: pulseMatch 2s infinite; }
  @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
  .user-card img { width: 100%; height: 100%; object-fit: cover; }
- .vibe-badge { position: absolute; bottom: 4px; right: 4px; font-size: 14px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
- .my-profile-pic { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+ .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+ .my-profile-pic { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
 
  #match-announcement {
- position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95);
- display: none; flex-direction: column; align-items: center; justify-content: center;
- text-align: center; animation: fadeIn 0.5s ease;
+   position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95);
+   display: none; flex-direction: column; align-items: center; justify-content: center;
+   text-align: center; animation: fadeIn 0.5s ease;
  }
  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
- .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; }
+ .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; line-height: 1.4; }
  .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
  .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
- .notification-dot { width: 12px; height: 12px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+ .notification-dot { width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
  </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-4">
 
  <!-- Initial Loader -->
  <div id="app-loading-fallback" class="fixed inset-0 bg-[#0a0a0a] z-[200] flex flex-col items-center justify-center p-6 text-center">
- <div class="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
- <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Connexion au serveur Firebase...</p>
+   <div class="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+   <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Connexion au serveur Firebase...</p>
  </div>
 
- <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
+ <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-4 text-center"></div>
 
- <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
- <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
- <button id="admin-trigger" class="glass opacity-40 hover:opacity-100 p-1.5 rounded-xl text-sm transition-all">⚙️</button>
+ <div class="absolute top-4 right-4 z-50 flex items-center space-x-3">
+   <button id="lang-toggle-btn" class="glass px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
+   <button id="admin-trigger" class="glass opacity-60 hover:opacity-100 p-2 rounded-xl text-base transition-all">⚙️</button>
  </div>
 
  <!-- Match Overlay -->
  <div id="match-announcement">
- <h2 class="text-pink-500 text-3xl font-black italic uppercase tracking-tighter mb-2">Incroyable !</h2>
- <h1 class="text-7xl font-black italic uppercase text-white mb-6">MATCH 🔥</h1>
- <div class="glass p-6 rounded-[2rem] shadow-[0_0_50px_rgba(255,255,255,0.2)] flex flex-col items-center">
- <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Invitation acceptée par</p>
- <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white mb-4">
- <img id="match-photo-display" src="" alt="Match" class="w-full h-full object-cover">
- </div>
- </div>
- <p class="mt-8 text-gray-500 font-bold animate-pulse">Appuie n'importe où pour continuer</p>
+   <h2 class="text-pink-500 text-2xl font-black italic uppercase tracking-tighter mb-2">Incroyable !</h2>
+   <h1 class="text-5xl font-black italic uppercase text-white mb-8">MATCH 🔥</h1>
+   <div class="glass p-8 rounded-[2rem] shadow-[0_0_50px_rgba(255,255,255,0.2)] flex flex-col items-center">
+     <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6">Invitation acceptée par</p>
+     <div class="w-48 h-48 rounded-full overflow-hidden border-4 border-white mb-4">
+       <img id="match-photo-display" src="" alt="Match" class="w-full h-full object-cover">
+     </div>
+   </div>
+   <p class="mt-10 text-gray-400 text-sm font-bold animate-pulse">Appuie n'importe où pour continuer</p>
  </div>
 
  <!-- Interaction Dynamic Popup -->
- <div id="confirm-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
- <p id="confirm-flash-title" class="text-gray-300 text-xs font-bold uppercase tracking-widest mb-4">Envoyer une invitation ?</p>
- <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20 relative">
- <img id="confirm-target-photo" src="" alt="Target" class="w-full h-full object-cover">
- </div>
- <div class="flex space-x-3">
- <button onclick="document.getElementById('confirm-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Annuler</button>
- <button id="btn-confirm-flash" class="flex-1 py-4 rounded-2xl font-black text-white uppercase tracking-widest shadow-lg transition-all">Action</button>
- </div>
- </div>
+ <div id="confirm-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="confirm-flash-title" class="text-gray-300 text-xs font-bold uppercase tracking-widest mb-6">Envoyer une invitation ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 relative">
+       <img id="confirm-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('confirm-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest">Annuler</button>
+       <button id="btn-confirm-flash" class="flex-1 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg transition-all">Action</button>
+     </div>
+   </div>
  </div>
 
  <!-- Cancel Popup -->
- <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
- <p id="cancel-flash-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Annuler cette invitation ?</p>
- <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20">
- <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
- </div>
- <div class="flex space-x-3">
- <button onclick="document.getElementById('cancel-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Garder</button>
- <button id="btn-confirm-cancel" class="flex-1 bg-red-600 py-4 rounded-2xl font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Annuler ❌</button>
- </div>
- </div>
+ <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="cancel-flash-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6">Annuler cette invitation ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20">
+       <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('cancel-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest">Garder</button>
+       <button id="btn-confirm-cancel" class="flex-1 bg-red-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Annuler ❌</button>
+     </div>
+   </div>
  </div>
 
  <!-- Unmatch Popup -->
- <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
- <p id="unmatch-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Supprimer cette connexion ?</p>
- <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-6 shadow-lg border border-white/20 border-red-500/50">
- <img id="unmatch-target-photo" src="" alt="Target" class="w-full h-full object-cover">
- </div>
- <div class="flex space-x-3">
- <button onclick="document.getElementById('unmatch-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Annuler</button>
- <button id="btn-confirm-unmatch" class="flex-1 bg-red-600 py-4 rounded-2xl font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Supprimer ❌</button>
- </div>
- </div>
+ <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="unmatch-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6">Supprimer cette connexion ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 border-red-500/50">
+       <img id="unmatch-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('unmatch-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest">Annuler</button>
+       <button id="btn-confirm-unmatch" class="flex-1 bg-red-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20">Supprimer</button>
+     </div>
+   </div>
  </div>
 
  <!-- Change Vibe Popup -->
- <div id="vibe-change-popup" class="hidden fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl">
- <h3 class="text-white text-center font-black uppercase italic tracking-wider mb-4">Change ton mood</h3>
- <div class="grid grid-cols-1 gap-2 mb-4" id="vibe-change-list">
- <!-- Injected via JS -->
- </div>
- <button onclick="document.getElementById('vibe-change-popup').classList.add('hidden')" class="w-full glass py-3 rounded-2xl font-bold text-gray-400 uppercase tracking-widest">Fermer</button>
- </div>
+ <div id="vibe-change-popup" class="hidden fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl">
+     <h3 class="text-white text-center text-xl font-black uppercase italic tracking-wider mb-6">Change ton mood</h3>
+     <div class="grid grid-cols-1 gap-3 mb-6" id="vibe-change-list">
+       <!-- Injected via JS -->
+     </div>
+     <button onclick="document.getElementById('vibe-change-popup').classList.add('hidden')" class="w-full glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest">Fermer</button>
+   </div>
  </div>
 
  <!-- Closed Screen -->
- <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop">
- <h1 class="text-5xl font-black mb-4 uppercase italic">CLUB<span class="text-pink-600">MATCH</span></h1>
- <div class="glass p-8 rounded-[2.5rem]">
- <p id="closed-message" class="text-gray-400 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
- </div>
+ <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop p-4">
+   <h1 class="text-4xl font-black mb-6 uppercase italic">CLUB<span class="text-pink-600">MATCH</span></h1>
+   <div class="glass p-8 rounded-[2.5rem]">
+     <p id="closed-message" class="text-gray-300 font-bold uppercase tracking-widest text-sm text-center">Événement non disponible.</p>
+   </div>
  </div>
 
  <!-- Login / Capture Screen -->
- <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-6 animate-pop text-center mt-8">
- <div>
- <h1 class="text-6xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
- <p id="event-name-display" class="text-pink-500 mt-1 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
- </div>
- 
- <div class="glass p-6 rounded-[2.5rem] space-y-5 shadow-2xl relative">
- <p id="login-instructions" class="text-gray-300 text-sm font-bold uppercase tracking-widest mb-2">Prends un selfie pour rejoindre</p>
- 
- <div class="camera-wrapper">
- <video id="camera-feed" autoplay playsinline muted></video>
- <canvas id="photo-canvas" class="hidden w-full h-full"></canvas>
- <button id="btn-switch-camera" class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white p-2.5 rounded-full text-xs hover:bg-black/80 transition-all z-10">🔄</button>
- </div>
- 
- <div id="camera-error" class="hidden glass border-red-500/30 p-4 rounded-2xl bg-red-500/5 text-left">
- <p class="text-red-500 text-xs font-black uppercase mb-1">🚨 Accès caméra bloqué</p>
- <p id="camera-error-hint" class="text-gray-400 text-[11px] leading-relaxed">Clique sur l'icône de cadenas pour autoriser la caméra, puis actualise la page.</p>
- <button onclick="location.reload()" class="mt-2 w-full bg-white/10 text-white text-[10px] font-bold py-1.5 rounded-lg uppercase tracking-wider">Réessayer 🔄</button>
- </div>
+ <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-8 animate-pop text-center mt-10">
+   <div>
+     <h1 class="text-5xl font-black tracking-tighter italic uppercase text-white leading-tight">CLUB<br><span class="text-pink-600">MATCH</span></h1>
+     <p id="event-name-display" class="text-pink-500 mt-2 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
+   </div>
+   
+   <div class="glass p-6 rounded-[2.5rem] space-y-6 shadow-2xl relative">
+     <p id="login-instructions" class="text-gray-300 text-sm font-bold uppercase tracking-widest mb-2">Prends un selfie pour rejoindre</p>
+     
+     <div class="camera-wrapper">
+       <video id="camera-feed" autoplay playsinline muted></video>
+       <canvas id="photo-canvas" class="hidden w-full h-full"></canvas>
+       <button id="btn-switch-camera" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white p-3 rounded-full text-base hover:bg-black/80 transition-all z-10">🔄</button>
+     </div>
+     
+     <div id="camera-error" class="hidden glass border-red-500/30 p-5 rounded-2xl bg-red-500/5 text-left">
+       <p class="text-red-500 text-sm font-black uppercase mb-2">🚨 Accès caméra bloqué</p>
+       <p id="camera-error-hint" class="text-gray-300 text-xs leading-relaxed mb-4">Clique sur l'icône de cadenas pour autoriser la caméra, puis actualise la page.</p>
+       <button onclick="location.reload()" class="w-full bg-white/10 text-white text-xs font-bold py-3 rounded-xl uppercase tracking-wider">Réessayer 🔄</button>
+     </div>
 
- <div id="capture-initial-controls">
- <button id="btn-take-snapshot" class="w-full btn-main py-5 rounded-2xl font-black text-lg uppercase tracking-widest text-white mt-4 flex items-center justify-center space-x-2">
- <span id="label-btn-take">📸 Prendre un selfie</span>
- </button>
- </div>
+     <div id="capture-initial-controls">
+       <button id="btn-take-snapshot" class="w-full btn-main py-5 rounded-2xl font-black text-base uppercase tracking-widest text-white mt-4 flex items-center justify-center space-x-2">
+         <span id="label-btn-take">📸 Prendre un selfie</span>
+       </button>
+     </div>
 
- <div id="capture-confirm-controls" class="hidden space-y-4 mt-4">
- <div class="text-left">
- <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest mb-2 text-center">Choisis ton Mood pour ce soir :</p>
- <div class="grid grid-cols-2 gap-2" id="vibe-selector-capture">
- <!-- Injected via JS -->
- </div>
- </div>
- <button id="btn-validate-join" class="w-full bg-white/20 py-5 rounded-2xl font-black text-lg uppercase tracking-widest text-white opacity-50 cursor-not-allowed transition-all">
- <span id="label-btn-validate">Valider & Rejoindre</span>
- </button>
- <button id="btn-retake-photo" class="w-full glass py-3 rounded-2xl font-bold text-xs uppercase tracking-widest text-gray-400">
- 🔄 Refaire la photo
- </button>
- </div>
- </div>
+     <div id="capture-confirm-controls" class="hidden space-y-5 mt-4">
+       <div class="text-left">
+         <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-3 text-center">Choisis ton Mood :</p>
+         <div class="grid grid-cols-2 gap-3" id="vibe-selector-capture">
+           <!-- Injected via JS -->
+         </div>
+       </div>
+       <div class="space-y-3">
+         <button id="btn-validate-join" class="w-full bg-white/20 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white opacity-50 cursor-not-allowed transition-all">
+           <span id="label-btn-validate">Valider & Rejoindre</span>
+         </button>
+         <button id="btn-retake-photo" class="w-full glass py-3 rounded-2xl font-bold text-xs uppercase tracking-widest text-gray-400">
+           🔄 Refaire la photo
+         </button>
+       </div>
+     </div>
+   </div>
  </div>
 
  <!-- Main App Dashboard -->
- <div id="main-app" class="hidden w-full max-w-md space-y-4 pt-2 pb-10">
- <header class="flex items-center justify-between py-2 px-4 bg-black/40 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md">
- <div class="flex items-center space-x-4">
- <div class="flex flex-col items-center relative">
- <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
- <div class="absolute -bottom-2 -right-2 bg-black rounded-full border border-white/20" id="my-vibe-badge-header"></div>
- </div>
- <div class="text-left">
- <div class="flex items-center space-x-2 cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
- <p class="text-white text-xs font-bold uppercase tracking-wide" id="my-vibe-text-header">Mood</p>
- <span class="bg-white/10 px-2 py-0.5 rounded-md text-[9px] text-gray-300">Modifier ✏️</span>
- </div>
- <div class="flex items-center space-x-1 mt-1">
- <span class="text-[10px] font-black text-pink-500" id="stat-matches">0</span>
- <span id="label-matches" class="text-[8px] uppercase text-gray-400 font-bold tracking-widest">Connexions</span>
- </div>
- </div>
- </div>
- </header>
+ <div id="main-app" class="hidden w-full max-w-md space-y-5 pt-2 pb-12 mx-auto">
+   <header class="flex items-center justify-between py-3 px-5 bg-black/60 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md shadow-lg">
+     <div class="flex items-center space-x-4">
+       <div class="flex flex-col items-center relative">
+         <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic">
+         <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
+       </div>
+       <div class="text-left">
+         <div class="flex items-center space-x-2 cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
+           <p class="text-white text-sm font-bold uppercase tracking-wide" id="my-vibe-text-header">Mood</p>
+           <span class="bg-white/10 px-2 py-1 rounded-md text-xs text-gray-300">Modifier ✏️</span>
+         </div>
+         <div class="flex items-center space-x-2 mt-1.5">
+           <span class="text-xs font-black text-pink-500" id="stat-matches">0</span>
+           <span id="label-matches" class="text-xs uppercase text-gray-400 font-bold tracking-widest">Connexions</span>
+         </div>
+       </div>
+     </div>
+   </header>
 
- <!-- Filter Bar -->
- <div class="flex overflow-x-auto space-x-2 py-1 px-1 hide-scrollbar" id="vibe-filters">
- <!-- Injected via JS -->
- </div>
- 
- <p id="limit-warning" class="text-center text-orange-500 text-xs font-bold uppercase hidden bg-orange-500/10 py-2 rounded-xl border border-orange-500/20">Limite d'invitations atteinte !</p>
+   <!-- Filter Bar -->
+   <div class="flex overflow-x-auto space-x-3 py-2 px-2 hide-scrollbar" id="vibe-filters">
+     <!-- Injected via JS -->
+   </div>
+   
+   <p id="limit-warning" class="text-center text-orange-500 text-xs font-bold uppercase hidden bg-orange-500/10 py-3 rounded-xl border border-orange-500/20">Limite d'invitations atteinte !</p>
 
- <!-- Live Photo Wall -->
- <div class="space-y-3">
- <div class="flex items-center space-x-2 px-1">
- <span id="label-wall" class="text-sm font-black text-white uppercase tracking-widest italic pl-2 border-l-4 border-pink-500">Live Photo Wall 📸</span>
- <div class="h-px flex-1 bg-white/10"></div>
- </div>
- <div id="photo-wall-grid" class="photo-grid glass p-3 rounded-[2rem]"></div>
- </div>
+   <!-- Live Photo Wall -->
+   <div class="space-y-4">
+     <div class="flex items-center space-x-3 px-2">
+       <span id="label-wall" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-pink-500">Live Photo Wall 📸</span>
+       <div class="h-px flex-1 bg-white/10"></div>
+     </div>
+     <div id="photo-wall-grid" class="photo-grid glass p-4 rounded-[2rem]"></div>
+   </div>
 
- <!-- Matches Section -->
- <div id="match-section" class="space-y-3">
- <div class="flex items-center space-x-2 px-1">
- <span id="label-section-matches" class="text-xs font-black text-pink-500 uppercase tracking-widest italic pl-2 border-l-4 border-pink-500">Tes Connexions 💬</span>
- <div class="h-px flex-1 bg-white/5"></div>
- </div>
- <div id="match-list" class="space-y-3"></div>
- </div>
+   <!-- Matches Section -->
+   <div id="match-section" class="space-y-4">
+     <div class="flex items-center space-x-3 px-2">
+       <span id="label-section-matches" class="text-sm font-black text-pink-500 uppercase tracking-widest italic pl-3 border-l-4 border-pink-500">Tes Connexions 💬</span>
+       <div class="h-px flex-1 bg-white/5"></div>
+     </div>
+     <div id="match-list" class="space-y-3 px-1"></div>
+   </div>
  </div>
 
  <!-- Chat Window -->
  <div id="chat-window" class="hidden fixed inset-0 bg-[#0a0a0a] z-[80] flex flex-col">
- <header class="p-4 border-b border-white/10 flex items-center space-x-4 bg-black/50 backdrop-blur-md">
- <button id="close-chat-trigger" class="text-2xl text-white opacity-50 px-2">←</button>
- <div class="relative">
- <img id="chat-target-photo" src="" class="w-10 h-10 rounded-full object-cover border border-white/20">
- <div id="chat-target-vibe" class="absolute -bottom-1 -right-1 text-[10px] bg-black rounded-full w-4 h-4 flex items-center justify-center"></div>
- </div>
- <h3 class="flex-1 text-lg font-black italic text-white uppercase tracking-wider" id="chat-title-text">Chat</h3>
- </header>
- <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-2"></div>
- <div class="px-6 py-2 text-center bg-white/5 border-t border-white/5">
- <p id="chat-limit-warning" class="text-red-500 text-[10px] font-bold uppercase hidden">Limite de messages atteinte !</p>
- <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider mt-1">Messages : 0 / 10</p>
- </div>
- <div class="p-4 bg-black border-t border-white/10 flex space-x-3 pb-8">
- <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-white outline-none focus:ring-2 focus:ring-pink-500 transition-all">
- <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl font-bold text-white uppercase">Envoyer</button>
- </div>
+   <header class="p-4 border-b border-white/10 flex items-center space-x-4 bg-black/60 backdrop-blur-md">
+     <button id="close-chat-trigger" class="text-3xl text-white opacity-60 hover:opacity-100 px-2 transition-all">←</button>
+     <div class="relative">
+       <img id="chat-target-photo" src="" class="w-12 h-12 rounded-full object-cover border border-white/20">
+       <div id="chat-target-vibe" class="absolute -bottom-1 -right-1 text-xs bg-black rounded-full w-5 h-5 flex items-center justify-center"></div>
+     </div>
+     <h3 class="flex-1 text-lg font-black italic text-white uppercase tracking-wider" id="chat-title-text">Chat</h3>
+   </header>
+   <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-3"></div>
+   <div class="px-6 py-3 text-center bg-white/5 border-t border-white/5">
+     <p id="chat-limit-warning" class="text-red-500 text-xs font-bold uppercase hidden">Limite de messages atteinte !</p>
+     <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider">Messages : 0 / 10</p>
+   </div>
+   <div class="p-4 bg-black border-t border-white/10 flex space-x-3 pb-safe">
+     <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-sm text-white outline-none focus:ring-2 focus:ring-pink-500 transition-all">
+     <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl text-sm font-bold text-white uppercase tracking-widest">Envoyer</button>
+   </div>
  </div>
 
  <!-- Admin Panel -->
- <div id="admin-panel" class="hidden fixed inset-0 bg-gray-900 z-[120] p-6 overflow-y-auto">
- <div class="w-full max-w-sm mx-auto space-y-8 py-10">
- <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
- <div class="glass rounded-3xl overflow-hidden border-white/10 text-white">
- <table class="w-full text-left text-sm">
- <thead class="bg-white/5 text-gray-400 uppercase text-[10px] font-bold tracking-widest">
- <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
- </thead>
- <tbody class="divide-y divide-white/5">
- <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Connectés</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
- <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Invitations</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
- <tr class="bg-pink-500/10"><td class="px-6 py-4 font-medium text-pink-500 italic">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
- </tbody>
- </table>
- </div>
- <div class="space-y-4">
- <button id="reset-event-trigger" class="bg-red-600 text-white py-5 rounded-2xl font-black w-full shadow-xl uppercase tracking-widest">Tout réinitialiser</button>
- </div>
- <button id="close-admin-trigger" class="block w-full text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest py-4">Fermer</button>
- </div>
+ <div id="admin-panel" class="hidden fixed inset-0 bg-gray-950 z-[120] p-6 overflow-y-auto flex flex-col justify-center backdrop-blur-xl">
+   <div class="w-full max-w-sm mx-auto space-y-8">
+     <h2 class="text-3xl font-black text-red-500 text-center uppercase italic tracking-tighter">Administration</h2>
+     <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
+       <table class="w-full text-left text-sm">
+         <thead class="bg-white/5 text-gray-400 uppercase text-xs font-bold tracking-widest">
+           <tr><th class="px-6 py-4">Indicateur</th><th class="px-6 py-4 text-right">Valeur</th></tr>
+         </thead>
+         <tbody class="divide-y divide-white/5 text-sm">
+           <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Connectés</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+           <tr><td class="px-6 py-4 font-medium text-gray-300 italic">Invitations</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+           <tr class="bg-pink-500/10"><td class="px-6 py-4 font-medium text-pink-500 italic">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-pink-500 text-lg">0</td></tr>
+         </tbody>
+       </table>
+     </div>
+     <div class="space-y-4">
+       <button id="reset-event-trigger" class="bg-red-600 text-white py-4 rounded-2xl text-sm font-black w-full shadow-xl uppercase tracking-widest">Tout réinitialiser</button>
+     </div>
+     <button id="close-admin-trigger" class="block w-full text-center text-gray-400 font-bold uppercase text-xs tracking-widest py-4 mt-4 hover:text-white transition-colors">Fermer</button>
+   </div>
  </div>
 
  <script type="module">
@@ -289,13 +293,13 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
  const firebaseConfig = {
- apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
- authDomain: "club-match-d2d39.firebaseapp.com",
- databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
- projectId: "club-match-d2d39",
- storageBucket: "club-match-d2d39.firebasestorage.app",
- messagingSenderId: "975364560340",
- appId: "1:975364560340:web:64fd827ced5c24b808f241"
+   apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+   authDomain: "club-match-d2d39.firebaseapp.com",
+   databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+   projectId: "club-match-d2d39",
+   storageBucket: "club-match-d2d39.firebasestorage.app",
+   messagingSenderId: "975364560340",
+   appId: "1:975364560340:web:64fd827ced5c24b808f241"
  };
 
  const app = initializeApp(firebaseConfig);
@@ -308,10 +312,10 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
 
  // --- CONFIGURATION DES VIBES ---
  const VIBES = {
- social: { id: 'social', icon: '🍸', color: '#2DD4BF', title: 'Social & Verre', action: 'Proposer un verre', prompt: 'Envoyer une invitation ?' },
- party: { id: 'party', icon: '⚡', color: '#F59E0B', title: 'Party & Défi', action: 'Lancer un défi', prompt: 'Défier cette personne ?' },
- flirt: { id: 'flirt', icon: '🔥', color: '#EC4899', title: 'Coup de Cœur', action: 'Flasher 🔥', prompt: 'Envoyer un flash ?' },
- network: { id: 'network', icon: '🤝', color: '#3B82F6', title: 'Network & Pro', action: 'Connecter', prompt: 'Proposer d\'échanger ?' }
+   social: { id: 'social', icon: '🍸', color: '#2DD4BF', title: 'Social & Verre', action: 'Proposer un verre', prompt: 'Envoyer une invitation ?' },
+   party: { id: 'party', icon: '⚡', color: '#F59E0B', title: 'Party & Défi', action: 'Lancer un défi', prompt: 'Défier cette personne ?' },
+   flirt: { id: 'flirt', icon: '🔥', color: '#EC4899', title: 'Coup de Cœur', action: 'Flasher 🔥', prompt: 'Envoyer un flash ?' },
+   network: { id: 'network', icon: '🤝', color: '#3B82F6', title: 'Network & Pro', action: 'Connecter', prompt: 'Proposer d\'échanger ?' }
  };
 
  let myUserId = null; 
@@ -319,8 +323,8 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  let isRegistered = localStorage.getItem(`isRegistered_${eventID}`) === 'true';
  let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
  let tempPhotoBase64 = null; 
- let selectedVibe = null; // Vibe choisie à l'inscription
- let currentFilter = 'all'; // Filtre d'affichage actuel
+ let selectedVibe = null;
+ let currentFilter = 'all'; 
 
  let activeChatRoom = null;
  let currentLikesSentCount = 0;
@@ -338,123 +342,122 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  const attachedNotificationListeners = new Set(); 
  let currentFacingMode = "user"; 
 
+ // --- GESTION DU PANNEAU D'ADMINISTRATION ---
+ document.getElementById('admin-trigger').onclick = () => {
+   document.getElementById('admin-panel').classList.remove('hidden');
+ };
+ document.getElementById('close-admin-trigger').onclick = () => {
+   document.getElementById('admin-panel').classList.add('hidden');
+ };
+
  // Initialisation UI Vibes
  function initVibesUI() {
- const capContainer = document.getElementById('vibe-selector-capture');
- const chgContainer = document.getElementById('vibe-change-list');
- const fltContainer = document.getElementById('vibe-filters');
- 
- capContainer.innerHTML = ''; chgContainer.innerHTML = '';
- fltContainer.innerHTML = `<button class="filter-btn active bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold border border-white/20 whitespace-nowrap transition-all" data-vibe="all">Tout le monde</button>`;
+   const capContainer = document.getElementById('vibe-selector-capture');
+   const chgContainer = document.getElementById('vibe-change-list');
+   const fltContainer = document.getElementById('vibe-filters');
+   
+   capContainer.innerHTML = ''; chgContainer.innerHTML = '';
+   fltContainer.innerHTML = `<button class="filter-btn active bg-white/20 px-5 py-2 rounded-full text-xs font-bold border border-white/20 whitespace-nowrap transition-all" data-vibe="all">Tout le monde</button>`;
 
- Object.values(VIBES).forEach(v => {
- // Pour l'écran de capture
- const btnCap = document.createElement('div');
- btnCap.className = "cursor-pointer rounded-xl p-3 border-2 border-white/10 text-center transition-all opacity-70 hover:opacity-100 flex flex-col items-center justify-center space-y-1 capture-vibe-btn";
- btnCap.innerHTML = `<span class="text-2xl">${v.icon}</span><span class="text-[9px] font-black uppercase" style="color:${v.color}">${v.title}</span>`;
- btnCap.onclick = () => selectVibeForCapture(v.id, btnCap);
- capContainer.appendChild(btnCap);
+   Object.values(VIBES).forEach(v => {
+     // Boutons de capture (Modifiés pour tailles homogènes)
+     const btnCap = document.createElement('div');
+     btnCap.className = "cursor-pointer rounded-2xl p-3 border-2 border-white/10 text-center transition-all opacity-70 hover:opacity-100 flex flex-col items-center justify-center space-y-2 capture-vibe-btn";
+     btnCap.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="text-xs font-black uppercase" style="color:${v.color}">${v.title}</span>`;
+     btnCap.onclick = () => selectVibeForCapture(v.id, btnCap);
+     capContainer.appendChild(btnCap);
 
- // Pour le changement in-app
- const btnChg = document.createElement('div');
- btnChg.className = "cursor-pointer rounded-xl p-4 border border-white/10 flex items-center space-x-3 transition-all hover:bg-white/5";
- btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-black uppercase tracking-widest flex-1 text-left text-sm" style="color:${v.color}">${v.title}</span>`;
- btnChg.onclick = async () => {
- await update(ref(db, `${basePath}/users/${myUserId}`), { vibe: v.id });
- document.getElementById('vibe-change-popup').classList.add('hidden');
- };
- chgContainer.appendChild(btnChg);
+     // Changement in-app (Modifiés pour tailles homogènes)
+     const btnChg = document.createElement('div');
+     btnChg.className = "cursor-pointer rounded-2xl p-4 border border-white/10 flex items-center space-x-4 transition-all hover:bg-white/5";
+     btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-black uppercase tracking-widest flex-1 text-left text-sm" style="color:${v.color}">${v.title}</span>`;
+     btnChg.onclick = async () => {
+       await update(ref(db, `${basePath}/users/${myUserId}`), { vibe: v.id });
+       document.getElementById('vibe-change-popup').classList.add('hidden');
+     };
+     chgContainer.appendChild(btnChg);
 
- // Pour les filtres
- const btnFlt = document.createElement('button');
- btnFlt.className = "filter-btn glass px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap opacity-50 hover:opacity-100 transition-all border-transparent";
- btnFlt.innerHTML = `${v.icon} ${v.title.split('&')[0]}`;
- btnFlt.dataset.vibe = v.id;
- btnFlt.onclick = () => {
- document.querySelectorAll('.filter-btn').forEach(b => {
- b.classList.remove('bg-white/20', 'border-white/20', 'opacity-100'); b.classList.add('glass', 'opacity-50');
- });
- btnFlt.classList.remove('glass', 'opacity-50'); btnFlt.classList.add('bg-white/20', 'border-white/20', 'opacity-100');
- currentFilter = v.id;
- renderPhotoWall();
- };
- fltContainer.appendChild(btnFlt);
- });
+     // Filtres (Modifiés pour tailles homogènes)
+     const btnFlt = document.createElement('button');
+     btnFlt.className = "filter-btn glass px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap opacity-60 hover:opacity-100 transition-all border-transparent";
+     btnFlt.innerHTML = `${v.icon} ${v.title.split('&')[0]}`;
+     btnFlt.dataset.vibe = v.id;
+     btnFlt.onclick = () => {
+       document.querySelectorAll('.filter-btn').forEach(b => {
+         b.classList.remove('bg-white/20', 'border-white/20', 'opacity-100'); b.classList.add('glass', 'opacity-60');
+       });
+       btnFlt.classList.remove('glass', 'opacity-60'); btnFlt.classList.add('bg-white/20', 'border-white/20', 'opacity-100');
+       currentFilter = v.id;
+       renderPhotoWall();
+     };
+     fltContainer.appendChild(btnFlt);
+   });
  }
 
  function selectVibeForCapture(vibeId, element) {
- selectedVibe = vibeId;
- document.querySelectorAll('.capture-vibe-btn').forEach(b => {
- b.classList.remove('border-white', 'bg-white/10', 'opacity-100');
- b.classList.add('border-white/10', 'opacity-70');
- });
- element.classList.remove('border-white/10', 'opacity-70');
- element.classList.add('border-white', 'bg-white/10', 'opacity-100');
- element.style.borderColor = VIBES[vibeId].color;
- 
- const btnVal = document.getElementById('btn-validate-join');
- btnVal.classList.remove('bg-white/20', 'opacity-50', 'cursor-not-allowed');
- btnVal.classList.add('btn-main');
+   selectedVibe = vibeId;
+   document.querySelectorAll('.capture-vibe-btn').forEach(b => {
+     b.classList.remove('border-white', 'bg-white/10', 'opacity-100');
+     b.classList.add('border-white/10', 'opacity-70');
+   });
+   element.classList.remove('border-white/10', 'opacity-70');
+   element.classList.add('border-white', 'bg-white/10', 'opacity-100');
+   element.style.borderColor = VIBES[vibeId].color;
+   
+   const btnVal = document.getElementById('btn-validate-join');
+   btnVal.classList.remove('bg-white/20', 'opacity-50', 'cursor-not-allowed');
+   btnVal.classList.add('btn-main');
  }
 
  initVibesUI();
 
- const i18n = {
- fr: {
- toggleBtn: "🇬🇧 EN", eventUnavailable: "Événement non disponible.",
- loginInstructions: "Prends un selfie pour rejoindre", btnTakeSnapshot: "📸 Prendre un selfie",
- btnRetakePhoto: "🔄 Refaire la photo"
- }
- };
- let currentLang = 'fr'; // Simplified for integration
-
  function playNotificationSound(type) {
- try {
- const ctx = new (window.AudioContext || window.webkitAudioContext)();
- const osc = ctx.createOscillator(); const gain = ctx.createGain();
- osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, ctx.currentTime);
- gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
- osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3);
- } catch (e) {}
+   try {
+     const ctx = new (window.AudioContext || window.webkitAudioContext)();
+     const osc = ctx.createOscillator(); const gain = ctx.createGain();
+     osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+     gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+     osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3);
+   } catch (e) {}
  }
 
  function showToastNotification(message) {
- const container = document.getElementById('toast-container');
- const toast = document.createElement('div');
- toast.className = `glass px-4 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-pink-500 bg-pink-500/10 text-pink-400 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
- toast.innerText = message;
- container.appendChild(toast);
- toast.offsetHeight; toast.classList.remove('translate-y-[-20px]', 'opacity-0');
- setTimeout(() => { toast.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
+   const container = document.getElementById('toast-container');
+   const toast = document.createElement('div');
+   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-pink-500 bg-pink-500/10 text-pink-400 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+   toast.innerText = message;
+   container.appendChild(toast);
+   toast.offsetHeight; toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+   setTimeout(() => { toast.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
  }
 
  function showUI(id) {
- document.getElementById('app-loading-fallback').classList.add('hidden');
- ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
- document.getElementById(id).classList.remove('hidden');
+   document.getElementById('app-loading-fallback').classList.add('hidden');
+   ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+   document.getElementById(id).classList.remove('hidden');
  }
 
  function launchFireworks(targetPhotoUrl) {
- const overlay = document.getElementById('match-announcement');
- document.getElementById('match-photo-display').src = targetPhotoUrl;
- overlay.style.display = 'flex';
- const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
- confetti(Object.assign({}, defaults, { particleCount: 100, origin: { y: 0.6 } }));
- overlay.onclick = () => overlay.style.display = 'none';
+   const overlay = document.getElementById('match-announcement');
+   document.getElementById('match-photo-display').src = targetPhotoUrl;
+   overlay.style.display = 'flex';
+   const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+   confetti(Object.assign({}, defaults, { particleCount: 100, origin: { y: 0.6 } }));
+   overlay.onclick = () => overlay.style.display = 'none';
  }
 
  // CAMERA LOGIC
  function initCamera() {
- const video = document.getElementById('camera-feed');
- const canvas = document.getElementById('photo-canvas');
- video.classList.remove('hidden'); canvas.classList.add('hidden');
- document.getElementById('capture-initial-controls').classList.remove('hidden');
- document.getElementById('capture-confirm-controls').classList.add('hidden');
- video.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
+   const video = document.getElementById('camera-feed');
+   const canvas = document.getElementById('photo-canvas');
+   video.classList.remove('hidden'); canvas.classList.add('hidden');
+   document.getElementById('capture-initial-controls').classList.remove('hidden');
+   document.getElementById('capture-confirm-controls').classList.add('hidden');
+   video.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
 
- navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 640 } }, audio: false })
- .then(stream => { videoStream = stream; video.srcObject = stream; video.onloadedmetadata = () => video.play(); })
- .catch(err => { document.getElementById('camera-error').classList.remove('hidden'); document.getElementById('capture-initial-controls').classList.add('hidden'); });
+   navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 640 } }, audio: false })
+     .then(stream => { videoStream = stream; video.srcObject = stream; video.onloadedmetadata = () => video.play(); })
+     .catch(err => { document.getElementById('camera-error').classList.remove('hidden'); document.getElementById('capture-initial-controls').classList.add('hidden'); });
  }
 
  function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } }
@@ -462,226 +465,242 @@ aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; curs
  document.getElementById('btn-switch-camera').onclick = (e) => { e.stopPropagation(); currentFacingMode = currentFacingMode === "user" ? "environment" : "user"; stopCamera(); initCamera(); };
 
  document.getElementById('btn-take-snapshot').onclick = () => {
- const video = document.getElementById('camera-feed');
- const canvas = document.getElementById('photo-canvas');
- const size = 200; canvas.width = size; canvas.height = size;
- const ctx = canvas.getContext('2d');
- if (currentFacingMode === "user") { ctx.translate(size, 0); ctx.scale(-1, 1); }
- const minDim = Math.min(video.videoWidth, video.videoHeight);
- const startX = (video.videoWidth - minDim) / 2; const startY = (video.videoHeight - minDim) / 2;
- ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, size, size);
- tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
- video.classList.add('hidden'); canvas.classList.remove('hidden');
- document.getElementById('capture-initial-controls').classList.add('hidden');
- document.getElementById('capture-confirm-controls').classList.remove('hidden');
+   const video = document.getElementById('camera-feed');
+   const canvas = document.getElementById('photo-canvas');
+   const size = 300; canvas.width = size; canvas.height = size;
+   const ctx = canvas.getContext('2d');
+   if (currentFacingMode === "user") { ctx.translate(size, 0); ctx.scale(-1, 1); }
+   const minDim = Math.min(video.videoWidth, video.videoHeight);
+   const startX = (video.videoWidth - minDim) / 2; const startY = (video.videoHeight - minDim) / 2;
+   ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, size, size);
+   tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+   video.classList.add('hidden'); canvas.classList.remove('hidden');
+   document.getElementById('capture-initial-controls').classList.add('hidden');
+   document.getElementById('capture-confirm-controls').classList.remove('hidden');
  };
 
  document.getElementById('btn-retake-photo').onclick = () => { tempPhotoBase64 = null; initCamera(); };
 
  document.getElementById('btn-validate-join').onclick = async () => {
- if(!tempPhotoBase64 || !myUserId || !selectedVibe) return;
- document.getElementById('label-btn-validate').innerText = 'Création du profil...';
- await set(ref(db, `${basePath}/users/${myUserId}`), { photo: tempPhotoBase64, joinedAt: serverTimestamp(), vibe: selectedVibe });
- myPhotoData = tempPhotoBase64;
- localStorage.setItem(`myPhoto_${eventID}`, tempPhotoBase64);
- localStorage.setItem(`isRegistered_${eventID}`, 'true');
- isRegistered = true; stopCamera(); loadApp();
+   if(!tempPhotoBase64 || !myUserId || !selectedVibe) return;
+   document.getElementById('label-btn-validate').innerText = 'Création du profil...';
+   await set(ref(db, `${basePath}/users/${myUserId}`), { photo: tempPhotoBase64, joinedAt: serverTimestamp(), vibe: selectedVibe });
+   myPhotoData = tempPhotoBase64;
+   localStorage.setItem(`myPhoto_${eventID}`, tempPhotoBase64);
+   localStorage.setItem(`isRegistered_${eventID}`, 'true');
+   isRegistered = true; stopCamera(); loadApp();
  };
 
  signInAnonymously(auth).then(res => { myUserId = res.user.uid; initFirebaseStructure(); }).catch(e => console.error(e));
 
  function initFirebaseStructure() {
- onValue(ref(db, `${basePath}/config`), snap => {
- const config = snap.val();
- if (!config) { showUI('closed-screen'); return; }
- document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
- if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
- });
+   onValue(ref(db, `${basePath}/config`), snap => {
+     const config = snap.val();
+     if (!config) { showUI('closed-screen'); return; }
+     document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+     if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
+   });
  }
 
  function renderPhotoWall() {
- const grid = document.getElementById('photo-wall-grid');
- grid.innerHTML = "";
- let myLikes = currentLikesData[myUserId] || {};
- 
- Object.keys(allUsersData).forEach(uid => {
- if (uid === myUserId) return;
- const user = allUsersData[uid];
- const userVibeKey = user.vibe || 'flirt'; 
- const userVibeInfo = VIBES[userVibeKey];
- 
- if (currentFilter !== 'all' && userVibeKey !== currentFilter) return;
- 
- const isMatched = myLikes[uid] && currentLikesData[uid] && currentLikesData[uid][myUserId];
- const hasLikedAlready = myLikes[uid];
+   const grid = document.getElementById('photo-wall-grid');
+   grid.innerHTML = "";
+   let myLikes = currentLikesData[myUserId] || {};
+   
+   Object.keys(allUsersData).forEach(uid => {
+     if (uid === myUserId) return;
+     const user = allUsersData[uid];
+     const userVibeKey = user.vibe || 'flirt'; 
+     const userVibeInfo = VIBES[userVibeKey];
+     
+     if (currentFilter !== 'all' && userVibeKey !== currentFilter) return;
+     
+     const isMatched = myLikes[uid] && currentLikesData[uid] && currentLikesData[uid][myUserId];
+     const hasLikedAlready = myLikes[uid];
 
- const card = document.createElement('div');
- card.className = `user-card ${isMatched ? 'matched' : ''}`;
- card.style.borderColor = isMatched ? '#fff' : userVibeInfo.color;
- card.innerHTML = `
- <img src="${user.photo}" loading="lazy">
- <div class="vibe-badge">${userVibeInfo.icon}</div>
- `;
- 
- if(isMatched) {
- card.onclick = () => openChat(uid);
- } else if(hasLikedAlready) {
- card.innerHTML += `<div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-1"><span class="text-white text-xl">⏳</span></div>`;
- card.onclick = () => {
- targetToCancel = uid;
- document.getElementById('cancel-target-photo').src = user.photo;
- document.getElementById('cancel-flash-popup').classList.remove('hidden');
- };
- } else {
- card.onclick = () => {
- targetToFlash = uid;
- document.getElementById('confirm-target-photo').src = user.photo;
- document.getElementById('confirm-flash-title').innerText = userVibeInfo.prompt;
- const btnFlash = document.getElementById('btn-confirm-flash');
- btnFlash.innerText = userVibeInfo.action;
- btnFlash.style.background = userVibeInfo.color;
- document.getElementById('confirm-flash-popup').classList.remove('hidden');
- };
- }
- grid.appendChild(card);
- });
+     const card = document.createElement('div');
+     card.className = `user-card ${isMatched ? 'matched' : ''}`;
+     card.style.borderColor = isMatched ? '#fff' : userVibeInfo.color;
+     card.innerHTML = `
+       <img src="${user.photo}" loading="lazy">
+       <div class="vibe-badge">${userVibeInfo.icon}</div>
+     `;
+     
+     if(isMatched) {
+       card.onclick = () => openChat(uid);
+     } else if(hasLikedAlready) {
+       card.innerHTML += `<div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-2"><span class="text-white text-3xl">⏳</span></div>`;
+       card.onclick = () => {
+         targetToCancel = uid;
+         document.getElementById('cancel-target-photo').src = user.photo;
+         document.getElementById('cancel-flash-popup').classList.remove('hidden');
+       };
+     } else {
+       card.onclick = () => {
+         targetToFlash = uid;
+         document.getElementById('confirm-target-photo').src = user.photo;
+         document.getElementById('confirm-flash-title').innerText = userVibeInfo.prompt;
+         const btnFlash = document.getElementById('btn-confirm-flash');
+         btnFlash.innerText = userVibeInfo.action;
+         btnFlash.style.background = userVibeInfo.color;
+         document.getElementById('confirm-flash-popup').classList.remove('hidden');
+       };
+     }
+     grid.appendChild(card);
+   });
  }
 
  document.getElementById('btn-confirm-flash').onclick = async () => {
- document.getElementById('confirm-flash-popup').classList.add('hidden');
- if(!targetToFlash) return;
- if (currentLikesSentCount >= 20) { document.getElementById('limit-warning').classList.remove('hidden'); return; }
- await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
- const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
- if(!check.exists()) showToastNotification("Invitation envoyée ! ✈️");
- targetToFlash = null;
+   document.getElementById('confirm-flash-popup').classList.add('hidden');
+   if(!targetToFlash) return;
+   if (currentLikesSentCount >= 20) { document.getElementById('limit-warning').classList.remove('hidden'); return; }
+   await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
+   const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
+   if(!check.exists()) showToastNotification("Invitation envoyée ! ✈️");
+   targetToFlash = null;
  };
 
  document.getElementById('btn-confirm-cancel').onclick = async () => {
- document.getElementById('cancel-flash-popup').classList.add('hidden');
- if(targetToCancel) await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
- targetToCancel = null;
+   document.getElementById('cancel-flash-popup').classList.add('hidden');
+   if(targetToCancel) await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
+   targetToCancel = null;
  };
 
  window.askUnmatch = (uid) => {
- targetToUnmatch = uid;
- document.getElementById('unmatch-target-photo').src = allUsersData[uid].photo;
- document.getElementById('unmatch-popup').classList.remove('hidden');
+   targetToUnmatch = uid;
+   document.getElementById('unmatch-target-photo').src = allUsersData[uid].photo;
+   document.getElementById('unmatch-popup').classList.remove('hidden');
  };
 
  document.getElementById('btn-confirm-unmatch').onclick = async () => {
- document.getElementById('unmatch-popup').classList.add('hidden');
- if(!targetToUnmatch) return;
- await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToUnmatch}`));
- const roomID = [myUserId, targetToUnmatch].sort().join('-');
- await remove(ref(db, `${basePath}/messages/${roomID}`));
- targetToUnmatch = null;
+   document.getElementById('unmatch-popup').classList.add('hidden');
+   if(!targetToUnmatch) return;
+   await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToUnmatch}`));
+   const roomID = [myUserId, targetToUnmatch].sort().join('-');
+   await remove(ref(db, `${basePath}/messages/${roomID}`));
+   targetToUnmatch = null;
  };
 
  function loadApp() {
- showUI('main-app');
- if(myPhotoData) document.getElementById('my-profile-image').src = myPhotoData;
+   showUI('main-app');
+   if(myPhotoData) document.getElementById('my-profile-image').src = myPhotoData;
 
- onValue(ref(db, `${basePath}/users`), (snapshot) => {
- allUsersData = snapshot.val() || {};
- if (!allUsersData[myUserId]) { localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return; }
- 
- // Update Header Info
- const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
- const vInfo = VIBES[myCurrentVibe];
- document.getElementById('my-vibe-badge-header').innerText = vInfo.icon;
- document.getElementById('my-vibe-text-header').innerText = vInfo.title;
- document.getElementById('my-vibe-text-header').style.color = vInfo.color;
- document.getElementById('my-profile-image').style.borderColor = vInfo.color;
- 
- renderPhotoWall();
- });
+   onValue(ref(db, `${basePath}/users`), (snapshot) => {
+     allUsersData = snapshot.val() || {};
+     if (!allUsersData[myUserId]) { localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return; }
+     
+     // Update Header Info
+     const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
+     const vInfo = VIBES[myCurrentVibe];
+     document.getElementById('my-vibe-badge-header').innerText = vInfo.icon;
+     document.getElementById('my-vibe-text-header').innerText = vInfo.title;
+     document.getElementById('my-vibe-text-header').style.color = vInfo.color;
+     document.getElementById('my-profile-image').style.borderColor = vInfo.color;
+     
+     // Update admin stats
+     document.getElementById('admin-total-users').innerText = Object.keys(allUsersData).length;
+     
+     renderPhotoWall();
+   });
 
- onValue(ref(db, `${basePath}/likes`), (snapshot) => {
- currentLikesData = snapshot.val() || {};
- renderPhotoWall();
- 
- let matches = []; let likesRecus = 0; let myLikes = currentLikesData[myUserId] || {};
- currentLikesSentCount = Object.keys(myLikes).length;
- 
- for (let userUid in currentLikesData) {
- if (currentLikesData[userUid][myUserId]) {
- likesRecus++; if (myLikes[userUid]) matches.push(userUid);
- }
- }
- 
- document.getElementById('stat-matches').innerText = matches.length;
+   onValue(ref(db, `${basePath}/likes`), (snapshot) => {
+     currentLikesData = snapshot.val() || {};
+     renderPhotoWall();
+     
+     let matches = []; let likesRecus = 0; let totalLikesNetwork = 0;
+     let myLikes = currentLikesData[myUserId] || {};
+     currentLikesSentCount = Object.keys(myLikes).length;
+     
+     for (let userUid in currentLikesData) {
+       const userLikes = currentLikesData[userUid];
+       totalLikesNetwork += Object.keys(userLikes).length;
+       if (userLikes[myUserId]) {
+         likesRecus++; if (myLikes[userUid]) matches.push(userUid);
+       }
+     }
+     
+     document.getElementById('stat-matches').innerText = matches.length;
+     document.getElementById('admin-total-likes').innerText = totalLikesNetwork;
+     
+     // Calcul simplifié des matchs totaux pour le panel admin (divisé par 2 car mutuel)
+     let totalMatchesNetwork = 0;
+     for (let uid1 in currentLikesData) {
+       for (let uid2 in currentLikesData[uid1]) {
+         if (currentLikesData[uid2] && currentLikesData[uid2][uid1]) totalMatchesNetwork++;
+       }
+     }
+     document.getElementById('admin-total-matches').innerText = totalMatchesNetwork / 2;
 
- if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) { showToastNotification("Nouvelle invitation reçue ! 👀"); playNotificationSound(); }
- if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
- showToastNotification("Connexion acceptée ! 🔥"); playNotificationSound();
- const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
- if (newMatchUid && allUsersData[newMatchUid]) launchFireworks(allUsersData[newMatchUid].photo);
- }
- prevLikesRecusCount = likesRecus; prevMatchesCount = matches.length; prevMatchesList = [...matches];
- 
- const list = document.getElementById('match-list');
- list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-500 text-xs py-6'>Aucune connexion...</p>`;
- 
- matches.forEach(uid => {
- const roomID = [myUserId, uid].sort().join('-');
- const u = allUsersData[uid];
- if(!u) return;
- const v = VIBES[u.vibe || 'flirt'];
- const div = document.createElement('div');
- div.className = "glass p-3 rounded-2xl flex justify-between items-center animate-pop";
- div.style.borderLeft = `4px solid ${v.color}`;
- div.innerHTML = `
- <div class="flex items-center space-x-4 cursor-pointer flex-1" onclick="openChat('${uid}')">
- <div class="relative"><img src="${u.photo}" class="w-12 h-12 rounded-full object-cover border border-white/20"><div class="absolute -bottom-1 -right-1 text-[10px] bg-black rounded-full">${v.icon}</div></div>
- <div class="flex flex-col"><span class="font-black text-white text-sm uppercase tracking-wider">Chat Privé</span></div>
- <div id="dot-${roomID}" class="notification-dot hidden"></div>
- </div>
- <button onclick="askUnmatch('${uid}')" class="ml-3 p-2 bg-red-500/10 rounded-xl text-red-500">🗑️</button>
- `;
- list.appendChild(div); listenForNotifications(roomID);
- });
- });
+     if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) { showToastNotification("Nouvelle invitation reçue ! 👀"); playNotificationSound(); }
+     if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
+       showToastNotification("Connexion acceptée ! 🔥"); playNotificationSound();
+       const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
+       if (newMatchUid && allUsersData[newMatchUid]) launchFireworks(allUsersData[newMatchUid].photo);
+     }
+     prevLikesRecusCount = likesRecus; prevMatchesCount = matches.length; prevMatchesList = [...matches];
+     
+     const list = document.getElementById('match-list');
+     list.innerHTML = matches.length ? "" : `<p class='text-center text-gray-500 text-sm py-8'>Aucune connexion...</p>`;
+     
+     matches.forEach(uid => {
+       const roomID = [myUserId, uid].sort().join('-');
+       const u = allUsersData[uid];
+       if(!u) return;
+       const v = VIBES[u.vibe || 'flirt'];
+       const div = document.createElement('div');
+       div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop shadow-md";
+       div.style.borderLeft = `4px solid ${v.color}`;
+       div.innerHTML = `
+         <div class="flex items-center space-x-4 cursor-pointer flex-1" onclick="openChat('${uid}')">
+           <div class="relative"><img src="${u.photo}" class="w-14 h-14 rounded-full object-cover border-2 border-white/20"><div class="absolute -bottom-1 -right-1 text-xs bg-black rounded-full p-0.5">${v.icon}</div></div>
+           <div class="flex flex-col"><span class="font-black text-white text-sm uppercase tracking-wider">Chat Privé</span></div>
+           <div id="dot-${roomID}" class="notification-dot hidden"></div>
+         </div>
+         <button onclick="askUnmatch('${uid}')" class="ml-4 p-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-500 transition-colors">🗑️</button>
+       `;
+       list.appendChild(div); listenForNotifications(roomID);
+     });
+   });
  }
 
  function listenForNotifications(roomID) {
- if (attachedNotificationListeners.has(roomID)) return;
- attachedNotificationListeners.add(roomID);
- onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
- const msgCount = Object.keys(snap.val() || {}).length;
- const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
- const dot = document.getElementById(`dot-${roomID}`);
- if (dot && msgCount > lastSeen && activeChatRoom !== roomID) dot.classList.remove('hidden');
- });
+   if (attachedNotificationListeners.has(roomID)) return;
+   attachedNotificationListeners.add(roomID);
+   onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
+     const msgCount = Object.keys(snap.val() || {}).length;
+     const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
+     const dot = document.getElementById(`dot-${roomID}`);
+     if (dot && msgCount > lastSeen && activeChatRoom !== roomID) dot.classList.remove('hidden');
+   });
  }
 
  function openChat(targetUid) {
- activeChatRoom = [myUserId, targetUid].sort().join('-');
- const u = allUsersData[targetUid];
- document.getElementById('chat-target-photo').src = u.photo;
- document.getElementById('chat-target-vibe').innerText = VIBES[u.vibe || 'flirt'].icon;
- document.getElementById('chat-window').classList.remove('hidden');
- const dot = document.getElementById(`dot-${activeChatRoom}`); if (dot) dot.classList.add('hidden');
- 
- onValue(ref(db, `${basePath}/messages/${activeChatRoom}`), (snap) => {
- const container = document.getElementById('chat-messages'); container.innerHTML = "";
- currentChatMessagesSent = 0; const entries = Object.values(snap.val() || {});
- entries.forEach(m => {
- if(m.sender === myUserId) currentChatMessagesSent++;
- const d = document.createElement('div'); d.className = `msg ${m.sender === myUserId ? 'msg-me' : 'msg-them'}`; d.innerText = m.text;
- container.appendChild(d);
- });
- localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
- setTimeout(() => container.scrollTop = container.scrollHeight, 50);
- });
+   activeChatRoom = [myUserId, targetUid].sort().join('-');
+   const u = allUsersData[targetUid];
+   document.getElementById('chat-target-photo').src = u.photo;
+   document.getElementById('chat-target-vibe').innerText = VIBES[u.vibe || 'flirt'].icon;
+   document.getElementById('chat-window').classList.remove('hidden');
+   const dot = document.getElementById(`dot-${activeChatRoom}`); if (dot) dot.classList.add('hidden');
+   
+   onValue(ref(db, `${basePath}/messages/${activeChatRoom}`), (snap) => {
+     const container = document.getElementById('chat-messages'); container.innerHTML = "";
+     currentChatMessagesSent = 0; const entries = Object.values(snap.val() || {});
+     entries.forEach(m => {
+       if(m.sender === myUserId) currentChatMessagesSent++;
+       const d = document.createElement('div'); d.className = `msg ${m.sender === myUserId ? 'msg-me' : 'msg-them'}`; d.innerText = m.text;
+       container.appendChild(d);
+     });
+     localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
+     setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+   });
  }
  window.openChat = openChat;
 
  document.getElementById('send-msg-trigger').onclick = async () => {
- const input = document.getElementById('chat-input');
- if(!input.value.trim() || !activeChatRoom) return;
- await push(ref(db, `${basePath}/messages/${activeChatRoom}`), { sender: myUserId, text: input.value.trim(), time: serverTimestamp() });
- input.value = "";
+   const input = document.getElementById('chat-input');
+   if(!input.value.trim() || !activeChatRoom) return;
+   await push(ref(db, `${basePath}/messages/${activeChatRoom}`), { sender: myUserId, text: input.value.trim(), time: serverTimestamp() });
+   input.value = "";
  };
 
  document.getElementById('close-chat-trigger').onclick = () => { document.getElementById('chat-window').classList.add('hidden'); activeChatRoom = null; };
