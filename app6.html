@@ -44,7 +44,7 @@
  @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
  .user-card img { width: 100%; height: 100%; object-fit: cover; }
  .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
- .my-profile-pic { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; transition: opacity 0.2s; }
+ .my-profile-pic { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; transition: opacity 0.2s; }
  .my-profile-pic:hover { opacity: 0.8; }
 
  #match-announcement {
@@ -70,9 +70,10 @@
 
  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-4 text-center"></div>
 
- <div class="absolute top-4 right-4 z-50 flex items-center space-x-3">
-   <button id="lang-toggle-btn" class="glass px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
+ <!-- Top Right Action Buttons (Admin gear + Lang toggle stacked underneath) -->
+ <div class="absolute top-4 right-4 z-50 flex flex-col items-end space-y-2">
    <button id="admin-trigger" class="glass opacity-60 hover:opacity-100 p-2 rounded-xl text-base transition-all">⚙️</button>
+   <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
  </div>
 
  <!-- Match Overlay -->
@@ -205,13 +206,9 @@
          <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
        </div>
        <div class="text-left">
-         <div class="flex items-center space-x-2 cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
+         <div class="cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
            <p class="text-white text-sm font-bold uppercase tracking-wide" id="my-vibe-text-header">Mood</p>
-           <span class="bg-white/10 px-2 py-1 rounded-md text-xs text-gray-300">Modifier ✏️</span>
-         </div>
-         <div class="flex items-center space-x-2 mt-1.5">
-           <span class="text-xs font-black text-pink-500" id="stat-matches">0</span>
-           <span id="label-matches" class="text-xs uppercase text-gray-400 font-bold tracking-widest">Connexions</span>
+           <span class="inline-block mt-1 bg-white/10 px-2 py-1 rounded-md text-xs text-gray-300">Modifier ✏️</span>
          </div>
        </div>
      </div>
@@ -351,15 +348,21 @@
  const attachedNotificationListeners = new Set(); 
  let currentFacingMode = "user"; 
 
- // --- GESTION DU PANNEAU D'ADMINISTRATION ---
+ // --- GESTION DU PANNEAU D'ADMINISTRATION & MOT DE PASSE ---
  document.getElementById('admin-trigger').onclick = () => {
-   document.getElementById('admin-panel').classList.remove('hidden');
+   const password = prompt("Entrez le mot de passe administrateur :");
+   if (password === "2026") {
+     document.getElementById('admin-panel').classList.remove('hidden');
+   } else if (password !== null) {
+     showToastNotification("Mot de passe incorrect ❌");
+   }
  };
+
  document.getElementById('close-admin-trigger').onclick = () => {
    document.getElementById('admin-panel').classList.add('hidden');
  };
 
- // Correction de la remise à zéro
+ // Remise à zéro
  document.getElementById('reset-event-trigger').onclick = async () => {
    if (confirm("Voulez-vous vraiment tout réinitialiser pour cet événement ?")) {
      await remove(ref(db, basePath));
@@ -688,7 +691,6 @@
        }
      }
      
-     document.getElementById('stat-matches').innerText = matches.length;
      document.getElementById('admin-total-likes').innerText = totalLikesNetwork;
      
      let totalMatchesNetwork = 0;
@@ -734,7 +736,7 @@
  function listenForNotifications(roomID) {
    if (attachedNotificationListeners.has(roomID)) return;
    attachedNotificationListeners.add(roomID);
-   onValue(ref(db, `${basePath}/messages/${roomID}`), (snap) => {
+   onValue(ref(db, basePath + `/messages/${roomID}`), (snap) => {
      const msgCount = Object.keys(snap.val() || {}).length;
      const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
      const dot = document.getElementById(`dot-${roomID}`);
@@ -750,7 +752,7 @@
    document.getElementById('chat-window').classList.remove('hidden');
    const dot = document.getElementById(`dot-${activeChatRoom}`); if (dot) dot.classList.add('hidden');
    
-   onValue(ref(db, `${basePath}/messages/${activeChatRoom}`), (snap) => {
+   onValue(ref(db, basePath + `/messages/${activeChatRoom}`), (snap) => {
      const container = document.getElementById('chat-messages'); container.innerHTML = "";
      currentChatMessagesSent = 0; const entries = Object.values(snap.val() || {});
      entries.forEach(m => {
