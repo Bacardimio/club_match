@@ -362,10 +362,12 @@
    document.getElementById('admin-panel').classList.add('hidden');
  };
 
- // Remise à zéro
+ // Remise à zéro (vide uniquement la base de données de l'événement sans supprimer le conteneur/config)
  document.getElementById('reset-event-trigger').onclick = async () => {
-   if (confirm("Voulez-vous vraiment tout réinitialiser pour cet événement ?")) {
-     await remove(ref(db, basePath));
+   if (confirm("Voulez-vous vraiment vider toutes les données de cet événement ?")) {
+     await remove(ref(db, `${basePath}/users`));
+     await remove(ref(db, `${basePath}/likes`));
+     await remove(ref(db, `${basePath}/messages`));
      localStorage.clear();
      location.reload();
    }
