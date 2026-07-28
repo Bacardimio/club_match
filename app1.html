@@ -173,56 +173,56 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  </div>
 
  <!-- BOUTONS POPUPS SOUS LE BOUTON FLASHER (Matches, Flashs Reçus, Flashs Envoyés) -->
- <div class="grid grid-cols-3 gap-2">
+ <div class="grid grid-cols-3 gap-2.5">
  
  <!-- Matches 🔥 (Rose) -->
- <div class="relative overflow-hidden p-2.5 rounded-2xl bg-pink-500/10 border border-pink-500/30 text-center shadow-[0_0_15px_rgba(255,0,85,0.1)] backdrop-blur-md flex flex-col items-center justify-center cursor-pointer hover:bg-pink-500/20 active:scale-95 transition-all" onclick="document.getElementById('matches-popup').classList.remove('hidden')">
- <span class="text-2xl font-black text-pink-500 tracking-tighter text-glow-pink" id="stat-matches">0</span>
- <span id="label-matches" class="text-[9px] uppercase text-white font-black tracking-wider bg-pink-500/30 px-2 py-0.5 rounded-full border border-pink-500/50 mt-1 whitespace-nowrap">Matches 🔥</span>
+ <div class="relative overflow-hidden p-3 rounded-2xl bg-pink-500/10 border border-pink-500/40 text-center shadow-[0_0_15px_rgba(255,0,85,0.15)] backdrop-blur-md flex flex-col items-center justify-center cursor-pointer hover:bg-pink-500/20 active:scale-95 transition-all" onclick="document.getElementById('matches-popup').classList.remove('hidden')">
+ <span class="text-3xl font-black text-pink-500 tracking-tighter text-glow-pink" id="stat-matches">0</span>
+ <span id="label-matches" class="text-[10px] uppercase text-white font-black tracking-wider bg-pink-500/30 px-2 py-0.5 rounded-full border border-pink-500/50 mt-1 whitespace-nowrap">Matches 🔥</span>
  </div>
 
  <!-- Flashs Reçus (Violet) -->
- <div class="glass p-2.5 rounded-2xl text-center border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/30 active:scale-95 cursor-pointer transition-all flex flex-col items-center justify-center" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
- <span class="text-2xl font-black text-purple-400 text-glow-purple" id="stat-likes-recus">0</span>
- <span id="label-likes-recus" class="text-[9px] uppercase text-purple-300 font-bold tracking-wider mt-1 whitespace-nowrap">Flashs Reçus</span>
+ <div class="glass p-3 rounded-2xl text-center border-purple-500/30 bg-purple-900/10 hover:bg-purple-900/30 active:scale-95 cursor-pointer transition-all flex flex-col items-center justify-center" onclick="document.getElementById('secret-flash-popup').classList.remove('hidden')">
+ <span class="text-3xl font-black text-purple-400 text-glow-purple" id="stat-likes-recus">0</span>
+ <span id="label-likes-recus" class="text-[10px] uppercase text-purple-300 font-bold tracking-wider mt-1 whitespace-nowrap">Flashs Reçus</span>
  </div>
 
  <!-- Flashs Envoyés (Bleu) -->
- <div class="glass p-2.5 rounded-2xl text-center border-blue-500/30 bg-blue-900/10 hover:bg-blue-900/30 active:scale-95 cursor-pointer transition-all flex flex-col items-center justify-center" onclick="document.getElementById('sent-flashes-popup').classList.remove('hidden')">
- <span class="text-2xl font-black text-blue-400 text-glow-blue"><span id="stat-likes-envoyes">0</span><span class="text-blue-600 text-xs font-bold ml-0.5">/5</span></span>
- <span id="label-likes-envoyes" class="text-[9px] uppercase text-blue-300 font-bold tracking-wider mt-1 whitespace-nowrap">Flashs Envoyés</span>
+ <div class="glass p-3 rounded-2xl text-center border-blue-500/30 bg-blue-900/10 hover:bg-blue-900/30 active:scale-95 cursor-pointer transition-all flex flex-col items-center justify-center" onclick="document.getElementById('sent-flashes-popup').classList.remove('hidden')">
+ <span class="text-3xl font-black text-blue-400 text-glow-blue"><span id="stat-likes-envoyes">0</span><span class="text-blue-600 text-sm font-bold ml-0.5">/5</span></span>
+ <span id="label-likes-envoyes" class="text-[10px] uppercase text-blue-300 font-bold tracking-wider mt-1 whitespace-nowrap">Flashs Envoyés</span>
  </div>
 
  </div>
  </div>
 
- <!-- POPUP 1 : Liste des MATCHES -->
+ <!-- POPUP 1 : Liste des MATCHES (Agrandie) -->
  <div id="matches-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-5 rounded-3xl max-w-xs w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_30px_rgba(255,0,85,0.3)] max-h-[80vh] flex flex-col">
- <div class="flex justify-between items-center pb-3 border-b border-pink-500/30 mb-3">
- <span class="text-sm font-black text-white uppercase tracking-widest italic flex items-center gap-1.5">
- <span>🔥</span> <span id="label-popup-matches">Tes Matches</span>
+ <div class="glass p-6 rounded-3xl max-w-sm w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_35px_rgba(255,0,85,0.35)] max-h-[85vh] flex flex-col">
+ <div class="flex justify-between items-center pb-3 border-b border-pink-500/30 mb-4">
+ <span class="text-lg font-black text-white uppercase tracking-widest italic flex items-center gap-2">
+ <span class="text-xl">🔥</span> <span id="label-popup-matches">Tes Matches</span>
  </span>
- <button onclick="document.getElementById('matches-popup').classList.add('hidden')" class="text-white/60 hover:text-white font-black text-xl leading-none">&times;</button>
+ <button onclick="document.getElementById('matches-popup').classList.add('hidden')" class="text-white/60 hover:text-white font-black text-2xl leading-none">&times;</button>
  </div>
- <div id="match-list" class="space-y-2 overflow-y-auto pr-1 flex-1"></div>
- <button onclick="document.getElementById('matches-popup').classList.add('hidden')" class="btn-main py-3 px-4 rounded-xl font-black text-white uppercase tracking-widest w-full text-xs mt-4 shadow-[0_0_15px_rgba(255,0,85,0.4)]">
+ <div id="match-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+ <button onclick="document.getElementById('matches-popup').classList.add('hidden')" class="btn-main py-3.5 px-4 rounded-2xl font-black text-white uppercase tracking-widest w-full text-sm mt-4 shadow-[0_0_15px_rgba(255,0,85,0.4)]">
  Fermer
  </button>
  </div>
  </div>
 
- <!-- POPUP 2 : Liste des FLASHS ENVOYÉS -->
+ <!-- POPUP 2 : Liste des FLASHS ENVOYÉS (Agrandie) -->
  <div id="sent-flashes-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
- <div class="glass p-5 rounded-3xl max-w-xs w-full animate-pop border-2 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.3)] max-h-[80vh] flex flex-col">
- <div class="flex justify-between items-center pb-3 border-b border-blue-500/30 mb-3">
- <span class="text-sm font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-1.5">
- <span>📤</span> <span id="label-popup-sent-flashes">Tes Flashs Envoyés</span>
+ <div class="glass p-6 rounded-3xl max-w-sm w-full animate-pop border-2 border-blue-500/50 shadow-[0_0_35px_rgba(59,130,246,0.35)] max-h-[85vh] flex flex-col">
+ <div class="flex justify-between items-center pb-3 border-b border-blue-500/30 mb-4">
+ <span class="text-lg font-black text-blue-400 uppercase tracking-widest italic flex items-center gap-2">
+ <span class="text-xl">📤</span> <span id="label-popup-sent-flashes">Tes Flashs Envoyés</span>
  </span>
- <button onclick="document.getElementById('sent-flashes-popup').classList.add('hidden')" class="text-white/60 hover:text-white font-black text-xl leading-none">&times;</button>
+ <button onclick="document.getElementById('sent-flashes-popup').classList.add('hidden')" class="text-white/60 hover:text-white font-black text-2xl leading-none">&times;</button>
  </div>
- <div id="likes-sent-list" class="space-y-1.5 overflow-y-auto pr-1 flex-1"></div>
- <button onclick="document.getElementById('sent-flashes-popup').classList.add('hidden')" class="btn-main py-3 px-4 rounded-xl font-black text-white uppercase tracking-widest w-full text-xs mt-4 shadow-[0_0_15px_rgba(255,0,85,0.4)]">
+ <div id="likes-sent-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+ <button onclick="document.getElementById('sent-flashes-popup').classList.add('hidden')" class="btn-main py-3.5 px-4 rounded-2xl font-black text-white uppercase tracking-widest w-full text-sm mt-4 shadow-[0_0_15px_rgba(255,0,85,0.4)]">
  Fermer
  </button>
  </div>
@@ -380,8 +380,8 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  secLikesSent: "Tes Flashs Envoyés",
  noMatches: "Aucun match pour le moment...",
  noLikesSent: "Aucun flash envoyé",
- chatWith: "Chat avec #",
- flashSentTo: "Flash envoyé à #",
+ chatWith: "Chat avec",
+ flashSentTo: "Flash envoyé à",
  chatTitle: "Chat",
  chatPlaceholder: "Message...",
  sendBtn: "Envoyer",
@@ -427,8 +427,8 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  secLikesSent: "Your Sent Flashes",
  noMatches: "No matches yet...",
  noLikesSent: "No flashes sent",
- chatWith: "Chat with #",
- flashSentTo: "Flash sent to #",
+ chatWith: "Chat with",
+ flashSentTo: "Flash sent to",
  chatTitle: "Chat",
  chatPlaceholder: "Type a message...",
  sendBtn: "Send",
@@ -632,6 +632,7 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
 
  input.classList.remove('input-valid', 'input-invalid', 'input-checking', 'input-already');
  icon.classList.add('hidden');
+ icon.innerText = '';
  feedback.classList.add('hidden');
  btn.disabled = true;
 
@@ -658,9 +659,8 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  feedback.classList.remove('hidden');
  } else if (state === 'already') {
  input.classList.add('input-already');
- icon.className = 'absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 font-bold text-2xl leading-none';
- icon.innerText = '↺';
- icon.classList.remove('hidden');
+ // Flèche circulaire supprimée complètement
+ icon.classList.add('hidden');
  feedback.classList.add('hidden');
  } else if (state === 'limit') {
  icon.classList.add('hidden');
@@ -968,19 +968,19 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  prevMatches = [...matches]; 
  if (document.getElementById('target-badge').value.trim()) validateTarget();
 
- // Injections dans les popups
+ // Injections dans les popups avec cartes plus grandes et lisibles
  const list = document.getElementById('match-list');
- list.innerHTML = matches.length ? "" : `<p class='text-center text-white/50 font-bold uppercase tracking-widest text-[10px] py-4'>${i18n[currentLang].noMatches}</p>`;
+ list.innerHTML = matches.length ? "" : `<p class='text-center text-white/50 font-bold uppercase tracking-widest text-xs py-6'>${i18n[currentLang].noMatches}</p>`;
  matches.forEach(id => {
  const roomID = [currentBadge, id].sort().join('-');
  const div = document.createElement('div');
- div.className = "bg-black/40 p-2.5 rounded-xl flex justify-between items-center border border-pink-500/30 shadow-md";
+ div.className = "bg-black/50 p-3.5 rounded-2xl flex justify-between items-center border border-pink-500/30 shadow-md";
  div.innerHTML = `
  <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openChat('${id}')">
- <span class="font-black italic text-white text-sm tracking-wide">${i18n[currentLang].chatWith}<span class="text-pink-500">${id}</span></span>
+ <span class="font-black italic text-white text-base tracking-wide">${i18n[currentLang].chatWith} <span class="text-pink-500 text-glow-pink">#${id}</span></span>
  <div id="dot-${roomID}" class="notification-dot hidden"></div>
  </div>
- <button onclick="deleteLike('${id}')" class="text-white/40 hover:text-red-500 px-2 text-xl font-bold transition-all">×</button>
+ <button onclick="deleteLike('${id}')" class="text-white/40 hover:text-red-500 px-2 text-2xl font-bold transition-all">×</button>
  `;
  list.appendChild(div);
  listenForNotifications(roomID);
@@ -988,14 +988,14 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
 
  const sentList = document.getElementById('likes-sent-list');
  const myLikesArray = Object.keys(myLikes);
- sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-white/40 text-[9px] uppercase font-bold py-4'>${i18n[currentLang].noLikesSent}</p>`;
+ sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-white/40 text-xs uppercase font-bold py-6'>${i18n[currentLang].noLikesSent}</p>`;
  myLikesArray.forEach(id => {
  if (matches.includes(id)) return;
  const div = document.createElement('div');
- div.className = "bg-blue-950/40 px-3 py-2 rounded-lg flex justify-between items-center border border-blue-500/20";
+ div.className = "bg-blue-950/50 px-4 py-3 rounded-2xl flex justify-between items-center border border-blue-500/30";
  div.innerHTML = `
- <span class="font-bold text-blue-200 italic text-xs tracking-widest uppercase">${i18n[currentLang].flashSentTo}<span class="text-white">${id}</span></span>
- <button onclick="deleteLike('${id}')" class="text-blue-500/50 hover:text-red-500 font-bold text-lg transition-all">×</button>
+ <span class="font-bold text-blue-200 italic text-sm tracking-widest uppercase">${i18n[currentLang].flashSentTo} <span class="text-white font-black">#${id}</span></span>
+ <button onclick="deleteLike('${id}')" class="text-blue-500/50 hover:text-red-500 font-bold text-2xl transition-all">×</button>
  `;
  sentList.appendChild(div);
  });
