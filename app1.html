@@ -92,9 +92,12 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
 
  <div id="toast-container" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-2 text-center"></div>
 
- <!-- Menu Réglages & Langue -->
+ <!-- Menu Réglages, Aide & Langue -->
  <div class="absolute top-3 right-3 z-50 flex flex-col items-end gap-2">
+ <div class="flex gap-2">
+ <button id="tutorial-trigger" title="Règles du jeu" class="glass opacity-80 hover:opacity-100 p-2 rounded-xl text-xs transition-all border-white/20">❓</button>
  <button id="admin-trigger" class="glass opacity-50 hover:opacity-100 p-2 rounded-xl text-xs transition-all border-white/20">⚙️</button>
+ </div>
  <button id="lang-toggle-btn" class="glass px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase text-white hover:bg-white/20 transition-all border-white/20">🇬🇧 EN</button>
  </div>
 
@@ -196,7 +199,37 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  </div>
  </div>
 
- <!-- POPUP 1 : Liste des MATCHES (Agrandie) -->
+ <!-- POPUP TUTORIEL / PROTOCOLE DE JEU (4 ÉTAPES) -->
+ <div id="tutorial-popup" class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-md">
+ <div class="glass p-6 rounded-3xl max-w-sm w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_35px_rgba(255,0,85,0.35)] flex flex-col items-center text-center relative">
+ <button id="btn-close-tuto" class="absolute top-4 right-4 text-white/50 hover:text-white font-black text-2xl leading-none">&times;</button>
+ 
+ <div id="tuto-step-icon" class="text-5xl mb-3 mt-1 animate-bounce">🏷️</div>
+ <span id="tuto-step-badge" class="text-[10px] font-black uppercase tracking-widest text-pink-400 bg-pink-500/20 px-3 py-1 rounded-full border border-pink-500/30 mb-2">Étape 1 / 4</span>
+ 
+ <h3 id="tuto-step-title" class="text-xl font-black italic uppercase text-white mb-2 text-glow-pink">Repère un badge</h3>
+ <p id="tuto-step-desc" class="text-xs text-gray-300 font-medium leading-relaxed mb-6 min-h-[60px] flex items-center justify-center">
+ Regarde autour de toi dans la soirée et repère le numéro de badge de la personne qui t'attire.
+ </p>
+
+ <!-- Indicateurs de points -->
+ <div class="flex space-x-2 mb-6">
+ <span class="tuto-dot w-2.5 h-2.5 rounded-full bg-pink-500 transition-all"></span>
+ <span class="tuto-dot w-2.5 h-2.5 rounded-full bg-white/20 transition-all"></span>
+ <span class="tuto-dot w-2.5 h-2.5 rounded-full bg-white/20 transition-all"></span>
+ <span class="tuto-dot w-2.5 h-2.5 rounded-full bg-white/20 transition-all"></span>
+ </div>
+
+ <!-- Boutons de contrôle -->
+ <div class="flex items-center justify-between w-full gap-2">
+ <button id="btn-tuto-prev" class="glass py-2.5 px-3.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white border-white/20 disabled:opacity-30">Précédent</button>
+ <button id="btn-tuto-skip" class="text-xs font-bold uppercase text-gray-400 hover:text-white px-2">Passer</button>
+ <button id="btn-tuto-next" class="btn-main py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md">Suivant</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- POPUP 1 : Liste des MATCHES -->
  <div id="matches-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
  <div class="glass p-6 rounded-3xl max-w-sm w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_35px_rgba(255,0,85,0.35)] max-h-[85vh] flex flex-col">
  <div class="flex justify-between items-center pb-3 border-b border-pink-500/30 mb-4">
@@ -212,7 +245,7 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  </div>
  </div>
 
- <!-- POPUP 2 : Liste des FLASHS ENVOYÉS (Agrandie) -->
+ <!-- POPUP 2 : Liste des FLASHS ENVOYÉS -->
  <div id="sent-flashes-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
  <div class="glass p-6 rounded-3xl max-w-sm w-full animate-pop border-2 border-blue-500/50 shadow-[0_0_35px_rgba(59,130,246,0.35)] max-h-[85vh] flex flex-col">
  <div class="flex justify-between items-center pb-3 border-b border-blue-500/30 mb-4">
@@ -337,12 +370,44 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  let myLikesGlobal = {};
  let currentTargetState = 'empty';
  let validateDebounceTimer = null;
+ let currentTutoStep = 0;
 
  const VAPID_KEY = "BGu3gXeBemm90V5vFVnPxcCczis1P0aYc4InE5cpojaiu9jL6heBQRHxi0XIyz2NqPdO-vR-PaRJ07ejzLdYdqo";
  let messaging = null;
  let swRegistration = null;
 
  let sharedAudioCtx = null;
+
+ const tutoStepsData = [
+ {
+ icon: "🏷️",
+ titleFr: "1. Repère un badge",
+ descFr: "Regarde autour de toi pendant la soirée et repère le numéro de badge de la personne qui te plaît.",
+ titleEn: "1. Spot a badge",
+ descEn: "Look around during the event and spot the badge number of someone you like."
+ },
+ {
+ icon: "⚡",
+ titleFr: "2. Flashe son numéro",
+ descFr: "Saisis son numéro dans la zone de saisie et clique sur Flasher. C'est 100% secret et anonyme !",
+ titleEn: "2. Flash their number",
+ descEn: "Enter their number in the app and tap Flash. It is 100% anonymous and secret!"
+ },
+ {
+ icon: "🔥",
+ titleFr: "3. Déclenche le Match",
+ descFr: "Si la personne te flashe aussi en retour... C'est le MATCH ! L'écran s'enflamme immédiatement.",
+ titleEn: "3. Trigger a Match",
+ descEn: "If that person flashes you back... It's a MATCH! Your screen lights up instantly."
+ },
+ {
+ icon: "💬",
+ titleFr: "4. Discute & Rencontre",
+ descFr: "Vous débloquez un chat direct pour vous retrouver rapidement dans la soirée et vous rencontrer en vrai !",
+ titleEn: "4. Chat & Meet",
+ descEn: "You unlock a direct chat to find each other quickly during the night and meet in real life!"
+ }
+ ];
 
  const i18n = {
  fr: {
@@ -390,7 +455,12 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  toastFlash: "Nouveau flash reçu ! 👀",
  toastMatch: "Nouveau Match ! 🔥",
  secretFlash: "Impossible de connaître ton flash avant que tu Matches !",
- btnUnderstood: "J'ai compris"
+ btnUnderstood: "J'ai compris",
+ btnTutoNext: "Suivant",
+ btnTutoPrev: "Précédent",
+ btnTutoSkip: "Passer",
+ btnTutoStart: "C'est parti !",
+ tutoStepBadge: "Étape {step} / 4"
  },
  en: {
  toggleBtn: "🇫🇷 FR",
@@ -437,7 +507,12 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  toastFlash: "New flash received! 👀",
  toastMatch: "New Match! 🔥",
  secretFlash: "Impossible to know your flash before you Match!",
- btnUnderstood: "Understood"
+ btnUnderstood: "Understood",
+ btnTutoNext: "Next",
+ btnTutoPrev: "Prev",
+ btnTutoSkip: "Skip",
+ btnTutoStart: "Let's go!",
+ tutoStepBadge: "Step {step} / 4"
  }
  };
 
@@ -456,6 +531,60 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  }
  }
  });
+
+ function renderTutoStep(stepIndex) {
+ currentTutoStep = stepIndex;
+ const data = tutoStepsData[stepIndex];
+ const isEn = currentLang === 'en';
+ const t = i18n[currentLang];
+
+ document.getElementById('tuto-step-icon').innerText = data.icon;
+ document.getElementById('tuto-step-badge').innerText = t.tutoStepBadge.replace('{step}', stepIndex + 1);
+ document.getElementById('tuto-step-title').innerText = isEn ? data.titleEn : data.titleFr;
+ document.getElementById('tuto-step-desc').innerText = isEn ? data.descEn : data.descFr;
+
+ document.getElementById('btn-tuto-prev').disabled = stepIndex === 0;
+ document.getElementById('btn-tuto-next').innerText = stepIndex === 3 ? t.btnTutoStart : t.btnTutoNext;
+ document.getElementById('btn-tuto-prev').innerText = t.btnTutoPrev;
+ document.getElementById('btn-tuto-skip').innerText = t.btnTutoSkip;
+
+ const dots = document.querySelectorAll('.tuto-dot');
+ dots.forEach((dot, idx) => {
+ if (idx === stepIndex) {
+ dot.className = "tuto-dot w-3 h-3 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(255,0,85,0.8)] transition-all";
+ } else {
+ dot.className = "tuto-dot w-2.5 h-2.5 rounded-full bg-white/20 transition-all";
+ }
+ });
+ }
+
+ function openTutorial() {
+ renderTutoStep(0);
+ document.getElementById('tutorial-popup').classList.remove('hidden');
+ }
+
+ function closeTutorial() {
+ document.getElementById('tutorial-popup').classList.add('hidden');
+ }
+
+ document.getElementById('tutorial-trigger').onclick = () => {
+ vibrateDevice('tap');
+ openTutorial();
+ };
+ document.getElementById('btn-close-tuto').onclick = closeTutorial;
+ document.getElementById('btn-tuto-skip').onclick = closeTutorial;
+ document.getElementById('btn-tuto-prev').onclick = () => {
+ vibrateDevice('tap');
+ if (currentTutoStep > 0) renderTutoStep(currentTutoStep - 1);
+ };
+ document.getElementById('btn-tuto-next').onclick = () => {
+ vibrateDevice('tap');
+ if (currentTutoStep < 3) {
+ renderTutoStep(currentTutoStep + 1);
+ } else {
+ closeTutorial();
+ }
+ };
 
  function applyLanguage() {
  const t = i18n[currentLang];
@@ -500,6 +629,8 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  document.getElementById('secret-flash-text').innerText = t.secretFlash;
  document.getElementById('btn-understood').innerText = t.btnUnderstood;
  }
+
+ renderTutoStep(currentTutoStep);
  }
 
  function getSharedAudioContext() {
@@ -659,7 +790,6 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  feedback.classList.remove('hidden');
  } else if (state === 'already') {
  input.classList.add('input-already');
- // Flèche circulaire supprimée complètement
  icon.classList.add('hidden');
  feedback.classList.add('hidden');
  } else if (state === 'limit') {
@@ -916,6 +1046,13 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  function loadApp() {
  showUI('main-app');
  document.getElementById('display-badge').innerText = currentBadge;
+
+ // Affichage automatique du tutoriel en 4 étapes à l'ouverture (une seule fois par session)
+ if (!sessionStorage.getItem(`tutoSeen_${eventID}_${currentBadge}`)) {
+ openTutorial();
+ sessionStorage.setItem(`tutoSeen_${eventID}_${currentBadge}`, 'true');
+ }
+
  onValue(ref(db, `${basePath}/users/${currentBadge}`), (snapshot) => {
  if (!snapshot.exists() || snapshot.val() !== firebaseUid) { 
  localStorage.removeItem(`myBadge_${eventID}`); 
@@ -968,7 +1105,6 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  prevMatches = [...matches]; 
  if (document.getElementById('target-badge').value.trim()) validateTarget();
 
- // Injections dans les popups avec cartes plus grandes et lisibles
  const list = document.getElementById('match-list');
  list.innerHTML = matches.length ? "" : `<p class='text-center text-white/50 font-bold uppercase tracking-widest text-xs py-6'>${i18n[currentLang].noMatches}</p>`;
  matches.forEach(id => {
