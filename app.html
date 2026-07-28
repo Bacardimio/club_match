@@ -177,6 +177,7 @@
    
    <!-- Matches 🔥 (Rose) -->
    <div class="relative overflow-hidden p-3 rounded-2xl bg-pink-500/10 border border-pink-500/40 text-center shadow-[0_0_15px_rgba(255,0,85,0.15)] backdrop-blur-md flex flex-col items-center justify-center cursor-pointer hover:bg-pink-500/20 active:scale-95 transition-all" onclick="document.getElementById('matches-popup').classList.remove('hidden')">
+    <div id="global-unread-dot" class="absolute top-2 right-2 w-3.5 h-3.5 bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981] hidden animate-pulse border-2 border-black/30 z-10"></div>
     <span class="text-3xl font-black text-pink-500 tracking-tighter text-glow-pink" id="stat-matches">0</span>
     <span id="label-matches" class="text-[10px] uppercase text-white font-black tracking-wider bg-pink-500/30 px-2 py-0.5 rounded-full border border-pink-500/50 mt-1 whitespace-nowrap">Matches 🔥</span>
    </div>
@@ -195,7 +196,7 @@
 
   </div>
 
-  <!-- Badge Protocole du jeu vert placé en bas de page -->
+  <!-- Badge Protocole du jeu vert en bas -->
   <div class="flex justify-center pt-3">
    <button id="tutorial-trigger" class="glass px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider text-emerald-400 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]">
     Protocole du jeu
@@ -203,7 +204,7 @@
   </div>
  </div>
 
- <!-- POPUP 1 : TUTORIEL / PROTOCOLE DU JEU (AGRANDI & SANS BADGES / NI MOT PASSER) -->
+ <!-- POPUP 1 : TUTORIEL -->
  <div id="tutorial-popup" class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4 backdrop-blur-md">
   <div class="glass p-8 rounded-3xl max-w-lg w-full animate-pop border-2 border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.3)] flex flex-col items-center text-center relative">
    <button id="btn-close-tuto" class="absolute top-4 right-4 text-white/50 hover:text-white font-black text-3xl leading-none">&times;</button>
@@ -215,7 +216,6 @@
     Repère le numéro de badge de la personne qui te plaît.
    </p>
 
-   <!-- Indicateurs de points -->
    <div class="flex space-x-3 mb-8">
     <span class="tuto-dot w-3 h-3 rounded-full bg-pink-500 transition-all"></span>
     <span class="tuto-dot w-3 h-3 rounded-full bg-white/20 transition-all"></span>
@@ -223,7 +223,6 @@
     <span class="tuto-dot w-3 h-3 rounded-full bg-white/20 transition-all"></span>
    </div>
 
-   <!-- Boutons de contrôle -->
    <div class="flex items-center justify-between w-full gap-4">
     <button id="btn-tuto-prev" class="glass py-3.5 px-6 rounded-2xl text-sm font-bold uppercase tracking-wider text-white/70 hover:text-white border-white/20 disabled:opacity-30">Précédent</button>
     <button id="btn-tuto-next" class="btn-main py-3.5 px-8 rounded-2xl text-sm font-black uppercase tracking-wider text-white shadow-md flex-1">Suivant</button>
@@ -231,7 +230,7 @@
   </div>
  </div>
 
- <!-- POPUP 2 : Liste des MATCHES (AGRANDI) -->
+ <!-- POPUP 2 : Liste des MATCHES -->
  <div id="matches-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
   <div class="glass p-8 rounded-3xl max-w-lg w-full animate-pop border-2 border-pink-500/50 shadow-[0_0_40px_rgba(255,0,85,0.35)] max-h-[85vh] flex flex-col">
    <div class="flex justify-between items-center pb-4 border-b border-pink-500/30 mb-6">
@@ -247,7 +246,7 @@
   </div>
  </div>
 
- <!-- POPUP 3 : Liste des FLASHS ENVOYÉS (AGRANDI) -->
+ <!-- POPUP 3 : Liste des FLASHS ENVOYÉS -->
  <div id="sent-flashes-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
   <div class="glass p-8 rounded-3xl max-w-lg w-full animate-pop border-2 border-blue-500/50 shadow-[0_0_40px_rgba(59,130,246,0.35)] max-h-[85vh] flex flex-col">
    <div class="flex justify-between items-center pb-4 border-b border-blue-500/30 mb-6">
@@ -263,7 +262,7 @@
   </div>
  </div>
 
- <!-- POPUP 4 : Secret Flash Popup (AGRANDI) -->
+ <!-- POPUP 4 : Secret Flash Popup -->
  <div id="secret-flash-popup" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
   <div class="glass p-8 rounded-3xl text-center max-w-md w-full animate-pop border-2 border-purple-500/50 shadow-[0_0_35px_rgba(168,85,247,0.3)]">
    <div class="text-5xl mb-4">🤫</div>
@@ -336,7 +335,7 @@
 
  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
   import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
 
@@ -369,6 +368,8 @@
   let isConfigListenerAttached = false;
 
   let knownUsers = new Set();
+  let unreadRooms = new Set();
+  
   let myLikesGlobal = {};
   let currentTargetState = 'empty';
   let validateDebounceTimer = null;
@@ -683,9 +684,9 @@
    if (!('vibrate' in navigator)) return;
    try {
     if (type === 'match') {
-     navigator.vibrate([200, 100, 200, 100, 400, 100, 400]);
+     navigator.vibrate([300, 100, 300, 100, 500, 200, 500, 200, 800, 200, 1800]);
     } else if (type === 'flash') {
-     navigator.vibrate([150, 80, 150, 80, 200]);
+     navigator.vibrate(5000);
     } else if (type === 'tap') {
      navigator.vibrate(30);
     }
@@ -923,10 +924,21 @@
    overlay.onclick = () => { overlay.style.display = 'none'; clearInterval(interval); };
   }
 
+  // SUPPRESSION BIDIRECTIONNELLE : Mise à jour atomique pour éviter le déclenchement intempestif des popups
   async function deleteLike(target) {
    vibrateDevice('tap');
-   if(confirm(currentLang === 'fr' ? `Supprimer le like/match avec #${target} ?` : `Delete like/match with #${target} ?`)) {
-    await remove(ref(db, `${basePath}/likes/${currentBadge}/${target}`));
+   const confirmMsg = currentLang === 'fr' 
+    ? `Supprimer définitivement le match/flash avec #${target} ?` 
+    : `Permanently delete match/flash with #${target}?`;
+   if(confirm(confirmMsg)) {
+    const updates = {};
+    updates[`${basePath}/likes/${currentBadge}/${target}`] = null;
+    updates[`${basePath}/likes/${target}/${currentBadge}`] = null;
+    try {
+     await update(ref(db), updates);
+    } catch (e) {
+     console.error("Erreur lors de la suppression:", e);
+    }
    }
   }
   window.deleteLike = deleteLike;
@@ -1066,28 +1078,42 @@
 
    onValue(ref(db, `${basePath}/likes`), (snapshot) => {
     const data = snapshot.val() || {};
-    let matches = [];
-    let likesRecus = 0;
-    let myLikes = data[currentBadge] || {};
-    myLikesGlobal = myLikes;
-    currentLikesSentCount = Object.keys(myLikes).length;
+    
+    let rawLikesRecus = [];
+    let rawLikesSent = Object.keys(data[currentBadge] || {});
+    myLikesGlobal = data[currentBadge] || {};
+
+    // Récupération de tous les flashs reçus
     for (let user in data) {
      if (data[user][currentBadge]) {
-      likesRecus++;
-      if (myLikes[user]) matches.push(user);
+      rawLikesRecus.push(user);
      }
     }
-    document.getElementById('stat-likes-recus').innerText = likesRecus;
+
+    // Détection des matchs (intersection entre envoyés et reçus)
+    let matches = rawLikesSent.filter(target => rawLikesRecus.includes(target));
+
+    // DÉDUCTIONS DES MATCHS POUR LES COMPTEURS DE FLASHS
+    let pendingLikesRecus = rawLikesRecus.filter(id => !matches.includes(id));
+    let pendingLikesSent = rawLikesSent.filter(id => !matches.includes(id));
+
+    // Mise à jour du compteur pour la limite des 5 flashs envoyés (seuls les non-matchés comptent)
+    currentLikesSentCount = pendingLikesSent.length;
+
+    // Mise à jour des éléments visuels de l'UI
+    document.getElementById('stat-likes-recus').innerText = pendingLikesRecus.length;
     document.getElementById('stat-likes-envoyes').innerText = currentLikesSentCount;
     document.getElementById('stat-matches').innerText = matches.length;
 
-    if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
+    // Déclenchement de la notification lors d'un NOUVEAU flash reçu
+    if (prevLikesRecusCount !== null && pendingLikesRecus.length > prevLikesRecusCount) {
      showToastNotification(i18n[currentLang].toastFlash, 'flash');
      playNotificationSound('flash');
      vibrateDevice('flash');
      triggerFlashAnimation();
     }
     
+    // Déclenchement lors d'un NOUVEAU Match
     if (prevMatches !== null) {
      const newMatches = matches.filter(id => !prevMatches.includes(id));
      if (newMatches.length > 0) {
@@ -1098,10 +1124,11 @@
      }
     }
     
-    prevLikesRecusCount = likesRecus;
+    prevLikesRecusCount = pendingLikesRecus.length;
     prevMatches = [...matches]; 
     if (document.getElementById('target-badge').value.trim()) validateTarget();
 
+    // Rendu de la liste des Matches
     const list = document.getElementById('match-list');
     list.innerHTML = matches.length ? "" : `<p class='text-center text-white/50 font-bold uppercase tracking-widest text-xs py-6'>${i18n[currentLang].noMatches}</p>`;
     matches.forEach(id => {
@@ -1119,11 +1146,10 @@
      listenForNotifications(roomID);
     });
 
+    // Rendu de la liste des Flashs Envoyés (Affiche uniquement les flashs en attente de match)
     const sentList = document.getElementById('likes-sent-list');
-    const myLikesArray = Object.keys(myLikes);
-    sentList.innerHTML = myLikesArray.length ? "" : `<p class='text-center text-white/40 text-xs uppercase font-bold py-6'>${i18n[currentLang].noLikesSent}</p>`;
-    myLikesArray.forEach(id => {
-     if (matches.includes(id)) return;
+    sentList.innerHTML = pendingLikesSent.length ? "" : `<p class='text-center text-white/40 text-xs uppercase font-bold py-6'>${i18n[currentLang].noLikesSent}</p>`;
+    pendingLikesSent.forEach(id => {
      const div = document.createElement('div');
      div.className = "bg-blue-950/50 px-5 py-3.5 rounded-2xl flex justify-between items-center border border-blue-500/30";
      div.innerHTML = `
@@ -1132,9 +1158,21 @@
      `;
      sentList.appendChild(div);
     });
+
     updateAdminStats();
     applyLanguage();
    });
+  }
+
+  function updateGlobalUnreadIndicator() {
+   const globalDot = document.getElementById('global-unread-dot');
+   if (globalDot) {
+    if (unreadRooms.size > 0) {
+     globalDot.classList.remove('hidden');
+    } else {
+     globalDot.classList.add('hidden');
+    }
+   }
   }
 
   function listenForNotifications(roomID) {
@@ -1143,9 +1181,15 @@
     const msgCount = Object.keys(messages).length;
     const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
     const dot = document.getElementById(`dot-${roomID}`);
-    if (dot && msgCount > lastSeen && activeChatRoom !== roomID) { 
-     dot.classList.remove('hidden'); 
+    
+    if (msgCount > lastSeen && activeChatRoom !== roomID) { 
+     if (dot) dot.classList.remove('hidden');
+     unreadRooms.add(roomID);
+    } else {
+     if (dot) dot.classList.add('hidden');
+     unreadRooms.delete(roomID);
     }
+    updateGlobalUnreadIndicator();
    });
   }
 
@@ -1178,8 +1222,12 @@
    activeChatRoom = [currentBadge, target].sort().join('-');
    document.getElementById('chat-target-badge').innerText = target;
    document.getElementById('chat-window').classList.remove('hidden');
+   
    const dot = document.getElementById(`dot-${activeChatRoom}`);
    if (dot) dot.classList.add('hidden');
+   unreadRooms.delete(activeChatRoom);
+   updateGlobalUnreadIndicator();
+   
    const chatRef = ref(db, `${basePath}/messages/${activeChatRoom}`);
    onValue(chatRef, (snap) => {
     const container = document.getElementById('chat-messages');
