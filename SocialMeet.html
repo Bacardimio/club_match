@@ -15,6 +15,7 @@
  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
  <style>
  :root {
+   --topbar-h: calc(3.25rem + env(safe-area-inset-top)); /* hauteur reelle de #top-bar */
    --accent-rgb: 255,79,216;
    --accent: #FF4FD8;      /* magenta néon — CTA, liseré principal */
    --accent-2: #4CE0FF;    /* cyan électrique */
@@ -62,6 +63,41 @@
  @keyframes shimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
  .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
  @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+
+ /* --- Barre d'outils fixe : une SEULE rangee horizontale pour la cloche, la langue et
+    l'engrenage. Auparavant l'engrenage et la langue flottaient en position:absolute
+    (z-50) tandis que la cloche vivait dans le header sticky (z-30) : sur smartphone les
+    deux blocs se recouvraient. Ils partagent desormais le meme conteneur, donc le
+    chevauchement est structurellement impossible.
+
+    Empilement (a respecter si on ajoute une couche) :
+      30  header sticky du tableau de bord
+      50  #top-bar            <- au-dessus du contenu, SOUS toutes les modales
+      60  popups confirmer / annuler / supprimer
+      65  toasts
+      80  fenetre de chat        90  changement d'ambiance      95  popup premium
+      100 annonce de match      120 panneau admin             200 loader
+    La barre etait a z-70 : ses trois boutons flottaient par-dessus le fond assombri
+    des popups z-60 (invitation, annulation, suppression). --- */
+ #top-bar {
+   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+   display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+   padding: calc(0.5rem + env(safe-area-inset-top)) 1rem 0.5rem;
+   pointer-events: none;
+   background: linear-gradient(to bottom, rgba(11,10,18,0.96) 40%, rgba(11,10,18,0.72) 75%, rgba(11,10,18,0));
+ }
+ #top-bar > * { pointer-events: auto; }
+ .top-btn {
+   height: 36px; min-width: 36px; padding: 0 10px; border-radius: 13px;
+   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+   font-size: 15px; line-height: 1; color: var(--cream); white-space: nowrap;
+   transition: background 0.2s, transform 0.15s, opacity 0.2s;
+ }
+ .top-btn.hidden { display: none; }
+ .top-btn:hover { background: rgba(255,255,255,0.11); }
+ .top-btn:active { transform: scale(0.94); }
 
  /* --- Typo dédiée aux ambiances : Space Grotesk, grotesque contemporain, très
     lisible en petit corps et plus caractériel qu'Inter pour un libellé de mood. --- */
@@ -155,20 +191,24 @@
  .notification-dot { width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
  </style>
 </head>
-<body class="flex flex-col min-h-screen items-center p-4">
+<body class="flex flex-col min-h-screen items-center px-4 pb-4 pt-[var(--topbar-h)]">
 
  <!-- Initial Loader -->
- <div id="app-loading-fallback" class="fixed inset-0 bg-[#0a0a0a] z-[200] flex flex-col items-center justify-center p-6 text-center">
+ <div id="app-loading-fallback" class="fixed inset-0 bg-[var(--ink)] z-[200] flex flex-col items-center justify-center p-6 text-center">
    <div class="w-12 h-12 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4"></div>
    <p class="text-gray-400 font-bold uppercase tracking-widest text-xs" data-i18n="loading">Connexion au serveur Firebase...</p>
  </div>
 
- <div id="toast-container" aria-live="polite" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-4 text-center"></div>
+ <div id="toast-container" aria-live="polite" style="top: calc(var(--topbar-h) + 0.5rem);" class="fixed left-1/2 -translate-x-1/2 z-[65] space-y-2 pointer-events-none w-full max-w-xs px-4 text-center"></div>
 
- <!-- Top Right Action Buttons (Admin gear + Lang toggle stacked underneath) -->
- <div class="absolute right-4 z-50 flex flex-col items-end space-y-2 pt-safe-4" style="top:0;">
-   <button id="admin-trigger" class="glass opacity-60 hover:opacity-100 p-2 rounded-xl text-base transition-all">⚙️</button>
-   <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
+ <!-- Barre d'outils unique : cloche, langue, admin. Rangee horizontale, jamais superposee. -->
+ <div id="top-bar">
+   <button id="notif-toggle" class="top-btn relative hidden">
+     <span id="notif-icon">🔔</span>
+     <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-black flex items-center justify-center">0</span>
+   </button>
+   <button id="lang-toggle-btn" class="top-btn text-xs font-bold tracking-wider uppercase">🇬🇧 EN</button>
+   <button id="admin-trigger" class="top-btn opacity-60 hover:opacity-100">⚙️</button>
  </div>
 
  <!-- Match Overlay -->
@@ -246,7 +286,7 @@
  </div>
 
  <!-- Login / Capture Screen -->
- <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-8 animate-pop text-center mt-10">
+ <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-8 animate-pop text-center mt-4">
    <div>
      <p class="eyebrow mb-2" data-i18n="badgeLabel">🎟️ Ton badge d'accès</p>
      <h1 class="font-display text-4xl font-extrabold tracking-tight leading-tight uppercase" style="color:var(--cream)">Social<span class="text-holo">Meet</span></h1>
@@ -295,7 +335,7 @@
 
  <!-- Main App Dashboard -->
  <div id="main-app" class="hidden w-full max-w-md space-y-5 pt-2 pb-12 mx-auto">
-   <header class="flex items-center justify-between py-3 px-5 bg-black/60 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md shadow-lg">
+   <header class="flex items-center justify-between py-3 px-5 bg-black/60 rounded-3xl border border-white/5 sticky top-[var(--topbar-h)] z-30 backdrop-blur-md shadow-lg">
      <div class="flex items-center space-x-4">
        <div class="flex flex-col items-center relative">
          <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic" title="Cliquer pour refaire ta photo 📸">
@@ -309,13 +349,6 @@
          </button>
        </div>
      </div>
-
-     <!-- Cloche : l'API de notification exige un geste utilisateur, d'où ce bouton dédié.
-          Le badge affiche le nombre d'invitations en attente même notifications refusées. -->
-     <button id="notif-toggle" class="relative p-2.5 rounded-2xl bg-white/5 border border-white/10 text-lg leading-none transition-all shrink-0">
-       <span id="notif-icon">🔔</span>
-       <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-black flex items-center justify-center">0</span>
-     </button>
    </header>
 
    <!-- Invitations reçues : placées tout en haut car c'est l'information la plus
@@ -356,7 +389,7 @@
  </div>
 
  <!-- Chat Window -->
- <div id="chat-window" class="hidden fixed inset-0 bg-[#0a0a0a] z-[80] flex flex-col">
+ <div id="chat-window" class="hidden fixed inset-0 bg-[var(--ink)] z-[80] flex flex-col">
    <header class="p-4 border-b border-white/10 flex items-center space-x-4 bg-black/60 backdrop-blur-md">
      <button id="close-chat-trigger" class="text-3xl text-white opacity-60 hover:opacity-100 px-2 transition-all">←</button>
      <div class="relative">
@@ -491,6 +524,8 @@
      wrongPassword: "Mot de passe incorrect ❌", userDeleted: "Utilisateur supprimé ❌",
      adminDeleteBtn: "Supprimer ❌",
      confirmReset: "Voulez-vous vraiment vider toutes les données de cet événement ?",
+     resetFailedDb: "Échec de la réinitialisation : la base de données a refusé la suppression (vérifie les règles Firebase). Rien n'a été modifié.",
+     resetPartialStorage: "Réinitialisation effectuée, mais certaines photos n'ont pas pu être supprimées du stockage (droits insuffisants). Vérifie les règles Firebase Storage.",
      confirmDeleteUser: "Supprimer cet utilisateur indésirable ?",
      allFilter: "Tous",
      premiumFilter: "Tous (Premium)",
@@ -549,6 +584,8 @@
      wrongPassword: "Incorrect password ❌", userDeleted: "User deleted ❌",
      adminDeleteBtn: "Delete ❌",
      confirmReset: "Do you really want to clear all data for this event?",
+     resetFailedDb: "Reset failed: the database refused the deletion (check your Firebase rules). Nothing was changed.",
+     resetPartialStorage: "Reset complete, but some photos couldn't be deleted from storage (insufficient permissions). Check your Firebase Storage rules.",
      confirmDeleteUser: "Delete this unwanted user?",
      allFilter: "All",
      premiumFilter: "All (Premium)",
@@ -590,7 +627,8 @@
  let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
  let tempPhotoBase64 = null; 
  let selectedVibe = null;
- let currentFilter = 'all'; 
+ let currentFilter = 'all';
+ let filterInitialized = false; // le filtre par défaut ne doit être posé qu'une fois, pas à chaque mise à jour de la liste des utilisateurs
 
  let activeChatRoom = null;
  let activeChatUnsubscribe = null; // évite l'accumulation de listeners onValue à chaque ouverture de chat
@@ -656,25 +694,68 @@
 
  // Remise à zéro (vide uniquement la base de données de l'événement sans supprimer le conteneur/config)
  document.getElementById('reset-event-trigger').onclick = async () => {
-   if (confirm(t('confirmReset'))) {
+   if (!confirm(t('confirmReset'))) return;
+   const btn = document.getElementById('reset-event-trigger');
+   const originalLabel = btn.textContent;
+   btn.disabled = true; btn.textContent = '...';
+
+   // On ne touche jamais `${basePath}/config` : c'est la fiche de l'événement (nom,
+   // mot de passe admin, statut ouvert/fermé) — c'est justement ce qu'on veut garder.
+   let dbFailed = false;
+   try {
      await remove(ref(db, `${basePath}/users`));
      await remove(ref(db, `${basePath}/likes`));
      await remove(ref(db, `${basePath}/messages`));
-     // Nettoyage du bucket Storage : sans ça, les photos de tous les participants restent
-     // stockées indéfiniment (coût qui s'accumule) même après un reset de l'événement.
-     try {
-       const folderRef = storageRef(storage, `events/${eventID}/photos`);
-       const filesList = await listAll(folderRef);
-       await Promise.all(filesList.items.map(item => deleteObject(item).catch(() => {})));
-     } catch (e) { console.error('Nettoyage Storage échoué :', e); }
-     // Fix : localStorage.clear() effaçait TOUT le localStorage du domaine, y compris
-     // les inscriptions à d'autres événements sur le même appareil. On ne retire ici que
-     // les clés propres à CET événement (les autres participants seront de toute façon
-     // ramenés à l'écran d'inscription automatiquement, cf. `if (!allUsersData[myUserId])`).
-     localStorage.removeItem(`isRegistered_${eventID}`);
-     localStorage.removeItem(`myPhoto_${eventID}`);
-     location.reload();
+   } catch (e) {
+     // Cause la plus probable : les règles Realtime Database exigent une autorisation
+     // par enfant (ex. "users/{uid}" scopé à `auth.uid == uid`) plutôt qu'au niveau du
+     // nœud parent "users". Un remove() global est alors rejeté en bloc — sans ce
+     // try/catch, l'erreur passait totalement inaperçue et le reste du reset
+     // (Storage, localStorage, reload) s'exécutait quand même, donnant l'impression
+     // trompeuse d'un reset "réussi" alors que rien n'avait été vidé.
+     console.error('Vidage Realtime Database échoué :', e);
+     dbFailed = true;
    }
+
+   // Nettoyage du bucket Storage : sans ça, les photos de tous les participants restent
+   // stockées indéfiniment (coût qui s'accumule) même après un reset de l'événement.
+   let storagePb = false;
+   try {
+     const folderRef = storageRef(storage, `events/${eventID}/photos`);
+     const filesList = await listAll(folderRef);
+     const results = await Promise.all(
+       filesList.items.map(item => deleteObject(item).then(() => true).catch(() => false))
+     );
+     storagePb = results.some(ok => !ok);
+   } catch (e) {
+     // Cause la plus probable : des règles Storage qui limitent la suppression au
+     // propriétaire du fichier (`request.auth.uid == uid`). L'admin n'étant ici qu'un
+     // simple mot de passe côté client — pas un vrai rôle Firebase — il n'a alors pas
+     // le droit de supprimer les photos des AUTRES participants, seulement la sienne.
+     // Voir aussi le filet de rattrapage dans loadApp() : chaque appareil encore
+     // connecté supprime sa PROPRE photo dès qu'il détecte le reset.
+     console.error('Nettoyage Storage échoué :', e);
+     storagePb = true;
+   }
+
+   btn.disabled = false; btn.textContent = originalLabel;
+
+   if (dbFailed) {
+     // On NE recharge PAS : la base n'a pas été vidée, laisser croire le contraire
+     // serait pire que de ne rien afficher.
+     alert(t('resetFailedDb'));
+     return;
+   }
+   if (storagePb) alert(t('resetPartialStorage'));
+
+   // Fix : localStorage.clear() effaçait TOUT le localStorage du domaine, y compris
+   // les inscriptions à d'autres événements sur le même appareil. On ne retire ici que
+   // les clés propres à CET événement (les autres participants seront de toute façon
+   // ramenés à l'écran d'inscription automatiquement, cf. `if (!allUsersData[myUserId])`
+   // dans loadApp(), qui supprime au passage leur propre photo Storage en fallback).
+   localStorage.removeItem(`isRegistered_${eventID}`);
+   localStorage.removeItem(`myPhoto_${eventID}`);
+   location.reload();
  };
 
  // Fonction pour supprimer un utilisateur indésirable depuis l'admin
@@ -934,6 +1015,10 @@
    document.getElementById('app-loading-fallback').classList.add('hidden');
    ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
    document.getElementById(id).classList.remove('hidden');
+   // La cloche ne concerne que les participants deja inscrits : inutile de l'afficher
+   // sur l'ecran de selfie ou sur l'ecran "evenement ferme".
+   const bell = document.getElementById('notif-toggle');
+   if (bell) bell.classList.toggle('hidden', id !== 'main-app');
  }
 
  function launchFireworks(targetPhotoUrl) {
@@ -1210,7 +1295,15 @@
 
    onValue(ref(db, `${basePath}/users`), (snapshot) => {
      allUsersData = snapshot.val() || {};
-     if (!allUsersData[myUserId]) { localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return; }
+     if (!allUsersData[myUserId]) {
+       // Filet de rattrapage : si mon profil a disparu (reset admin ou suppression
+       // individuelle), je supprime MA PROPRE photo du Storage avant de recharger.
+       // Utile si les règles Storage limitent la suppression au propriétaire du
+       // fichier : dans ce cas, l'admin ne peut pas effacer cette photo depuis SON
+       // navigateur (voir le handler de reset), seul CE navigateur-ci le peut.
+       deleteObject(storageRef(storage, photoStoragePath(myUserId))).catch(() => {});
+       localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return;
+     }
      
      const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
      const vInfo = getVibe(myCurrentVibe);
@@ -1218,6 +1311,16 @@
      document.getElementById('my-vibe-text-header').innerText = vInfo.title;
      document.getElementById('my-vibe-text-header').style.color = vInfo.color;
      document.getElementById('my-profile-image').style.borderColor = vInfo.color;
+
+     // Le mood "Tous" étant désormais payant, le mur photo s'ouvre par défaut filtré
+     // sur MON PROPRE mood plutôt que sur tout le monde. On ne le fait qu'une seule
+     // fois (premier chargement) pour ne pas écraser un filtre déjà choisi par
+     // l'utilisateur à chaque mise à jour de la liste des participants.
+     if (!filterInitialized) {
+       filterInitialized = true;
+       currentFilter = myCurrentVibe;
+       initVibesUI(); // reconstruit les boutons de filtre avec le bon état actif
+     }
      
      document.getElementById('admin-total-users').innerText = Object.keys(allUsersData).length;
      
