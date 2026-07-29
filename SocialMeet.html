@@ -231,8 +231,12 @@
      <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 relative">
        <img id="confirm-target-photo" src="" alt="Target" class="w-full h-full object-cover">
      </div>
-     <div class="flex space-x-4">
+     <div class="flex space-x-3">
        <button onclick="document.getElementById('confirm-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="cancel">Annuler</button>
+       <!-- N'apparaît que pour une invitation REÇUE (voir openInviteConfirm) : refuser
+            supprime la demande et prévient le demandeur, contrairement à "Annuler"
+            qui se contente de fermer la popup sans rien décider. -->
+       <button id="btn-decline-invite" class="hidden flex-1 bg-red-600/90 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20" data-i18n="declineInvite">Refuser</button>
        <button id="btn-confirm-flash" class="flex-1 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg transition-all">Action</button>
      </div>
    </div>
@@ -534,6 +538,10 @@
      invitesHint: "Touche une photo pour répondre.",
      inviteReceivedPrompt: "Cette personne t'a envoyé une invitation",
      acceptInvite: "Accepter ✨",
+     declineInvite: "Refuser",
+     toastInviteDeclined: "Ton invitation a été déclinée",
+     notifDeclineTitle: "Invitation déclinée",
+     notifDeclineBody: "La personne a décliné ton invitation.",
      notifInviteTitle: "Nouvelle invitation 💌",
      notifInviteBody: "Quelqu'un veut te rencontrer ce soir.",
      notifMatchTitle: "C'est un match ! 🔥",
@@ -594,6 +602,10 @@
      invitesHint: "Tap a photo to reply.",
      inviteReceivedPrompt: "This person sent you an invitation",
      acceptInvite: "Accept ✨",
+     declineInvite: "Decline",
+     toastInviteDeclined: "Your invitation was declined",
+     notifDeclineTitle: "Invitation declined",
+     notifDeclineBody: "They declined your invitation.",
      notifInviteTitle: "New invitation 💌",
      notifInviteBody: "Someone wants to meet you tonight.",
      notifMatchTitle: "It's a match! 🔥",
@@ -706,6 +718,7 @@
      await remove(ref(db, `${basePath}/users`));
      await remove(ref(db, `${basePath}/likes`));
      await remove(ref(db, `${basePath}/messages`));
+     await remove(ref(db, `${basePath}/declines`));
    } catch (e) {
      // Cause la plus probable : les règles Realtime Database exigent une autorisation
      // par enfant (ex. "users/{uid}" scopé à `auth.uid == uid`) plutôt qu'au niveau du
@@ -768,6 +781,12 @@
        if (currentLikesData[otherUid] && currentLikesData[otherUid][uid]) {
          await remove(ref(db, `${basePath}/likes/${otherUid}/${uid}`));
        }
+     }
+     // Nettoie aussi les refus en attente le concernant (dans les deux sens), pour ne
+     // pas laisser un utilisateur supprimé recevoir ou déclencher une notification.
+     await remove(ref(db, `${basePath}/declines/${uid}`)).catch(() => {});
+     for (let otherUid in allUsersData) {
+       await remove(ref(db, `${basePath}/declines/${otherUid}/${uid}`)).catch(() => {});
      }
      // Supprime aussi sa photo du Storage (best-effort : on ignore l'erreur si le
      // fichier n'existe déjà plus, pour ne pas bloquer le reste de la suppression).
@@ -844,6 +863,13 @@
      btnChg.onclick = async () => {
        await update(ref(db, `${basePath}/users/${myUserId}`), { vibe: v.id });
        document.getElementById('vibe-change-popup').classList.add('hidden');
+       // Le filtre du mur photo doit suivre le mood qu'on vient de choisir, comme au
+       // tout premier chargement de l'app (voir `filterInitialized` dans loadApp) —
+       // sinon on resterait filtré sur l'ancien mood après en avoir changé.
+       currentFilter = v.id;
+       filterInitialized = true;
+       initVibesUI();
+       renderPhotoWall();
      };
      chgContainer.appendChild(btnChg);
 
@@ -1138,6 +1164,7 @@
    const btnFlash = document.getElementById('btn-confirm-flash');
    btnFlash.innerText = theyInvited ? t('acceptInvite') : vibeInfo.action;
    btnFlash.style.background = vibeInfo.color;
+   document.getElementById('btn-decline-invite').classList.toggle('hidden', !theyInvited);
    document.getElementById('confirm-flash-popup').classList.remove('hidden');
  }
 
@@ -1266,6 +1293,19 @@
    const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
    if(!check.exists()) showToastNotification(t('toastInviteSent'));
    targetToFlash = null;
+ };
+
+ // Refuser une invitation reçue : supprime la demande (elle disparaît de mon mur et de
+ // ma liste d'invitations) et écrit une trace dans "declines" pour que le DEMANDEUR en
+ // soit prévenu — sans back-end, c'est ce nœud Firebase que son propre navigateur
+ // écoute (cf. le listener `declines/${myUserId}` plus bas) pour afficher le refus.
+ document.getElementById('btn-decline-invite').onclick = async () => {
+   document.getElementById('confirm-flash-popup').classList.add('hidden');
+   if (!targetToFlash) return;
+   const requesterUid = targetToFlash;
+   targetToFlash = null;
+   await remove(ref(db, `${basePath}/likes/${requesterUid}/${myUserId}`));
+   await set(ref(db, `${basePath}/declines/${requesterUid}/${myUserId}`), serverTimestamp());
  };
 
  document.getElementById('btn-confirm-cancel').onclick = async () => {
@@ -1404,6 +1444,21 @@
      
      lastMatches = matches;
      renderMatches(matches);
+   });
+
+   // Écoute les refus reçus sur MES invitations envoyées (voir btn-decline-invite plus
+   // haut). Chaque entrée traitée est immédiatement supprimée : sans back-end, c'est le
+   // moyen le plus simple de garantir qu'un refus n'est notifié qu'une seule fois, tout
+   // en restant fiable si je n'étais pas en ligne au moment où l'autre a refusé (l'entrée
+   // reste alors en base jusqu'à ma prochaine connexion).
+   onValue(ref(db, `${basePath}/declines/${myUserId}`), (snap) => {
+     const declines = snap.val() || {};
+     Object.keys(declines).forEach(declinerUid => {
+       showToastNotification(t('toastInviteDeclined'));
+       vibrate([30, 40, 30]);
+       pushSystemNotification(t('notifDeclineTitle'), t('notifDeclineBody'), 'socialmeet-decline-' + declinerUid);
+       remove(ref(db, `${basePath}/declines/${myUserId}/${declinerUid}`)).catch(() => {});
+     });
    });
  }
 
