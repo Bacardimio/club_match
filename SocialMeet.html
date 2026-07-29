@@ -333,16 +333,24 @@
  <!-- Main App Dashboard -->
  <div id="main-app" class="hidden w-full max-w-md space-y-5 pt-2 pb-12 mx-auto">
    <header class="flex items-center justify-between py-3 px-5 sticky top-[var(--topbar-h)] z-30">
-     <div class="flex items-center space-x-4">
-       <div class="flex flex-col items-center relative">
+     <div class="flex items-center space-x-4 min-w-0">
+       <!-- shrink-0 : la photo garde toujours ses 76px, quelle que soit la longueur du
+            nom du mood affiché à côté (ex. "Networking" vs "Affinités"). Avant, aucun
+            des deux éléments n'avait de règle de rétrécissement explicite, donc flexbox
+            les compressait tous les deux à parts égales dès que le mood le plus long ne
+            tenait plus — la photo se retrouvait ovale sur petit écran. --> 
+       <div class="flex flex-col items-center relative shrink-0">
          <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic" title="Cliquer pour refaire ta photo 📸">
          <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
        </div>
        <!-- Sans encapsulage : le mood est le texte lui-même, pas une pastille dans une
-            pastille. La police display (Unbounded) fait tout le travail visuel. -->
-       <button class="flex items-center gap-2 group" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
-         <span class="font-display text-2xl font-extrabold uppercase tracking-tight leading-none" id="my-vibe-text-header" data-i18n="moodDefault">Ambiance</span>
-         <span class="text-sm opacity-40 group-active:opacity-80 transition-opacity">✏️</span>
+            pastille. La police display (Unbounded) fait tout le travail visuel.
+            min-w-0 + flex-1 : c'est maintenant CE bouton qui absorbe la contrainte
+            d'espace — sa taille de police est fluide (clamp) selon la largeur
+            disponible, avec troncature en tout dernier recours sur un écran extrême. -->
+       <button class="flex items-center gap-2 group min-w-0 flex-1" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
+         <span class="font-display font-extrabold uppercase tracking-tight leading-none truncate" id="my-vibe-text-header" style="font-size: clamp(1.05rem, 6vw, 1.5rem);" data-i18n="moodDefault">Ambiance</span>
+         <span class="text-sm opacity-40 group-active:opacity-80 transition-opacity shrink-0">✏️</span>
        </button>
      </div>
    </header>
@@ -834,6 +842,16 @@
    // visible) — au clic, rien ne se passait. On pré-remplit donc avec le mood actuel.
    selectedVibe = (allUsersData[myUserId] && allUsersData[myUserId].vibe) || myOwnVibeId || 'flirt';
 
+   // LE VRAI BUG signalé ensuite : `btn-validate-join.disabled` n'était remis à `false`
+   // que dans le bloc catch (échec réseau) — jamais après un succès, puisqu'on quittait
+   // l'écran juste après via loadApp(). Ce même bouton, jamais recréé, restait donc
+   // bloqué à `disabled = true` pour le reste de la session dès la toute première
+   // inscription réussie : au clic sur "Mettre à jour ma photo", le navigateur ignorait
+   // purement et simplement l'interaction, sans même exécuter de JS.
+   const btnVal = document.getElementById('btn-validate-join');
+   btnVal.disabled = false;
+   setValidateJoinReady(true); // le mood est déjà pré-rempli ci-dessus : le bouton doit aussi le MONTRER comme prêt, pas seulement l'être techniquement
+
    // Le texte s'adapte au contexte : on ne "rejoint" pas l'événement une seconde fois,
    // on met juste à jour sa photo.
    const instructions = document.getElementById('login-instructions');
@@ -942,6 +960,21 @@
    renderPhotoWall();
  }
 
+ // Bascule l'aspect ET l'état réellement cliquable du bouton de validation. Séparée de
+ // selectVibeForCapture() pour pouvoir être appelée aussi quand on pré-remplit le mood
+ // par programmation (retake de la photo de profil), sans passer par un clic manuel sur
+ // une tuile.
+ function setValidateJoinReady(isReady) {
+   const btnVal = document.getElementById('btn-validate-join');
+   if (isReady) {
+     btnVal.classList.remove('bg-white/20', 'opacity-50', 'cursor-not-allowed');
+     btnVal.classList.add('btn-main');
+   } else {
+     btnVal.classList.remove('btn-main');
+     btnVal.classList.add('bg-white/20', 'opacity-50', 'cursor-not-allowed');
+   }
+ }
+
  function selectVibeForCapture(vibeId, element) {
    selectedVibe = vibeId;
    document.querySelectorAll('.capture-vibe-btn').forEach(b => {
@@ -951,10 +984,7 @@
    element.classList.remove('border-white/10', 'opacity-70');
    element.classList.add('border-white', 'bg-white/10', 'opacity-100');
    element.style.borderColor = getVibe(vibeId).color;
-   
-   const btnVal = document.getElementById('btn-validate-join');
-   btnVal.classList.remove('bg-white/20', 'opacity-50', 'cursor-not-allowed');
-   btnVal.classList.add('btn-main');
+   setValidateJoinReady(true);
  }
 
  applyTranslations(); // applique la langue mémorisée (et régénère les listes de vibes traduites) dès le chargement
@@ -1197,11 +1227,17 @@
      // Fix : sans ce catch, un échec réseau laissait le bouton bloqué indéfiniment
      // sur "Création du profil..." sans aucun message d'erreur pour l'utilisateur.
      console.error(e);
-     btnVal.disabled = false;
      // Restaure le texte du contexte en cours (mise à jour de photo vs premier
      // enregistrement) plutôt que de toujours revenir sur "Rejoindre l'événement".
      label.innerText = wasAlreadyRegistered ? t('updatePhoto') : t('validateJoin');
      showToastNotification(currentLang === 'fr' ? "Échec de l'envoi, réessaie ❌" : "Failed to send, try again ❌");
+   } finally {
+     // Fix racine du bug de retake : `disabled` n'était remis à `false` que dans le
+     // catch, jamais après un succès (on quittait l'écran juste après). Ce même bouton
+     // n'étant jamais recréé, il restait bloqué à `disabled = true` pour le reste de la
+     // session dès la toute première inscription réussie — au clic pour "Mettre à jour
+     // ma photo" plus tard, rien ne se produisait, pas même une erreur visible.
+     btnVal.disabled = false;
    }
  };
 
@@ -1411,9 +1447,18 @@
    targetToUnmatch = null;
  };
 
+ // Effet de bord du fix ci-dessus : le bouton de validation fonctionnant maintenant
+ // aussi pour un retake, loadApp() peut être appelée une seconde fois dans la même
+ // session (inscription initiale, puis mise à jour de photo). Sans garde, chaque appel
+ // rajoutait 4 écouteurs onValue (users/likes/declines/messages) en plus des précédents
+ // — résultat : toasts, vibrations et rendus en double après un simple retake réussi.
+ let appListenersAttached = false;
+
  function loadApp() {
    showUI('main-app');
    if(myPhotoData) document.getElementById('my-profile-image').src = myPhotoData;
+   if (appListenersAttached) return; // l'UI est déjà à jour ci-dessus ; inutile de se réabonner
+   appListenersAttached = true;
 
    onValue(ref(db, `${basePath}/users`), (snapshot) => {
      allUsersData = snapshot.val() || {};
