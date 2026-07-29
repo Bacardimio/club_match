@@ -426,6 +426,7 @@
            <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="connected">Participants</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
            <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="invitations">Invitations</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
            <tr class="bg-[var(--accent)]/10"><td class="px-6 py-4 font-medium text-[var(--accent)] italic" data-i18n="connections">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-[var(--accent)] text-lg">0</td></tr>
+           <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="messagesTotal">Messages</td><td id="admin-total-messages" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
          </tbody>
        </table>
      </div>
@@ -521,7 +522,7 @@
      messagesCounter: n => `Messages : ${n} / 10`,
      messagePlaceholder: "Message...", send: "Envoyer",
      adminTitle: "Administration", indicator: "Indicateur", value: "Valeur",
-     connected: "Participants", invitations: "Invitations", connections: "Connexions",
+     connected: "Participants", invitations: "Invitations", connections: "Connexions", messagesTotal: "Messages",
      userManagement: "Gestion des utilisateurs", resetAll: "Tout réinitialiser",
      toastNewLike: "Nouvelle invitation reçue ! 👀", toastNewMatch: "Connexion acceptée ! 🔥",
      toastInviteSent: "Invitation envoyée ! ✈️",
@@ -585,7 +586,7 @@
      messagesCounter: n => `Messages: ${n} / 10`,
      messagePlaceholder: "Message...", send: "Send",
      adminTitle: "Administration", indicator: "Metric", value: "Value",
-     connected: "Participants", invitations: "Invitations", connections: "Matches",
+     connected: "Participants", invitations: "Invitations", connections: "Matches", messagesTotal: "Messages",
      userManagement: "User management", resetAll: "Reset everything",
      toastNewLike: "New invitation received! 👀", toastNewMatch: "Connection accepted! 🔥",
      toastInviteSent: "Invitation sent! ✈️",
@@ -1459,6 +1460,19 @@
        pushSystemNotification(t('notifDeclineTitle'), t('notifDeclineBody'), 'socialmeet-decline-' + declinerUid);
        remove(ref(db, `${basePath}/declines/${myUserId}/${declinerUid}`)).catch(() => {});
      });
+   });
+
+   // Compteur total de messages (toutes conversations confondues), affiché dans le
+   // panneau admin. Il n'a qu'un rôle de statistique, mais sert aussi de preuve visuelle
+   // en temps réel que "Tout réinitialiser" vide bien `${basePath}/messages` : ce
+   // chiffre doit retomber à 0 juste après un reset, sur TOUS les navigateurs ouverts.
+   onValue(ref(db, `${basePath}/messages`), (snapshot) => {
+     const allRooms = snapshot.val() || {};
+     const totalMessages = Object.values(allRooms).reduce(
+       (sum, room) => sum + Object.keys(room || {}).length, 0
+     );
+     const el = document.getElementById('admin-total-messages');
+     if (el) el.innerText = totalMessages;
    });
  }
 
