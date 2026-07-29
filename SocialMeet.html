@@ -3,36 +3,32 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
- <meta name="theme-color" content="#0B0A12">
+ <meta name="theme-color" content="#0B0B10">
  <meta name="apple-mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
  <title>SocialMeet — Ton pass événement</title>
  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,800;1,9..144,600&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
  <script src="https://cdn.tailwindcss.com"></script>
  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
  <style>
  :root {
-   --accent: #FF4FD8;      /* magenta néon — CTA, liseré principal */
-   --accent-2: #4CE0FF;    /* cyan électrique */
-   --accent-3: #B14CFF;    /* violet — 3e stop du dégradé holographique */
-   --ink: #0B0A12;         /* noir profond à dominante violette */
-   --cream: #F3F1FF;       /* blanc légèrement lavande pour les titres */
+   --accent-rgb: 244,63,94;
+   --accent: #F43F5E;      /* rose — invitations, CTA */
+   --accent-2: #F5A623;    /* ambre chaud — dégradé CTA */
+   --ink: #0B0B10;         /* noir chaud, plus profond qu'un noir pur */
+   --gold: #C9A24D;        /* or champagne — liseré premium */
+   --cream: #F3EEE4;       /* blanc cassé pour les titres */
  }
  * { -webkit-tap-highlight-color: transparent; }
  html { -webkit-text-size-adjust: 100%; }
  body {
-   background-color: var(--ink);
-   background-image:
-     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-     radial-gradient(circle at 12% 15%, rgba(76,224,255,0.20), transparent 42%),
-     radial-gradient(circle at 88% 12%, rgba(255,79,216,0.16), transparent 45%),
-     radial-gradient(circle at 50% 105%, rgba(177,76,255,0.18), transparent 50%);
-   background-repeat: repeat, no-repeat, no-repeat, no-repeat;
-   background-size: 160px 160px, cover, cover, cover;
-   background-blend-mode: overlay, normal, normal, normal;
+   background:
+     radial-gradient(ellipse 120% 55% at 50% -10%, rgba(201,162,77,0.11), transparent 60%),
+     radial-gradient(ellipse 90% 50% at 100% 100%, rgba(244,63,94,0.07), transparent 55%),
+     var(--ink);
    color: var(--cream);
    font-family: 'Inter', -apple-system, system-ui, sans-serif;
    overflow-x: hidden;
@@ -40,27 +36,58 @@
    overscroll-behavior-y: contain;
    min-height: 100dvh;
  }
- .font-display { font-family: 'Unbounded', ui-sans-serif, sans-serif; }
- .text-holo {
-   background: linear-gradient(90deg, var(--accent-2), var(--accent-3) 50%, var(--accent));
-   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
- }
- .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-2); }
- .glass { background: rgba(255, 255, 255, 0.045); backdrop-filter: blur(22px) saturate(150%); border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+ .font-display { font-family: 'Fraunces', ui-serif, Georgia, serif; }
+ .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); }
+ .glass { background: rgba(255, 255, 255, 0.035); backdrop-filter: blur(20px); border: 1px solid rgba(201,162,77,0.14); }
  .event-card { position: relative; }
  .event-card::before {
-   content: ""; position: absolute; top: -1px; left: 10%; right: 10%; height: 2px; border-radius: 2px;
-   background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent-3), var(--accent), transparent); opacity: 0.9;
+   content: ""; position: absolute; top: -1px; left: 14%; right: 14%; height: 2px; border-radius: 2px;
+   background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.8;
  }
- .btn-main {
-   background: linear-gradient(120deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2));
-   background-size: 250% 250%; animation: shimmer 7s ease infinite;
-   box-shadow: 0 10px 26px -8px rgba(177,76,255,0.55); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
- }
- .btn-main:active { transform: scale(0.96); box-shadow: 0 4px 14px -6px rgba(177,76,255,0.5); }
- @keyframes shimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+ .btn-main { background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 24px -8px rgba(244,63,94,0.55); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+ .btn-main:active { transform: scale(0.96); box-shadow: 0 4px 14px -6px rgba(244,63,94,0.5); }
  .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
  @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+
+ /* --- Typo dédiée aux ambiances : Space Grotesk, grotesque contemporain, très
+    lisible en petit corps et plus caractériel qu'Inter pour un libellé de mood. --- */
+ .font-mood { font-family: 'Space Grotesk', 'Inter', -apple-system, sans-serif; letter-spacing: -0.015em; }
+ .mood-chip {
+   display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+   transition: background 0.2s, transform 0.15s;
+ }
+ .mood-chip:active { transform: scale(0.97); }
+ .mood-chip:hover { background: rgba(255,255,255,0.1); }
+
+ /* --- Invitations reçues : halo + pastille, l'information doit sauter aux yeux --- */
+ .invite-avatar { position: relative; flex: 0 0 auto; background: none; border: none; padding: 0; cursor: pointer; }
+ .invite-avatar img {
+   width: 68px; height: 68px; border-radius: 22px; object-fit: cover; display: block;
+   border: 2px solid var(--accent); box-shadow: 0 0 18px -3px var(--accent);
+ }
+ .invite-avatar .invite-ping {
+   position: absolute; inset: -4px; border-radius: 26px; border: 2px solid var(--accent);
+   animation: invitePing 1.9s cubic-bezier(0, 0, 0.2, 1) infinite; pointer-events: none;
+ }
+ @keyframes invitePing { 0% { opacity: 0.85; transform: scale(0.95); } 70%, 100% { opacity: 0; transform: scale(1.14); } }
+ .user-card.invited-me { border-color: var(--accent) !important; animation: invitedGlow 2s ease-in-out infinite; }
+ @keyframes invitedGlow {
+   0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
+   50% { box-shadow: 0 0 16px 2px rgba(var(--accent-rgb), 0.6); }
+ }
+ .invite-tag {
+   position: absolute; top: 6px; left: 6px; font-size: 13px; line-height: 1;
+   background: var(--accent); color: #fff; border-radius: 999px; padding: 4px 6px;
+   box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+ }
+
+ /* Accessibilité : on coupe les animations décoratives si le système le demande. */
+ @media (prefers-reduced-motion: reduce) {
+   .invite-avatar .invite-ping, .user-card.invited-me, .user-card.matched, .btn-main, .animate-pop {
+     animation: none !important;
+   }
+ }
 
  .hide-scrollbar::-webkit-scrollbar { display: none; }
  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -70,14 +97,11 @@
  .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
  .pt-safe-4 { padding-top: max(1rem, env(safe-area-inset-top)); }
 
- /* Camera UI — anneau holographique façon sticker chrome, technique padding-box / border-box */
+ /* Camera UI */
  .camera-wrapper {
    width: 240px; height: 240px; border-radius: 50%; overflow: hidden; margin: 0 auto;
-   border: 4px solid transparent;
-   background: linear-gradient(var(--ink), var(--ink)) padding-box,
-     conic-gradient(from 180deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2)) border-box;
-   box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 36px rgba(177,76,255,0.4);
-   position: relative; background-color: #111;
+   border: 4px solid var(--accent); box-shadow: 0 0 0 1px rgba(201,162,77,0.35), 0 0 34px rgba(244,63,94,0.35);
+   position: relative; background: #111;
  }
  #camera-feed { width: 100%; height: 100%; object-fit: cover; }
  #photo-canvas { width: 100%; height: 100%; object-fit: cover; }
@@ -90,26 +114,21 @@
  }
  .user-card:active { transform: scale(0.95); }
  .user-card.matched { animation: pulseMatch 2s infinite; }
- @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(255,79,216,0.45); } 70% { box-shadow: 0 0 0 10px rgba(255,79,216,0); } 100% { box-shadow: 0 0 0 0 rgba(255,79,216,0); } }
+ @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(201,162,77,0.45); } 70% { box-shadow: 0 0 0 10px rgba(201,162,77,0); } 100% { box-shadow: 0 0 0 0 rgba(201,162,77,0); } }
  .user-card img { width: 100%; height: 100%; object-fit: cover; }
- .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.22); }
- .my-profile-pic {
-   width: 76px; height: 76px; border-radius: 50%; object-fit: cover; cursor: pointer; transition: opacity 0.2s;
-   border: 3px solid transparent;
-   background: linear-gradient(var(--ink), var(--ink)) padding-box,
-     conic-gradient(from 180deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2)) border-box;
- }
+ .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(201,162,77,0.35); }
+ .my-profile-pic { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); cursor: pointer; transition: opacity 0.2s; }
  .my-profile-pic:hover { opacity: 0.85; }
 
  #match-announcement {
-   position: fixed; inset: 0; z-index: 100; background: rgba(6,4,14,0.96);
+   position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95);
    display: none; flex-direction: column; align-items: center; justify-content: center;
    text-align: center; animation: fadeIn 0.5s ease;
  }
  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
  .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; line-height: 1.4; }
- .msg-me { align-self: flex-end; background: linear-gradient(120deg, var(--accent-3), var(--accent)); color: white; border-bottom-right-radius: 4px; }
+ .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
  .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
  .notification-dot { width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
  </style>
@@ -118,7 +137,7 @@
 
  <!-- Initial Loader -->
  <div id="app-loading-fallback" class="fixed inset-0 bg-[#0a0a0a] z-[200] flex flex-col items-center justify-center p-6 text-center">
-   <div class="w-12 h-12 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4"></div>
+   <div class="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-4"></div>
    <p class="text-gray-400 font-bold uppercase tracking-widest text-xs" data-i18n="loading">Connexion au serveur Firebase...</p>
  </div>
 
@@ -133,7 +152,7 @@
  <!-- Match Overlay -->
  <div id="match-announcement">
    <p class="eyebrow mb-2" data-i18n="matchTitle1">C'est réciproque</p>
-   <h1 class="font-display text-6xl font-extrabold text-holo mb-8 uppercase" data-i18n="matchTitle2">Match 🔥</h1>
+   <h1 class="font-display text-6xl font-semibold italic text-white mb-8" data-i18n="matchTitle2">Match 🔥</h1>
    <div class="glass p-8 rounded-[2rem] shadow-[0_0_50px_rgba(255,255,255,0.2)] flex flex-col items-center">
      <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6" data-i18n="matchSubtitle">Invitation acceptée par</p>
      <div class="w-48 h-48 rounded-full overflow-hidden border-4 border-white mb-4">
@@ -188,7 +207,7 @@
  <!-- Change Vibe Popup -->
  <div id="vibe-change-popup" class="hidden fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-5 backdrop-blur-md">
    <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl">
-     <h3 class="font-display text-white text-center text-xl font-semibold mb-6" data-i18n="changeVibeTitle">Change ton ambiance</h3>
+     <h3 class="font-display text-white text-center text-2xl font-semibold italic mb-6" data-i18n="changeVibeTitle">Change ton ambiance</h3>
      <div class="grid grid-cols-1 gap-3 mb-6" id="vibe-change-list">
        <!-- Injected via JS -->
      </div>
@@ -198,7 +217,7 @@
 
  <!-- Closed Screen -->
  <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop p-4">
-   <h1 class="font-display text-3xl font-extrabold mb-6 tracking-tight uppercase">Social<span class="text-holo">Meet</span></h1>
+   <h1 class="font-display text-4xl font-semibold mb-6 tracking-tight">Social<span class="text-rose-500 italic">Meet</span></h1>
    <div class="glass event-card p-8 rounded-[2.5rem]">
      <p id="closed-message" class="text-gray-300 font-bold uppercase tracking-widest text-sm text-center" data-i18n="eventUnavailable">Cet événement n'est plus disponible.</p>
    </div>
@@ -208,8 +227,8 @@
  <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-8 animate-pop text-center mt-10">
    <div>
      <p class="eyebrow mb-2" data-i18n="badgeLabel">🎟️ Ton badge d'accès</p>
-     <h1 class="font-display text-4xl font-extrabold tracking-tight leading-tight uppercase" style="color:var(--cream)">Social<span class="text-holo">Meet</span></h1>
-     <p id="event-name-display" class="text-[var(--accent-2)] mt-3 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
+     <h1 class="font-display text-5xl font-semibold tracking-tight leading-tight" style="color:var(--cream)">Social<span class="text-rose-500 italic">Meet</span></h1>
+     <p id="event-name-display" class="text-rose-400 mt-3 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
    </div>
    
    <div class="glass event-card p-6 rounded-[2.5rem] space-y-6 shadow-2xl relative">
@@ -261,13 +280,32 @@
          <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
        </div>
        <div class="text-left">
-         <div class="cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
-           <p class="text-white text-sm font-bold uppercase tracking-wide" id="my-vibe-text-header" data-i18n="moodDefault">Ambiance</p>
-           <span class="inline-block mt-1 bg-white/10 px-2 py-1 rounded-md text-xs text-gray-300" data-i18n="editMood">Modifier ✏️</span>
-         </div>
+         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500 mb-1.5" data-i18n="myMoodLabel">Ton ambiance</p>
+         <button class="mood-chip" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
+           <span class="font-mood text-[15px] font-semibold leading-none" id="my-vibe-text-header" data-i18n="moodDefault">Ambiance</span>
+           <span class="text-[11px] leading-none opacity-70">✏️</span>
+         </button>
        </div>
      </div>
+
+     <!-- Cloche : l'API de notification exige un geste utilisateur, d'où ce bouton dédié.
+          Le badge affiche le nombre d'invitations en attente même notifications refusées. -->
+     <button id="notif-toggle" class="relative p-2.5 rounded-2xl bg-white/5 border border-white/10 text-lg leading-none transition-all shrink-0">
+       <span id="notif-icon">🔔</span>
+       <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-black flex items-center justify-center">0</span>
+     </button>
    </header>
+
+   <!-- Invitations reçues : placées tout en haut car c'est l'information la plus
+        actionnable de l'écran. Masquée tant qu'il n'y a rien en attente. -->
+   <div id="invites-section" class="hidden glass rounded-[2rem] p-4 space-y-3 animate-pop" style="border-color: var(--accent);">
+     <div class="flex items-center justify-between">
+       <span id="invites-label" class="font-mood text-sm font-semibold text-white" data-i18n="invitesLabel">Ils veulent te rencontrer</span>
+       <span id="invites-count" class="text-[11px] font-black px-2.5 py-1 rounded-full bg-[var(--accent)] text-white">0</span>
+     </div>
+     <div id="invites-row" class="flex gap-3 overflow-x-auto hide-scrollbar pb-1"></div>
+     <p class="text-[11px] text-gray-400" data-i18n="invitesHint">Touche une photo pour répondre.</p>
+   </div>
 
    <!-- Filter Bar (Grid layout for direct 2-line visibility) -->
    <div class="grid grid-cols-3 gap-2 px-1" id="vibe-filters">
@@ -279,7 +317,7 @@
    <!-- Live Photo Wall -->
    <div class="space-y-4">
      <div class="flex items-center space-x-3 px-2">
-       <span id="label-wall" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-[var(--accent)]" data-i18n="photoWallLabel">Mur photo en direct 📸</span>
+       <span id="label-wall" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-rose-500" data-i18n="photoWallLabel">Mur photo en direct 📸</span>
        <div class="h-px flex-1 bg-white/10"></div>
      </div>
      <div id="photo-wall-grid" class="photo-grid glass p-4 rounded-[2rem]"></div>
@@ -288,7 +326,7 @@
    <!-- Matches Section -->
    <div id="match-section" class="space-y-4">
      <div class="flex items-center space-x-3 px-2">
-       <span id="label-section-matches" class="text-sm font-black text-[var(--accent)] uppercase tracking-widest italic pl-3 border-l-4 border-[var(--accent)]" data-i18n="matchesLabel">Tes Connexions 💬</span>
+       <span id="label-section-matches" class="text-sm font-black text-rose-500 uppercase tracking-widest italic pl-3 border-l-4 border-rose-500" data-i18n="matchesLabel">Tes Connexions 💬</span>
        <div class="h-px flex-1 bg-white/5"></div>
      </div>
      <div id="match-list" class="space-y-3 px-1"></div>
@@ -311,7 +349,7 @@
      <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider">Messages : 0 / 10</p>
    </div>
    <div class="p-4 bg-black border-t border-white/10 flex space-x-3 pb-safe">
-     <input type="text" id="chat-input" placeholder="Message..." data-i18n-placeholder="messagePlaceholder" class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-sm text-white outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all">
+     <input type="text" id="chat-input" placeholder="Message..." data-i18n-placeholder="messagePlaceholder" class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500 transition-all">
      <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl text-sm font-bold text-white uppercase tracking-widest" data-i18n="send">Envoyer</button>
    </div>
  </div>
@@ -319,7 +357,7 @@
  <!-- Admin Panel -->
  <div id="admin-panel" class="hidden fixed inset-0 bg-gray-950 z-[120] p-6 overflow-y-auto flex flex-col justify-center backdrop-blur-xl">
    <div class="w-full max-w-sm mx-auto space-y-6 my-auto">
-     <h2 class="font-display text-2xl font-extrabold text-center text-holo uppercase" data-i18n="adminTitle">Administration</h2>
+     <h2 class="font-display text-3xl font-semibold text-center italic" style="color:var(--gold)" data-i18n="adminTitle">Administration</h2>
      <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
        <table class="w-full text-left text-sm">
          <thead class="bg-white/5 text-gray-400 uppercase text-xs font-bold tracking-widest">
@@ -328,7 +366,7 @@
          <tbody class="divide-y divide-white/5 text-sm">
            <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="connected">Participants</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
            <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="invitations">Invitations</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
-           <tr class="bg-[var(--accent)]/10"><td class="px-6 py-4 font-medium text-[var(--accent)] italic" data-i18n="connections">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-[var(--accent)] text-lg">0</td></tr>
+           <tr class="bg-rose-500/10"><td class="px-6 py-4 font-medium text-rose-500 italic" data-i18n="connections">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-rose-500 text-lg">0</td></tr>
          </tbody>
        </table>
      </div>
@@ -387,14 +425,11 @@
  // --- CONFIGURATION DES AMBIANCES (données neutres, indépendantes de la langue) ---
  // 4 ambiances pensées pour être cohérentes sur tout type de lieu événementiel
  // (bars, discothèques, galas, soirées à thème) : Convivialité, Dancefloor, Affinités, Networking.
- // Les 4 couleurs d'ambiance reprennent la famille holographique de la marque
- // (cyan / violet / magenta), + un ambre néon pour "Convivialité" : cohérence visuelle
- // totale entre le dégradé de marque et les badges d'ambiance.
  const VIBES_BASE = {
-   social: { id: 'social', icon: '🥂', color: '#FFC24C' },
-   party: { id: 'party', icon: '💃', color: '#B14CFF' },
-   flirt: { id: 'flirt', icon: '🔥', color: '#FF4FD8' },
-   network: { id: 'network', icon: '🤝', color: '#4CE0FF' }
+   social: { id: 'social', icon: '🥂', color: '#E8B84B' },
+   party: { id: 'party', icon: '💃', color: '#B84FE0' },
+   flirt: { id: 'flirt', icon: '🔥', color: '#FB4570' },
+   network: { id: 'network', icon: '🤝', color: '#2FC7A6' }
  };
 
  // --- TRADUCTIONS (FR / EN) ---
@@ -433,6 +468,20 @@
      confirmReset: "Voulez-vous vraiment vider toutes les données de cet événement ?",
      confirmDeleteUser: "Supprimer cet utilisateur indésirable ?",
      allFilter: "Tous",
+     myMoodLabel: "Ton ambiance",
+     invitesLabel: "Ils veulent te rencontrer",
+     invitesHint: "Touche une photo pour répondre.",
+     inviteReceivedPrompt: "Cette personne t'a envoyé une invitation",
+     acceptInvite: "Accepter ✨",
+     notifInviteTitle: "Nouvelle invitation 💌",
+     notifInviteBody: "Quelqu'un veut te rencontrer ce soir.",
+     notifMatchTitle: "C'est un match ! 🔥",
+     notifMatchBody: "Ouvre SocialMeet pour lancer la conversation.",
+     notifMessageTitle: "Nouveau message 💬",
+     notifMessageBody: "Tu as reçu un message dans SocialMeet.",
+     notifsEnabled: "Notifications activées 🔔",
+     notifsBlocked: "Notifications bloquées dans les réglages du navigateur",
+     notifsUnsupported: "Notifications indisponibles sur cet appareil",
      // Les 4 ambiances : formulées pour rester justes aussi bien dans un bar, une
      // discothèque, un gala qu'une soirée à thème.
      vibes: {
@@ -476,6 +525,20 @@
      confirmReset: "Do you really want to clear all data for this event?",
      confirmDeleteUser: "Delete this unwanted user?",
      allFilter: "All",
+     myMoodLabel: "Your vibe",
+     invitesLabel: "They want to meet you",
+     invitesHint: "Tap a photo to reply.",
+     inviteReceivedPrompt: "This person sent you an invitation",
+     acceptInvite: "Accept ✨",
+     notifInviteTitle: "New invitation 💌",
+     notifInviteBody: "Someone wants to meet you tonight.",
+     notifMatchTitle: "It's a match! 🔥",
+     notifMatchBody: "Open SocialMeet to start chatting.",
+     notifMessageTitle: "New message 💬",
+     notifMessageBody: "You received a message in SocialMeet.",
+     notifsEnabled: "Notifications on 🔔",
+     notifsBlocked: "Notifications blocked in your browser settings",
+     notifsUnsupported: "Notifications unavailable on this device",
      // Same 4 vibes, phrased to stay natural across bars, clubs, galas and themed nights.
      vibes: {
        social: { title: 'Social', action: 'Offer a drink', prompt: 'Offer them a drink?' },
@@ -540,6 +603,7 @@
      document.getElementById('my-vibe-text-header').innerText = vInfo.title;
    }
    renderPhotoWall();
+   renderInvites();
    renderMatches();
  }
 
@@ -709,10 +773,72 @@
    } catch (e) {}
  }
 
+ // --- NOTIFICATIONS SYSTÈME (smartphone) ---
+ // Limite technique à connaître : sans service worker ni serveur push, une notification
+ // ne peut être émise que si SocialMeet est encore ouvert (onglet au premier plan OU en
+ // arrière-plan). Sur iOS, l'API n'existe que si la page a été ajoutée à l'écran d'accueil.
+ // On double donc toujours la notification par une vibration et un compteur dans le titre
+ // de l'onglet, qui fonctionnent partout.
+ const notifSupported = 'Notification' in window;
+
+ function updateNotifButton() {
+   const icon = document.getElementById('notif-icon');
+   const btn = document.getElementById('notif-toggle');
+   if (!icon || !btn) return;
+   btn.classList.remove('opacity-40', 'opacity-60');
+   if (!notifSupported || Notification.permission === 'denied') {
+     icon.textContent = '\uD83D\uDD15'; btn.classList.add('opacity-40');
+   } else if (Notification.permission === 'granted') {
+     icon.textContent = '\uD83D\uDD14';
+   } else {
+     icon.textContent = '\uD83D\uDD14'; btn.classList.add('opacity-60');
+   }
+ }
+
+ async function askNotificationPermission(showFeedback) {
+   if (!notifSupported) { if (showFeedback) showToastNotification(t('notifsUnsupported')); return; }
+   if (Notification.permission === 'granted') { if (showFeedback) showToastNotification(t('notifsEnabled')); updateNotifButton(); return; }
+   if (Notification.permission === 'denied') { if (showFeedback) showToastNotification(t('notifsBlocked')); updateNotifButton(); return; }
+   try {
+     const res = await Notification.requestPermission();
+     if (showFeedback) showToastNotification(res === 'granted' ? t('notifsEnabled') : t('notifsBlocked'));
+   } catch (e) { console.error(e); }
+   updateNotifButton();
+ }
+
+ function vibrate(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
+
+ function pushSystemNotification(title, body, tag) {
+   vibrate([40, 60, 40]);
+   if (!notifSupported || Notification.permission !== 'granted') return;
+   try {
+     const n = new Notification(title, { body, tag, renotify: true, icon: myPhotoData || undefined });
+     n.onclick = () => { window.focus(); n.close(); };
+   } catch (e) { /* certaines plateformes exigent un service worker : échec silencieux */ }
+ }
+
+ // Compteur d'invitations en attente : badge sur la cloche + titre de l'onglet + badge
+ // d'icône (PWA installée). Reste visible même si les notifications sont refusées.
+ function updateAppBadge(count) {
+   const badge = document.getElementById('notif-badge');
+   if (badge) {
+     badge.textContent = count;
+     badge.classList.toggle('hidden', count === 0);
+   }
+   document.title = count > 0 ? `(${count}) SocialMeet` : 'SocialMeet \u2014 Ton pass \u00e9v\u00e9nement';
+   try {
+     if (navigator.setAppBadge) { count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge(); }
+   } catch (e) {}
+ }
+
+ const notifToggleBtn = document.getElementById('notif-toggle');
+ if (notifToggleBtn) notifToggleBtn.onclick = () => askNotificationPermission(true);
+ updateNotifButton();
+
  function showToastNotification(message) {
    const container = document.getElementById('toast-container');
    const toast = document.createElement('div');
-   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent-2)] transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-rose-500 bg-rose-500/10 text-rose-400 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
    toast.innerText = message;
    container.appendChild(toast);
    toast.offsetHeight; toast.classList.remove('translate-y-[-20px]', 'opacity-0');
@@ -771,6 +897,9 @@
 
  document.getElementById('btn-validate-join').onclick = async () => {
    if(!tempPhotoBase64 || !myUserId || !selectedVibe) return;
+   // L'API Notification exige un geste utilisateur : on profite de ce clic pour demander
+   // l'autorisation, plutôt qu'un popup surgissant dès l'ouverture de la page.
+   askNotificationPermission(false);
    const btnVal = document.getElementById('btn-validate-join');
    const label = document.getElementById('label-btn-validate');
    btnVal.disabled = true;
@@ -814,13 +943,87 @@
    });
  }
 
+ // Cette personne m'a-t-elle envoyé une invitation ?
+ function invitedMe(uid) {
+   return !!(currentLikesData[uid] && currentLikesData[uid][myUserId]);
+ }
+
+ // Invitations reçues auxquelles je n'ai pas encore répondu.
+ function pendingInvites() {
+   const myLikes = currentLikesData[myUserId] || {};
+   return Object.keys(allUsersData).filter(uid => uid !== myUserId && invitedMe(uid) && !myLikes[uid]);
+ }
+
+ // Ouverture de la popup de confirmation, partagée par le mur photo et la rangée
+ // d'invitations. Le libellé s'adapte : on "accepte" une invitation reçue au lieu d'en
+ // envoyer une, ce qui crée le match immédiatement.
+ function openInviteConfirm(uid) {
+   const user = allUsersData[uid];
+   if (!user) return;
+   const vibeInfo = getVibe(user.vibe || 'flirt');
+   const theyInvited = invitedMe(uid);
+   targetToFlash = uid;
+   document.getElementById('confirm-target-photo').src = user.photo;
+   document.getElementById('confirm-flash-title').innerText = theyInvited ? t('inviteReceivedPrompt') : vibeInfo.prompt;
+   const btnFlash = document.getElementById('btn-confirm-flash');
+   btnFlash.innerText = theyInvited ? t('acceptInvite') : vibeInfo.action;
+   btnFlash.style.background = vibeInfo.color;
+   document.getElementById('confirm-flash-popup').classList.remove('hidden');
+ }
+
+ // Rangée d'avatars en haut du tableau de bord : rend enfin visibles les invitations
+ // reçues, qui n'étaient jusqu'ici signalées que par un toast éphémère.
+ function renderInvites() {
+   const section = document.getElementById('invites-section');
+   const row = document.getElementById('invites-row');
+   const countEl = document.getElementById('invites-count');
+   if (!section || !row || !countEl) return;
+
+   const invites = pendingInvites();
+   updateAppBadge(invites.length);
+
+   if (!invites.length) { section.classList.add('hidden'); row.innerHTML = ''; return; }
+   section.classList.remove('hidden');
+   countEl.textContent = invites.length;
+   row.innerHTML = '';
+
+   invites.forEach(uid => {
+     const u = allUsersData[uid];
+     const v = getVibe(u.vibe || 'flirt');
+     const wrap = document.createElement('button');
+     wrap.className = 'invite-avatar';
+     wrap.setAttribute('aria-label', t('acceptInvite'));
+
+     const img = document.createElement('img');
+     img.src = u.photo; img.loading = 'lazy'; img.alt = '';
+     const ping = document.createElement('span');
+     ping.className = 'invite-ping';
+     const badge = document.createElement('div');
+     badge.className = 'vibe-badge';
+     badge.textContent = v.icon;
+
+     wrap.appendChild(img); wrap.appendChild(ping); wrap.appendChild(badge);
+     wrap.onclick = () => openInviteConfirm(uid);
+     row.appendChild(wrap);
+   });
+ }
+
  function renderPhotoWall() {
    const grid = document.getElementById('photo-wall-grid');
    grid.innerHTML = "";
    let myLikes = currentLikesData[myUserId] || {};
-   
-   Object.keys(allUsersData).forEach(uid => {
-     if (uid === myUserId) return;
+
+   // Les personnes qui m'ont invité passent en tête de grille : c'est l'action la plus
+   // utile, elle ne doit pas être noyée au milieu du mur.
+   const orderedUids = Object.keys(allUsersData)
+     .filter(uid => uid !== myUserId)
+     .sort((a, b) => {
+       const aPriority = invitedMe(a) && !myLikes[a] ? 1 : 0;
+       const bPriority = invitedMe(b) && !myLikes[b] ? 1 : 0;
+       return bPriority - aPriority;
+     });
+
+   orderedUids.forEach(uid => {
      const user = allUsersData[uid];
      const userVibeKey = user.vibe || 'flirt'; 
      const userVibeInfo = getVibe(userVibeKey);
@@ -829,6 +1032,7 @@
      
      const isMatched = myLikes[uid] && currentLikesData[uid] && currentLikesData[uid][myUserId];
      const hasLikedAlready = myLikes[uid];
+     const theyInvitedMe = invitedMe(uid);
 
      const card = document.createElement('div');
      card.className = `user-card ${isMatched ? 'matched' : ''}`;
@@ -865,15 +1069,15 @@
          document.getElementById('cancel-flash-popup').classList.remove('hidden');
        };
      } else {
-       card.onclick = () => {
-         targetToFlash = uid;
-         document.getElementById('confirm-target-photo').src = user.photo;
-         document.getElementById('confirm-flash-title').innerText = userVibeInfo.prompt;
-         const btnFlash = document.getElementById('btn-confirm-flash');
-         btnFlash.innerText = userVibeInfo.action;
-         btnFlash.style.background = userVibeInfo.color;
-         document.getElementById('confirm-flash-popup').classList.remove('hidden');
-       };
+       // Invitation reçue en attente : halo animé + pastille 💌 pour la repérer d'un coup d'œil.
+       if (theyInvitedMe) {
+         card.classList.add('invited-me');
+         const tag = document.createElement('div');
+         tag.className = 'invite-tag';
+         tag.textContent = '\uD83D\uDC8C';
+         card.appendChild(tag);
+       }
+       card.onclick = () => openInviteConfirm(uid);
      }
      grid.appendChild(card);
    });
@@ -882,7 +1086,12 @@
  document.getElementById('btn-confirm-flash').onclick = async () => {
    document.getElementById('confirm-flash-popup').classList.add('hidden');
    if(!targetToFlash) return;
-   if (currentLikesSentCount >= 20) { document.getElementById('limit-warning').classList.remove('hidden'); return; }
+   // La limite ne s'applique qu'aux invitations qu'on ENVOIE. Répondre à une invitation
+   // reçue doit toujours rester possible, même quota atteint.
+   if (!invitedMe(targetToFlash) && currentLikesSentCount >= 20) {
+     document.getElementById('limit-warning').classList.remove('hidden');
+     return;
+   }
    await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
    const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
    if(!check.exists()) showToastNotification(t('toastInviteSent'));
@@ -961,11 +1170,13 @@
      });
 
      renderPhotoWall();
+     renderInvites();
    });
 
    onValue(ref(db, `${basePath}/likes`), (snapshot) => {
      currentLikesData = snapshot.val() || {};
      renderPhotoWall();
+     renderInvites();
      
      let matches = []; let likesRecus = 0; let totalLikesNetwork = 0;
      let myLikes = currentLikesData[myUserId] || {};
@@ -991,9 +1202,13 @@
      // transitoire où une seule moitié d'un match vient d'être écrite en base.
      document.getElementById('admin-total-matches').innerText = Math.floor(totalMatchesNetwork / 2);
 
-     if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) { showToastNotification(t('toastNewLike')); playNotificationSound(); }
+     if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) {
+       showToastNotification(t('toastNewLike')); playNotificationSound();
+       pushSystemNotification(t('notifInviteTitle'), t('notifInviteBody'), 'socialmeet-invite');
+     }
      if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
        showToastNotification(t('toastNewMatch')); playNotificationSound();
+       pushSystemNotification(t('notifMatchTitle'), t('notifMatchBody'), 'socialmeet-match');
        const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
        if (newMatchUid && allUsersData[newMatchUid]) launchFireworks(allUsersData[newMatchUid].photo);
      }
@@ -1068,14 +1283,26 @@
    });
  }
 
+ // Compteurs en mémoire : permettent de distinguer un vrai nouveau message d'un simple
+ // premier chargement de l'historique (qui ne doit surtout pas déclencher de notification).
+ const roomMessageCounts = new Map();
+
  function listenForNotifications(roomID) {
    if (attachedNotificationListeners.has(roomID)) return;
    attachedNotificationListeners.add(roomID);
    onValue(ref(db, basePath + `/messages/${roomID}`), (snap) => {
      const msgCount = Object.keys(snap.val() || {}).length;
+     const previousCount = roomMessageCounts.get(roomID);
+     roomMessageCounts.set(roomID, msgCount);
+
      const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
      const dot = document.getElementById(`dot-${roomID}`);
      if (dot && msgCount > lastSeen && activeChatRoom !== roomID) dot.classList.remove('hidden');
+
+     if (previousCount !== undefined && msgCount > previousCount && activeChatRoom !== roomID) {
+       playNotificationSound();
+       pushSystemNotification(t('notifMessageTitle'), t('notifMessageBody'), 'socialmeet-msg-' + roomID);
+     }
    });
  }
 
