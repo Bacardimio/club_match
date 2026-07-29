@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <meta name="theme-color" content="#0B0A12">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ <title>SocialMeet — Ton pass événement</title>
+ <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+ <style>
+ :root {
+   --accent: #FF4FD8;      /* magenta néon — CTA, liseré principal */
+   --accent-2: #4CE0FF;    /* cyan électrique */
+   --accent-3: #B14CFF;    /* violet — 3e stop du dégradé holographique */
+   --ink: #0B0A12;         /* noir profond à dominante violette */
+   --cream: #F3F1FF;       /* blanc légèrement lavande pour les titres */
+ }
+ * { -webkit-tap-highlight-color: transparent; }
+ html { -webkit-text-size-adjust: 100%; }
+ body {
+   background-color: var(--ink);
+   background-image:
+     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+     radial-gradient(circle at 12% 15%, rgba(76,224,255,0.20), transparent 42%),
+     radial-gradient(circle at 88% 12%, rgba(255,79,216,0.16), transparent 45%),
+     radial-gradient(circle at 50% 105%, rgba(177,76,255,0.18), transparent 50%);
+   background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+   background-size: 160px 160px, cover, cover, cover;
+   background-blend-mode: overlay, normal, normal, normal;
+   color: var(--cream);
+   font-family: 'Inter', -apple-system, system-ui, sans-serif;
+   overflow-x: hidden;
+   touch-action: manipulation;
+   overscroll-behavior-y: contain;
+   min-height: 100dvh;
+ }
+ .font-display { font-family: 'Unbounded', ui-sans-serif, sans-serif; }
+ .text-holo {
+   background: linear-gradient(90deg, var(--accent-2), var(--accent-3) 50%, var(--accent));
+   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+ }
+ .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-2); }
+ .glass { background: rgba(255, 255, 255, 0.045); backdrop-filter: blur(22px) saturate(150%); border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+ .event-card { position: relative; }
+ .event-card::before {
+   content: ""; position: absolute; top: -1px; left: 10%; right: 10%; height: 2px; border-radius: 2px;
+   background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent-3), var(--accent), transparent); opacity: 0.9;
+ }
+ .btn-main {
+   background: linear-gradient(120deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2));
+   background-size: 250% 250%; animation: shimmer 7s ease infinite;
+   box-shadow: 0 10px 26px -8px rgba(177,76,255,0.55); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+ }
+ .btn-main:active { transform: scale(0.96); box-shadow: 0 4px 14px -6px rgba(177,76,255,0.5); }
+ @keyframes shimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+ .animate-pop { animation: pop 0.4s cubic-bezier(0.26, 1.36, 0.74, 1.2) forwards; }
+ @keyframes pop { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+
+ .hide-scrollbar::-webkit-scrollbar { display: none; }
+ .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+ /* Barre de sécurité iOS (encoche / indicateur d'accueil) : pb-safe était utilisé dans le
+    HTML mais jamais défini, donc sans effet réel sur mobile. */
+ .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+ .pt-safe-4 { padding-top: max(1rem, env(safe-area-inset-top)); }
+
+ /* Camera UI — anneau holographique façon sticker chrome, technique padding-box / border-box */
+ .camera-wrapper {
+   width: 240px; height: 240px; border-radius: 50%; overflow: hidden; margin: 0 auto;
+   border: 4px solid transparent;
+   background: linear-gradient(var(--ink), var(--ink)) padding-box,
+     conic-gradient(from 180deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2)) border-box;
+   box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 36px rgba(177,76,255,0.4);
+   position: relative; background-color: #111;
+ }
+ #camera-feed { width: 100%; height: 100%; object-fit: cover; }
+ #photo-canvas { width: 100%; height: 100%; object-fit: cover; }
+
+ /* Photo Wall & Vibes */
+ .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+ .user-card {
+   aspect-ratio: 1; border-radius: 16px; overflow: hidden; position: relative; cursor: pointer;
+   transition: transform 0.2s; border: 3px solid transparent;
+ }
+ .user-card:active { transform: scale(0.95); }
+ .user-card.matched { animation: pulseMatch 2s infinite; }
+ @keyframes pulseMatch { 0% { box-shadow: 0 0 0 0 rgba(255,79,216,0.45); } 70% { box-shadow: 0 0 0 10px rgba(255,79,216,0); } 100% { box-shadow: 0 0 0 0 rgba(255,79,216,0); } }
+ .user-card img { width: 100%; height: 100%; object-fit: cover; }
+ .vibe-badge { position: absolute; bottom: 6px; right: 6px; font-size: 16px; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.22); }
+ .my-profile-pic {
+   width: 76px; height: 76px; border-radius: 50%; object-fit: cover; cursor: pointer; transition: opacity 0.2s;
+   border: 3px solid transparent;
+   background: linear-gradient(var(--ink), var(--ink)) padding-box,
+     conic-gradient(from 180deg, var(--accent-2), var(--accent-3), var(--accent), var(--accent-2)) border-box;
+ }
+ .my-profile-pic:hover { opacity: 0.85; }
+
+ #match-announcement {
+   position: fixed; inset: 0; z-index: 100; background: rgba(6,4,14,0.96);
+   display: none; flex-direction: column; align-items: center; justify-content: center;
+   text-align: center; animation: fadeIn 0.5s ease;
+ }
+ @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+ .msg { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 8px; position: relative; line-height: 1.4; }
+ .msg-me { align-self: flex-end; background: linear-gradient(120deg, var(--accent-3), var(--accent)); color: white; border-bottom-right-radius: 4px; }
+ .msg-them { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+ .notification-dot { width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+ </style>
+</head>
+<body class="flex flex-col min-h-screen items-center p-4">
+
+ <!-- Initial Loader -->
+ <div id="app-loading-fallback" class="fixed inset-0 bg-[#0a0a0a] z-[200] flex flex-col items-center justify-center p-6 text-center">
+   <div class="w-12 h-12 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4"></div>
+   <p class="text-gray-400 font-bold uppercase tracking-widest text-xs" data-i18n="loading">Connexion au serveur Firebase...</p>
+ </div>
+
+ <div id="toast-container" aria-live="polite" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 space-y-2 pointer-events-none w-full max-w-xs px-4 text-center"></div>
+
+ <!-- Top Right Action Buttons (Admin gear + Lang toggle stacked underneath) -->
+ <div class="absolute right-4 z-50 flex flex-col items-end space-y-2 pt-safe-4" style="top:0;">
+   <button id="admin-trigger" class="glass opacity-60 hover:opacity-100 p-2 rounded-xl text-base transition-all">⚙️</button>
+   <button id="lang-toggle-btn" class="glass px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider uppercase text-white hover:bg-white/10 transition-all">🇬🇧 EN</button>
+ </div>
+
+ <!-- Match Overlay -->
+ <div id="match-announcement">
+   <p class="eyebrow mb-2" data-i18n="matchTitle1">C'est réciproque</p>
+   <h1 class="font-display text-6xl font-extrabold text-holo mb-8 uppercase" data-i18n="matchTitle2">Match 🔥</h1>
+   <div class="glass p-8 rounded-[2rem] shadow-[0_0_50px_rgba(255,255,255,0.2)] flex flex-col items-center">
+     <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6" data-i18n="matchSubtitle">Invitation acceptée par</p>
+     <div class="w-48 h-48 rounded-full overflow-hidden border-4 border-white mb-4">
+       <img id="match-photo-display" src="" alt="Match" class="w-full h-full object-cover">
+     </div>
+   </div>
+   <p class="mt-10 text-gray-400 text-sm font-bold animate-pulse" data-i18n="matchContinue">Appuie n'importe où pour continuer</p>
+ </div>
+
+ <!-- Interaction Dynamic Popup -->
+ <div id="confirm-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="confirm-flash-title" class="text-gray-300 text-xs font-bold uppercase tracking-widest mb-6">Envoyer une invitation ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 relative">
+       <img id="confirm-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('confirm-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="cancel">Annuler</button>
+       <button id="btn-confirm-flash" class="flex-1 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg transition-all">Action</button>
+     </div>
+   </div>
+ </div>
+
+ <!-- Cancel Popup -->
+ <div id="cancel-flash-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="cancel-flash-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6" data-i18n="cancelFlashTitle">Annuler cette invitation ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20">
+       <img id="cancel-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('cancel-flash-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="keep">Garder</button>
+       <button id="btn-confirm-cancel" class="flex-1 bg-red-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20" data-i18n="cancelInvite">Annuler ❌</button>
+     </div>
+   </div>
+ </div>
+
+ <!-- Unmatch Popup -->
+ <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
+     <p id="unmatch-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6" data-i18n="unmatchTitle">Supprimer cette connexion ?</p>
+     <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 border-red-500/50">
+       <img id="unmatch-target-photo" src="" alt="Target" class="w-full h-full object-cover">
+     </div>
+     <div class="flex space-x-4">
+       <button onclick="document.getElementById('unmatch-popup').classList.add('hidden')" class="flex-1 glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="cancel">Annuler</button>
+       <button id="btn-confirm-unmatch" class="flex-1 bg-red-600 py-4 rounded-2xl text-sm font-black text-white uppercase tracking-widest shadow-lg shadow-red-500/20" data-i18n="unmatchConfirm">Supprimer</button>
+     </div>
+   </div>
+ </div>
+
+ <!-- Change Vibe Popup -->
+ <div id="vibe-change-popup" class="hidden fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-8 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl">
+     <h3 class="font-display text-white text-center text-xl font-semibold mb-6" data-i18n="changeVibeTitle">Change ton ambiance</h3>
+     <div class="grid grid-cols-1 gap-3 mb-6" id="vibe-change-list">
+       <!-- Injected via JS -->
+     </div>
+     <button onclick="document.getElementById('vibe-change-popup').classList.add('hidden')" class="w-full glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="close">Fermer</button>
+   </div>
+ </div>
+
+ <!-- Closed Screen -->
+ <div id="closed-screen" class="hidden w-full max-w-sm my-auto text-center animate-pop p-4">
+   <h1 class="font-display text-3xl font-extrabold mb-6 tracking-tight uppercase">Social<span class="text-holo">Meet</span></h1>
+   <div class="glass event-card p-8 rounded-[2.5rem]">
+     <p id="closed-message" class="text-gray-300 font-bold uppercase tracking-widest text-sm text-center" data-i18n="eventUnavailable">Cet événement n'est plus disponible.</p>
+   </div>
+ </div>
+
+ <!-- Login / Capture Screen -->
+ <div id="login-screen" class="hidden w-full max-w-sm my-auto space-y-8 animate-pop text-center mt-10">
+   <div>
+     <p class="eyebrow mb-2" data-i18n="badgeLabel">🎟️ Ton badge d'accès</p>
+     <h1 class="font-display text-4xl font-extrabold tracking-tight leading-tight uppercase" style="color:var(--cream)">Social<span class="text-holo">Meet</span></h1>
+     <p id="event-name-display" class="text-[var(--accent-2)] mt-3 text-xs font-bold tracking-[0.2em] uppercase opacity-90">CHARGEMENT...</p>
+   </div>
+   
+   <div class="glass event-card p-6 rounded-[2.5rem] space-y-6 shadow-2xl relative">
+     <p id="login-instructions" class="text-gray-300 text-sm font-bold uppercase tracking-widest mb-2" data-i18n="loginInstructions">Prends un selfie pour rejoindre la soirée</p>
+     
+     <div class="camera-wrapper">
+       <video id="camera-feed" autoplay playsinline muted></video>
+       <canvas id="photo-canvas" class="hidden w-full h-full"></canvas>
+       <button id="btn-switch-camera" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white p-3 rounded-full text-base hover:bg-black/80 transition-all z-10">🔄</button>
+     </div>
+     
+     <div id="camera-error" class="hidden glass border-red-500/30 p-5 rounded-2xl bg-red-500/5 text-left">
+       <p class="text-red-500 text-sm font-black uppercase mb-2" data-i18n="cameraBlockedTitle">🚨 Accès caméra bloqué</p>
+       <p id="camera-error-hint" class="text-gray-300 text-xs leading-relaxed mb-4" data-i18n="cameraBlockedHint">Clique sur l'icône de cadenas pour autoriser la caméra, puis actualise la page.</p>
+       <button onclick="location.reload()" class="w-full bg-white/10 text-white text-xs font-bold py-3 rounded-xl uppercase tracking-wider" data-i18n="retry">Réessayer 🔄</button>
+     </div>
+
+     <div id="capture-initial-controls">
+       <button id="btn-take-snapshot" class="w-full btn-main py-5 rounded-2xl font-black text-base uppercase tracking-widest text-white mt-4 flex items-center justify-center space-x-2">
+         <span id="label-btn-take" data-i18n="takeSelfie">📸 Prendre un selfie</span>
+       </button>
+     </div>
+
+     <div id="capture-confirm-controls" class="hidden space-y-5 mt-4">
+       <div class="text-left">
+         <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-3 text-center" data-i18n="chooseMood">Choisis ton ambiance</p>
+         <div class="grid grid-cols-2 gap-3" id="vibe-selector-capture">
+           <!-- Injected via JS -->
+         </div>
+       </div>
+       <div class="space-y-3">
+         <button id="btn-validate-join" class="w-full bg-white/20 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white opacity-50 cursor-not-allowed transition-all">
+           <span id="label-btn-validate" data-i18n="validateJoin">Rejoindre l'événement</span>
+         </button>
+         <button id="btn-retake-photo" class="w-full glass py-3 rounded-2xl font-bold text-xs uppercase tracking-widest text-gray-400" data-i18n="retakePhoto">
+           🔄 Refaire la photo
+         </button>
+       </div>
+     </div>
+   </div>
+ </div>
+
+ <!-- Main App Dashboard -->
+ <div id="main-app" class="hidden w-full max-w-md space-y-5 pt-2 pb-12 mx-auto">
+   <header class="flex items-center justify-between py-3 px-5 bg-black/60 rounded-3xl border border-white/5 sticky top-2 z-30 backdrop-blur-md shadow-lg">
+     <div class="flex items-center space-x-4">
+       <div class="flex flex-col items-center relative">
+         <img id="my-profile-image" src="" alt="Moi" class="my-profile-pic" title="Cliquer pour refaire ta photo 📸">
+         <div class="absolute -bottom-2 -right-2 text-xs bg-black rounded-full border border-white/20 p-0.5" id="my-vibe-badge-header"></div>
+       </div>
+       <div class="text-left">
+         <div class="cursor-pointer" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
+           <p class="text-white text-sm font-bold uppercase tracking-wide" id="my-vibe-text-header" data-i18n="moodDefault">Ambiance</p>
+           <span class="inline-block mt-1 bg-white/10 px-2 py-1 rounded-md text-xs text-gray-300" data-i18n="editMood">Modifier ✏️</span>
+         </div>
+       </div>
+     </div>
+   </header>
+
+   <!-- Filter Bar (Grid layout for direct 2-line visibility) -->
+   <div class="grid grid-cols-3 gap-2 px-1" id="vibe-filters">
+     <!-- Injected via JS -->
+   </div>
+   
+   <p id="limit-warning" class="text-center text-orange-500 text-xs font-bold uppercase hidden bg-orange-500/10 py-3 rounded-xl border border-orange-500/20" data-i18n="inviteLimit">Limite d'invitations atteinte !</p>
+
+   <!-- Live Photo Wall -->
+   <div class="space-y-4">
+     <div class="flex items-center space-x-3 px-2">
+       <span id="label-wall" class="text-sm font-black text-white uppercase tracking-widest italic pl-3 border-l-4 border-[var(--accent)]" data-i18n="photoWallLabel">Mur photo en direct 📸</span>
+       <div class="h-px flex-1 bg-white/10"></div>
+     </div>
+     <div id="photo-wall-grid" class="photo-grid glass p-4 rounded-[2rem]"></div>
+   </div>
+
+   <!-- Matches Section -->
+   <div id="match-section" class="space-y-4">
+     <div class="flex items-center space-x-3 px-2">
+       <span id="label-section-matches" class="text-sm font-black text-[var(--accent)] uppercase tracking-widest italic pl-3 border-l-4 border-[var(--accent)]" data-i18n="matchesLabel">Tes Connexions 💬</span>
+       <div class="h-px flex-1 bg-white/5"></div>
+     </div>
+     <div id="match-list" class="space-y-3 px-1"></div>
+   </div>
+ </div>
+
+ <!-- Chat Window -->
+ <div id="chat-window" class="hidden fixed inset-0 bg-[#0a0a0a] z-[80] flex flex-col">
+   <header class="p-4 border-b border-white/10 flex items-center space-x-4 bg-black/60 backdrop-blur-md">
+     <button id="close-chat-trigger" class="text-3xl text-white opacity-60 hover:opacity-100 px-2 transition-all">←</button>
+     <div class="relative">
+       <img id="chat-target-photo" src="" class="w-12 h-12 rounded-full object-cover border border-white/20">
+       <div id="chat-target-vibe" class="absolute -bottom-1 -right-1 text-xs bg-black rounded-full w-5 h-5 flex items-center justify-center"></div>
+     </div>
+     <h3 class="flex-1 text-lg font-black italic text-white uppercase tracking-wider" id="chat-title-text" data-i18n="chatTitle">Chat</h3>
+   </header>
+   <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-3"></div>
+   <div class="px-6 py-3 text-center bg-white/5 border-t border-white/5">
+     <p id="chat-limit-warning" class="text-red-500 text-xs font-bold uppercase hidden" data-i18n="messageLimit">Limite de messages atteinte !</p>
+     <p id="chat-counter-display" class="text-gray-400 text-xs font-bold uppercase tracking-wider">Messages : 0 / 10</p>
+   </div>
+   <div class="p-4 bg-black border-t border-white/10 flex space-x-3 pb-safe">
+     <input type="text" id="chat-input" placeholder="Message..." data-i18n-placeholder="messagePlaceholder" class="flex-1 bg-white/10 border-none rounded-2xl px-5 py-4 text-sm text-white outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all">
+     <button id="send-msg-trigger" class="btn-main px-6 rounded-2xl text-sm font-bold text-white uppercase tracking-widest" data-i18n="send">Envoyer</button>
+   </div>
+ </div>
+
+ <!-- Admin Panel -->
+ <div id="admin-panel" class="hidden fixed inset-0 bg-gray-950 z-[120] p-6 overflow-y-auto flex flex-col justify-center backdrop-blur-xl">
+   <div class="w-full max-w-sm mx-auto space-y-6 my-auto">
+     <h2 class="font-display text-2xl font-extrabold text-center text-holo uppercase" data-i18n="adminTitle">Administration</h2>
+     <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
+       <table class="w-full text-left text-sm">
+         <thead class="bg-white/5 text-gray-400 uppercase text-xs font-bold tracking-widest">
+           <tr><th class="px-6 py-4" data-i18n="indicator">Indicateur</th><th class="px-6 py-4 text-right" data-i18n="value">Valeur</th></tr>
+         </thead>
+         <tbody class="divide-y divide-white/5 text-sm">
+           <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="connected">Participants</td><td id="admin-total-users" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+           <tr><td class="px-6 py-4 font-medium text-gray-300 italic" data-i18n="invitations">Invitations</td><td id="admin-total-likes" class="px-6 py-4 text-right font-black text-lg">0</td></tr>
+           <tr class="bg-[var(--accent)]/10"><td class="px-6 py-4 font-medium text-[var(--accent)] italic" data-i18n="connections">Connexions</td><td id="admin-total-matches" class="px-6 py-4 text-right font-black text-[var(--accent)] text-lg">0</td></tr>
+         </tbody>
+       </table>
+     </div>
+
+     <!-- Admin Users Management List for Deletion -->
+     <div class="glass rounded-3xl overflow-hidden border-white/10 text-white shadow-2xl">
+       <div class="px-6 py-3 bg-white/5 uppercase text-xs font-bold tracking-widest text-gray-400" data-i18n="userManagement">Gestion des utilisateurs</div>
+       <div id="admin-users-list" class="divide-y divide-white/5 max-h-48 overflow-y-auto p-2 space-y-2">
+         <!-- Injected via JS -->
+       </div>
+     </div>
+
+     <div class="space-y-4">
+       <button id="reset-event-trigger" class="bg-red-600 text-white py-4 rounded-2xl text-sm font-black w-full shadow-xl uppercase tracking-widest" data-i18n="resetAll">Tout réinitialiser</button>
+     </div>
+     <button id="close-admin-trigger" class="block w-full text-center text-gray-400 font-bold uppercase text-xs tracking-widest py-4 hover:text-white transition-colors" data-i18n="close">Fermer</button>
+   </div>
+ </div>
+
+ <script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+ import { getDatabase, ref, set, onValue, get, remove, push, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+ import { getStorage, ref as storageRef, uploadString, getDownloadURL, deleteObject, listAll } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+
+ const firebaseConfig = {
+   apiKey: "AIzaSyDP3JFut79NexJwawiDYEgJO0_r-HWYQVc",
+   authDomain: "club-match-d2d39.firebaseapp.com",
+   databaseURL: "https://club-match-d2d39-default-rtdb.europe-west1.firebasedatabase.app",
+   projectId: "club-match-d2d39",
+   storageBucket: "club-match-d2d39.firebasestorage.app",
+   messagingSenderId: "975364560340",
+   appId: "1:975364560340:web:64fd827ced5c24b808f241"
+ };
+
+ const app = initializeApp(firebaseConfig);
+ const db = getDatabase(app);
+ const auth = getAuth(app);
+ const storage = getStorage(app);
+
+ const urlParams = new URLSearchParams(window.location.search);
+ const eventID = urlParams.get('event') || 'default';
+ const basePath = `events/${eventID}`;
+
+ // Les photos ne sont plus stockées en base64 dans la Realtime Database (ce qui alourdissait
+ // chaque synchro pour TOUS les participants) mais dans Firebase Storage. La DB ne garde
+ // qu'une URL légère (quelques dizaines d'octets au lieu de ~20-40 Ko par photo).
+ function photoStoragePath(uid) { return `events/${eventID}/photos/${uid}.jpg`; }
+
+ // Déclarée tout en haut car utilisée par updateChatCounterDisplay(), elle-même appelée
+ // par applyTranslations() dès le chargement du script (langue mémorisée). Une const
+ // référencée avant sa ligne de déclaration plante tout le script en JS (temporal dead
+ // zone) : c'est ce qui empêchait l'app de démarrer.
+ const CHAT_MESSAGE_LIMIT = 10;
+
+ // --- CONFIGURATION DES AMBIANCES (données neutres, indépendantes de la langue) ---
+ // 4 ambiances pensées pour être cohérentes sur tout type de lieu événementiel
+ // (bars, discothèques, galas, soirées à thème) : Convivialité, Dancefloor, Affinités, Networking.
+ // Les 4 couleurs d'ambiance reprennent la famille holographique de la marque
+ // (cyan / violet / magenta), + un ambre néon pour "Convivialité" : cohérence visuelle
+ // totale entre le dégradé de marque et les badges d'ambiance.
+ const VIBES_BASE = {
+   social: { id: 'social', icon: '🥂', color: '#FFC24C' },
+   party: { id: 'party', icon: '💃', color: '#B14CFF' },
+   flirt: { id: 'flirt', icon: '🔥', color: '#FF4FD8' },
+   network: { id: 'network', icon: '🤝', color: '#4CE0FF' }
+ };
+
+ // --- TRADUCTIONS (FR / EN) ---
+ const translations = {
+   fr: {
+     loading: "Connexion à l'événement...",
+     loadingCaps: "CHARGEMENT...",
+     badgeLabel: "🎟️ Ton badge d'accès",
+     matchTitle1: "C'est réciproque", matchTitle2: "Match 🔥",
+     matchSubtitle: "Invitation acceptée par", matchContinue: "Appuie n'importe où pour continuer",
+     cancel: "Annuler", keep: "Garder", cancelInvite: "Annuler ❌",
+     unmatchTitle: "Supprimer cette connexion ?", unmatchConfirm: "Supprimer",
+     cancelFlashTitle: "Annuler cette invitation ?",
+     changeVibeTitle: "Change ton ambiance", close: "Fermer",
+     eventUnavailable: "Cet événement n'est plus disponible.",
+     loginInstructions: "Prends un selfie pour rejoindre la soirée",
+     cameraBlockedTitle: "🚨 Accès caméra bloqué",
+     cameraBlockedHint: "Clique sur l'icône de cadenas pour autoriser la caméra, puis actualise la page.",
+     retry: "Réessayer 🔄", takeSelfie: "📸 Prendre un selfie",
+     chooseMood: "Choisis ton ambiance", validateJoin: "Rejoindre l'événement",
+     creatingProfile: "Création du profil...", uploadingPhoto: "Envoi de la photo...", retakePhoto: "🔄 Refaire la photo",
+     moodDefault: "Ambiance", editMood: "Modifier ✏️",
+     inviteLimit: "Limite d'invitations atteinte !",
+     photoWallLabel: "Mur photo en direct 📸", matchesLabel: "Tes Connexions 💬",
+     noMatches: "Aucune connexion pour l'instant...", privateChat: "Chat Privé", chatTitle: "Chat",
+     messageLimit: "Limite de messages atteinte !",
+     messagesCounter: n => `Messages : ${n} / 10`,
+     messagePlaceholder: "Message...", send: "Envoyer",
+     adminTitle: "Administration", indicator: "Indicateur", value: "Valeur",
+     connected: "Participants", invitations: "Invitations", connections: "Connexions",
+     userManagement: "Gestion des utilisateurs", resetAll: "Tout réinitialiser",
+     toastNewLike: "Nouvelle invitation reçue ! 👀", toastNewMatch: "Connexion acceptée ! 🔥",
+     toastInviteSent: "Invitation envoyée ! ✈️",
+     wrongPassword: "Mot de passe incorrect ❌", userDeleted: "Utilisateur supprimé ❌",
+     adminDeleteBtn: "Supprimer ❌",
+     confirmReset: "Voulez-vous vraiment vider toutes les données de cet événement ?",
+     confirmDeleteUser: "Supprimer cet utilisateur indésirable ?",
+     allFilter: "Tous",
+     // Les 4 ambiances : formulées pour rester justes aussi bien dans un bar, une
+     // discothèque, un gala qu'une soirée à thème.
+     vibes: {
+       social: { title: 'Convivialité', action: 'Proposer un verre', prompt: 'Lui proposer un verre ?' },
+       party: { title: 'Dancefloor', action: 'Inviter à danser', prompt: "L'inviter à danser ?" },
+       flirt: { title: 'Affinités', action: 'Envoyer un charme', prompt: 'Craquer pour cette personne ?' },
+       network: { title: 'Networking', action: 'Échanger nos contacts', prompt: 'Proposer un échange de contacts ?' }
+     }
+   },
+   en: {
+     loading: "Connecting to the event...",
+     loadingCaps: "LOADING...",
+     badgeLabel: "🎟️ Your event pass",
+     matchTitle1: "It's mutual", matchTitle2: "Match 🔥",
+     matchSubtitle: "Invite accepted by", matchContinue: "Tap anywhere to continue",
+     cancel: "Cancel", keep: "Keep", cancelInvite: "Cancel ❌",
+     unmatchTitle: "Remove this connection?", unmatchConfirm: "Remove",
+     cancelFlashTitle: "Cancel this invite?",
+     changeVibeTitle: "Change your vibe", close: "Close",
+     eventUnavailable: "This event is no longer available.",
+     loginInstructions: "Take a selfie to join the event",
+     cameraBlockedTitle: "🚨 Camera access blocked",
+     cameraBlockedHint: "Click the lock icon to allow the camera, then refresh the page.",
+     retry: "Retry 🔄", takeSelfie: "📸 Take a selfie",
+     chooseMood: "Pick your vibe", validateJoin: "Join the event",
+     creatingProfile: "Creating profile...", uploadingPhoto: "Uploading photo...", retakePhoto: "🔄 Retake photo",
+     moodDefault: "Vibe", editMood: "Edit ✏️",
+     inviteLimit: "Invitation limit reached!",
+     photoWallLabel: "Live Photo Wall 📸", matchesLabel: "Your Connections 💬",
+     noMatches: "No connections yet...", privateChat: "Private Chat", chatTitle: "Chat",
+     messageLimit: "Message limit reached!",
+     messagesCounter: n => `Messages: ${n} / 10`,
+     messagePlaceholder: "Message...", send: "Send",
+     adminTitle: "Administration", indicator: "Metric", value: "Value",
+     connected: "Participants", invitations: "Invitations", connections: "Matches",
+     userManagement: "User management", resetAll: "Reset everything",
+     toastNewLike: "New invitation received! 👀", toastNewMatch: "Connection accepted! 🔥",
+     toastInviteSent: "Invitation sent! ✈️",
+     wrongPassword: "Incorrect password ❌", userDeleted: "User deleted ❌",
+     adminDeleteBtn: "Delete ❌",
+     confirmReset: "Do you really want to clear all data for this event?",
+     confirmDeleteUser: "Delete this unwanted user?",
+     allFilter: "All",
+     // Same 4 vibes, phrased to stay natural across bars, clubs, galas and themed nights.
+     vibes: {
+       social: { title: 'Social', action: 'Offer a drink', prompt: 'Offer them a drink?' },
+       party: { title: 'Dancefloor', action: 'Ask to dance', prompt: 'Ask them to dance?' },
+       flirt: { title: 'Chemistry', action: 'Send a spark', prompt: 'Feeling a spark?' },
+       network: { title: 'Networking', action: 'Exchange contacts', prompt: 'Exchange contacts?' }
+     }
+   }
+ };
+
+ let currentLang = localStorage.getItem('lang') || 'fr';
+ function t(key) { return translations[currentLang][key]; }
+ function getVibe(id) {
+   const base = VIBES_BASE[id] || VIBES_BASE.flirt;
+   const tr = (translations[currentLang].vibes[base.id]) || translations.fr.vibes[base.id];
+   return { ...base, ...tr };
+ }
+
+ let myUserId = null; 
+ let videoStream = null; 
+ let isRegistered = localStorage.getItem(`isRegistered_${eventID}`) === 'true';
+ let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
+ let tempPhotoBase64 = null; 
+ let selectedVibe = null;
+ let currentFilter = 'all'; 
+
+ let activeChatRoom = null;
+ let activeChatUnsubscribe = null; // évite l'accumulation de listeners onValue à chaque ouverture de chat
+ let currentLikesSentCount = 0;
+ let currentChatMessagesSent = 0;
+ let allUsersData = {};
+ let currentLikesData = {};
+ let lastMatches = []; // conservé pour pouvoir re-render la liste au changement de langue
+
+ let prevLikesRecusCount = null;
+ let prevMatchesCount = null;
+ let prevMatchesList = [];
+ let targetToFlash = null;
+ let targetToCancel = null;
+ let targetToUnmatch = null;
+ 
+ const attachedNotificationListeners = new Set(); 
+ let currentFacingMode = "user"; 
+
+ // --- GESTION DE LA LANGUE (FR/EN) ---
+ function applyTranslations() {
+   document.documentElement.lang = currentLang;
+   document.querySelectorAll('[data-i18n]').forEach(el => {
+     const key = el.dataset.i18n;
+     if (translations[currentLang][key] !== undefined) el.textContent = translations[currentLang][key];
+   });
+   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+     const key = el.dataset.i18nPlaceholder;
+     if (translations[currentLang][key] !== undefined) el.placeholder = translations[currentLang][key];
+   });
+   document.getElementById('lang-toggle-btn').textContent = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
+   updateChatCounterDisplay();
+   // Re-génère les blocs construits dynamiquement en JS (ils contiennent du texte traduit)
+   initVibesUI();
+   if (myUserId && allUsersData[myUserId]) {
+     const vInfo = getVibe(allUsersData[myUserId].vibe || 'flirt');
+     document.getElementById('my-vibe-text-header').innerText = vInfo.title;
+   }
+   renderPhotoWall();
+   renderMatches();
+ }
+
+ document.getElementById('lang-toggle-btn').onclick = () => {
+   currentLang = currentLang === 'fr' ? 'en' : 'fr';
+   localStorage.setItem('lang', currentLang);
+   applyTranslations();
+ };
+
+ // --- GESTION DU PANNEAU D'ADMINISTRATION & MOT DE PASSE ---
+ document.getElementById('admin-trigger').onclick = () => {
+   const password = prompt("Entrez le mot de passe administrateur :");
+   if (password === "2026") {
+     document.getElementById('admin-panel').classList.remove('hidden');
+   } else if (password !== null) {
+     showToastNotification(t('wrongPassword'));
+   }
+ };
+
+ document.getElementById('close-admin-trigger').onclick = () => {
+   document.getElementById('admin-panel').classList.add('hidden');
+ };
+
+ // Remise à zéro (vide uniquement la base de données de l'événement sans supprimer le conteneur/config)
+ document.getElementById('reset-event-trigger').onclick = async () => {
+   if (confirm(t('confirmReset'))) {
+     await remove(ref(db, `${basePath}/users`));
+     await remove(ref(db, `${basePath}/likes`));
+     await remove(ref(db, `${basePath}/messages`));
+     // Nettoyage du bucket Storage : sans ça, les photos de tous les participants restent
+     // stockées indéfiniment (coût qui s'accumule) même après un reset de l'événement.
+     try {
+       const folderRef = storageRef(storage, `events/${eventID}/photos`);
+       const filesList = await listAll(folderRef);
+       await Promise.all(filesList.items.map(item => deleteObject(item).catch(() => {})));
+     } catch (e) { console.error('Nettoyage Storage échoué :', e); }
+     // Fix : localStorage.clear() effaçait TOUT le localStorage du domaine, y compris
+     // les inscriptions à d'autres événements sur le même appareil. On ne retire ici que
+     // les clés propres à CET événement (les autres participants seront de toute façon
+     // ramenés à l'écran d'inscription automatiquement, cf. `if (!allUsersData[myUserId])`).
+     localStorage.removeItem(`isRegistered_${eventID}`);
+     localStorage.removeItem(`myPhoto_${eventID}`);
+     location.reload();
+   }
+ };
+
+ // Fonction pour supprimer un utilisateur indésirable depuis l'admin
+ window.adminDeleteUser = async (uid) => {
+   if (confirm(t('confirmDeleteUser'))) {
+     await remove(ref(db, `${basePath}/users/${uid}`));
+     await remove(ref(db, `${basePath}/likes/${uid}`));
+     // Nettoyer ses likes reçus chez les autres
+     for (let otherUid in currentLikesData) {
+       if (currentLikesData[otherUid] && currentLikesData[otherUid][uid]) {
+         await remove(ref(db, `${basePath}/likes/${otherUid}/${uid}`));
+       }
+     }
+     // Supprime aussi sa photo du Storage (best-effort : on ignore l'erreur si le
+     // fichier n'existe déjà plus, pour ne pas bloquer le reste de la suppression).
+     await deleteObject(storageRef(storage, photoStoragePath(uid))).catch(() => {});
+     showToastNotification(t('userDeleted'));
+   }
+ };
+
+ // Permettre de refaire sa photo en cliquant sur son profil
+ document.getElementById('my-profile-image').onclick = () => {
+   stopCamera();
+   showUI('login-screen');
+   initCamera();
+ };
+
+ // Initialisation UI Vibes
+ function setFilterActive(btn, isActive) {
+   if (isActive) {
+     btn.classList.remove('glass', 'opacity-60');
+     btn.classList.add('bg-white/25', 'border-white/30', 'opacity-100', 'shadow-sm');
+   } else {
+     btn.classList.remove('bg-white/25', 'border-white/30', 'opacity-100', 'shadow-sm');
+     btn.classList.add('glass', 'opacity-60');
+   }
+ }
+
+ function initVibesUI() {
+   const capContainer = document.getElementById('vibe-selector-capture');
+   const chgContainer = document.getElementById('vibe-change-list');
+   const fltContainer = document.getElementById('vibe-filters');
+   
+   capContainer.innerHTML = ''; 
+   chgContainer.innerHTML = '';
+   fltContainer.innerHTML = '';
+
+   const btnAll = document.createElement('button');
+   btnAll.className = "filter-btn py-2.5 px-2 rounded-xl text-xs font-bold border border-transparent transition-all flex items-center justify-center space-x-1";
+   btnAll.innerHTML = `🌍 <span class=\"truncate\">${t('allFilter')}</span>`;
+   btnAll.dataset.vibe = 'all';
+   setFilterActive(btnAll, currentFilter === 'all');
+   btnAll.onclick = () => {
+     document.querySelectorAll('.filter-btn').forEach(b => setFilterActive(b, false));
+     setFilterActive(btnAll, true);
+     currentFilter = 'all';
+     renderPhotoWall();
+   };
+   fltContainer.appendChild(btnAll);
+
+   Object.keys(VIBES_BASE).forEach(id => {
+     const v = getVibe(id);
+
+     const btnCap = document.createElement('div');
+     btnCap.className = "cursor-pointer rounded-2xl p-3 border-2 border-white/10 text-center transition-all opacity-70 hover:opacity-100 flex flex-col items-center justify-center space-y-2 capture-vibe-btn";
+     btnCap.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display text-sm font-semibold" style="color:${v.color}">${v.title}</span>`;
+     btnCap.onclick = () => selectVibeForCapture(v.id, btnCap);
+     if (selectedVibe === v.id) {
+       btnCap.classList.remove('border-white/10', 'opacity-70');
+       btnCap.classList.add('border-white', 'bg-white/10', 'opacity-100');
+       btnCap.style.borderColor = v.color;
+     }
+     capContainer.appendChild(btnCap);
+
+     const btnChg = document.createElement('div');
+     btnChg.className = "cursor-pointer rounded-2xl p-4 border border-white/10 flex items-center space-x-4 transition-all hover:bg-white/5";
+     btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display font-semibold flex-1 text-left text-base" style="color:${v.color}">${v.title}</span>`;
+     btnChg.onclick = async () => {
+       await update(ref(db, `${basePath}/users/${myUserId}`), { vibe: v.id });
+       document.getElementById('vibe-change-popup').classList.add('hidden');
+     };
+     chgContainer.appendChild(btnChg);
+
+     const btnFlt = document.createElement('button');
+     btnFlt.className = "filter-btn glass py-2.5 px-2 rounded-xl text-xs font-bold opacity-60 hover:opacity-100 transition-all border-transparent flex items-center justify-center space-x-1";
+     btnFlt.innerHTML = `${v.icon} <span class=\"truncate\">${v.title}</span>`;
+     btnFlt.dataset.vibe = v.id;
+     setFilterActive(btnFlt, currentFilter === v.id);
+     btnFlt.onclick = () => {
+       document.querySelectorAll('.filter-btn').forEach(b => setFilterActive(b, false));
+       setFilterActive(btnFlt, true);
+       currentFilter = v.id;
+       renderPhotoWall();
+     };
+     fltContainer.appendChild(btnFlt);
+   });
+ }
+
+ function selectVibeForCapture(vibeId, element) {
+   selectedVibe = vibeId;
+   document.querySelectorAll('.capture-vibe-btn').forEach(b => {
+     b.classList.remove('border-white', 'bg-white/10', 'opacity-100');
+     b.classList.add('border-white/10', 'opacity-70');
+   });
+   element.classList.remove('border-white/10', 'opacity-70');
+   element.classList.add('border-white', 'bg-white/10', 'opacity-100');
+   element.style.borderColor = getVibe(vibeId).color;
+   
+   const btnVal = document.getElementById('btn-validate-join');
+   btnVal.classList.remove('bg-white/20', 'opacity-50', 'cursor-not-allowed');
+   btnVal.classList.add('btn-main');
+ }
+
+ applyTranslations(); // applique la langue mémorisée (et régénère les listes de vibes traduites) dès le chargement
+
+ function playNotificationSound(type) {
+   try {
+     const ctx = new (window.AudioContext || window.webkitAudioContext)();
+     const osc = ctx.createOscillator(); const gain = ctx.createGain();
+     osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+     gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+     osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3);
+   } catch (e) {}
+ }
+
+ function showToastNotification(message) {
+   const container = document.getElementById('toast-container');
+   const toast = document.createElement('div');
+   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent-2)] transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+   toast.innerText = message;
+   container.appendChild(toast);
+   toast.offsetHeight; toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+   setTimeout(() => { toast.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
+ }
+
+ function showUI(id) {
+   document.getElementById('app-loading-fallback').classList.add('hidden');
+   ['closed-screen', 'login-screen', 'main-app'].forEach(s => document.getElementById(s).classList.add('hidden'));
+   document.getElementById(id).classList.remove('hidden');
+ }
+
+ function launchFireworks(targetPhotoUrl) {
+   const overlay = document.getElementById('match-announcement');
+   document.getElementById('match-photo-display').src = targetPhotoUrl;
+   overlay.style.display = 'flex';
+   const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
+   confetti(Object.assign({}, defaults, { particleCount: 100, origin: { y: 0.6 } }));
+   overlay.onclick = () => overlay.style.display = 'none';
+ }
+
+ // CAMERA LOGIC
+ function initCamera() {
+   const video = document.getElementById('camera-feed');
+   const canvas = document.getElementById('photo-canvas');
+   video.classList.remove('hidden'); canvas.classList.add('hidden');
+   document.getElementById('capture-initial-controls').classList.remove('hidden');
+   document.getElementById('capture-confirm-controls').classList.add('hidden');
+   video.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
+
+   navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 640 } }, audio: false })
+     .then(stream => { videoStream = stream; video.srcObject = stream; video.onloadedmetadata = () => video.play(); })
+     .catch(err => { document.getElementById('camera-error').classList.remove('hidden'); document.getElementById('capture-initial-controls').classList.add('hidden'); });
+ }
+
+ function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } }
+
+ document.getElementById('btn-switch-camera').onclick = (e) => { e.stopPropagation(); currentFacingMode = currentFacingMode === "user" ? "environment" : "user"; stopCamera(); initCamera(); };
+
+ document.getElementById('btn-take-snapshot').onclick = () => {
+   const video = document.getElementById('camera-feed');
+   const canvas = document.getElementById('photo-canvas');
+   const size = 300; canvas.width = size; canvas.height = size;
+   const ctx = canvas.getContext('2d');
+   if (currentFacingMode === "user") { ctx.translate(size, 0); ctx.scale(-1, 1); }
+   const minDim = Math.min(video.videoWidth, video.videoHeight);
+   const startX = (video.videoWidth - minDim) / 2; const startY = (video.videoHeight - minDim) / 2;
+   ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, size, size);
+   tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+   video.classList.add('hidden'); canvas.classList.remove('hidden');
+   document.getElementById('capture-initial-controls').classList.add('hidden');
+   document.getElementById('capture-confirm-controls').classList.remove('hidden');
+ };
+
+ document.getElementById('btn-retake-photo').onclick = () => { tempPhotoBase64 = null; initCamera(); };
+
+ document.getElementById('btn-validate-join').onclick = async () => {
+   if(!tempPhotoBase64 || !myUserId || !selectedVibe) return;
+   const btnVal = document.getElementById('btn-validate-join');
+   const label = document.getElementById('label-btn-validate');
+   btnVal.disabled = true;
+   try {
+     // 1) Upload de la photo vers Firebase Storage (au lieu de l'écrire en base64 dans la DB).
+     label.innerText = t('uploadingPhoto');
+     const photoRef = storageRef(storage, photoStoragePath(myUserId));
+     await uploadString(photoRef, tempPhotoBase64, 'data_url');
+     const downloadURL = await getDownloadURL(photoRef);
+
+     // 2) La Realtime Database ne stocke plus qu'une URL légère, pas plus de ~150-200
+     //    caractères, au lieu de ~20-40 Ko de base64 par photo répliqués à chaque client
+     //    connecté à chaque changement. Sur un event à plusieurs centaines de participants,
+     //    ça évite de retélécharger des mégaoctets de photos à tout le monde à chaque
+     //    nouvelle arrivée.
+     label.innerText = t('creatingProfile');
+     await set(ref(db, `${basePath}/users/${myUserId}`), { photo: downloadURL, joinedAt: serverTimestamp(), vibe: selectedVibe });
+
+     myPhotoData = downloadURL;
+     localStorage.setItem(`myPhoto_${eventID}`, downloadURL);
+     localStorage.setItem(`isRegistered_${eventID}`, 'true');
+     isRegistered = true; stopCamera(); loadApp();
+   } catch (e) {
+     // Fix : sans ce catch, un échec réseau laissait le bouton bloqué indéfiniment
+     // sur "Création du profil..." sans aucun message d'erreur pour l'utilisateur.
+     console.error(e);
+     btnVal.disabled = false;
+     label.innerText = t('validateJoin');
+     showToastNotification(currentLang === 'fr' ? "Échec de la création du profil, réessaie ❌" : "Failed to create profile, try again ❌");
+   }
+ };
+
+ signInAnonymously(auth).then(res => { myUserId = res.user.uid; initFirebaseStructure(); }).catch(e => console.error(e));
+
+ function initFirebaseStructure() {
+   onValue(ref(db, `${basePath}/config`), snap => {
+     const config = snap.val();
+     if (!config) { showUI('closed-screen'); return; }
+     document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+     if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
+   });
+ }
+
+ function renderPhotoWall() {
+   const grid = document.getElementById('photo-wall-grid');
+   grid.innerHTML = "";
+   let myLikes = currentLikesData[myUserId] || {};
+   
+   Object.keys(allUsersData).forEach(uid => {
+     if (uid === myUserId) return;
+     const user = allUsersData[uid];
+     const userVibeKey = user.vibe || 'flirt'; 
+     const userVibeInfo = getVibe(userVibeKey);
+     
+     if (currentFilter !== 'all' && userVibeKey !== currentFilter) return;
+     
+     const isMatched = myLikes[uid] && currentLikesData[uid] && currentLikesData[uid][myUserId];
+     const hasLikedAlready = myLikes[uid];
+
+     const card = document.createElement('div');
+     card.className = `user-card ${isMatched ? 'matched' : ''}`;
+     card.style.borderColor = isMatched ? '#fff' : userVibeInfo.color;
+
+     // Sécurité : on construit l'élément <img> via une propriété DOM (.src) plutôt que
+     // d'interpoler user.photo dans une chaîne innerHTML. Si les règles Firebase étaient
+     // un jour trop permissives, une valeur "photo" malveillante ne pourrait jamais
+     // injecter de HTML/JS de cette façon (contrairement à innerHTML="<img src='${..}'>").
+     const img = document.createElement('img');
+     img.src = user.photo;
+     img.loading = 'lazy';
+     img.alt = '';
+     card.appendChild(img);
+
+     const badge = document.createElement('div');
+     badge.className = 'vibe-badge';
+     badge.textContent = userVibeInfo.icon;
+     card.appendChild(badge);
+     
+     if(isMatched) {
+       card.onclick = () => openChat(uid);
+     } else if(hasLikedAlready) {
+       const overlay = document.createElement('div');
+       overlay.className = 'absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-2';
+       const hourglass = document.createElement('span');
+       hourglass.className = 'text-white text-3xl';
+       hourglass.textContent = '⏳';
+       overlay.appendChild(hourglass);
+       card.appendChild(overlay);
+       card.onclick = () => {
+         targetToCancel = uid;
+         document.getElementById('cancel-target-photo').src = user.photo;
+         document.getElementById('cancel-flash-popup').classList.remove('hidden');
+       };
+     } else {
+       card.onclick = () => {
+         targetToFlash = uid;
+         document.getElementById('confirm-target-photo').src = user.photo;
+         document.getElementById('confirm-flash-title').innerText = userVibeInfo.prompt;
+         const btnFlash = document.getElementById('btn-confirm-flash');
+         btnFlash.innerText = userVibeInfo.action;
+         btnFlash.style.background = userVibeInfo.color;
+         document.getElementById('confirm-flash-popup').classList.remove('hidden');
+       };
+     }
+     grid.appendChild(card);
+   });
+ }
+
+ document.getElementById('btn-confirm-flash').onclick = async () => {
+   document.getElementById('confirm-flash-popup').classList.add('hidden');
+   if(!targetToFlash) return;
+   if (currentLikesSentCount >= 20) { document.getElementById('limit-warning').classList.remove('hidden'); return; }
+   await set(ref(db, `${basePath}/likes/${myUserId}/${targetToFlash}`), true);
+   const check = await get(ref(db, `${basePath}/likes/${targetToFlash}/${myUserId}`));
+   if(!check.exists()) showToastNotification(t('toastInviteSent'));
+   targetToFlash = null;
+ };
+
+ document.getElementById('btn-confirm-cancel').onclick = async () => {
+   document.getElementById('cancel-flash-popup').classList.add('hidden');
+   if(targetToCancel) await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToCancel}`));
+   targetToCancel = null;
+ };
+
+ window.askUnmatch = (uid) => {
+   targetToUnmatch = uid;
+   document.getElementById('unmatch-target-photo').src = allUsersData[uid].photo;
+   document.getElementById('unmatch-popup').classList.remove('hidden');
+ };
+
+ document.getElementById('btn-confirm-unmatch').onclick = async () => {
+   document.getElementById('unmatch-popup').classList.add('hidden');
+   if(!targetToUnmatch) return;
+   await remove(ref(db, `${basePath}/likes/${myUserId}/${targetToUnmatch}`));
+   const roomID = [myUserId, targetToUnmatch].sort().join('-');
+   await remove(ref(db, `${basePath}/messages/${roomID}`));
+   targetToUnmatch = null;
+ };
+
+ function loadApp() {
+   showUI('main-app');
+   if(myPhotoData) document.getElementById('my-profile-image').src = myPhotoData;
+
+   onValue(ref(db, `${basePath}/users`), (snapshot) => {
+     allUsersData = snapshot.val() || {};
+     if (!allUsersData[myUserId]) { localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return; }
+     
+     const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
+     const vInfo = getVibe(myCurrentVibe);
+     document.getElementById('my-vibe-badge-header').innerText = vInfo.icon;
+     document.getElementById('my-vibe-text-header').innerText = vInfo.title;
+     document.getElementById('my-vibe-text-header').style.color = vInfo.color;
+     document.getElementById('my-profile-image').style.borderColor = vInfo.color;
+     
+     document.getElementById('admin-total-users').innerText = Object.keys(allUsersData).length;
+     
+     // Render Admin Users List
+     // Sécurité : on construit les éléments via createElement/textContent/.src (propriétés DOM)
+     // plutôt que d'interpoler u.photo dans innerHTML, pour éviter tout risque d'injection
+     // si une valeur "photo" malveillante finissait un jour dans la base (ex: règles Firebase
+     // trop permissives). Le bouton "Supprimer" utilise addEventListener plutôt qu'un
+     // attribut onclick="...('${uid}')" construit par concaténation de chaînes.
+     const adminUsersList = document.getElementById('admin-users-list');
+     adminUsersList.innerHTML = '';
+     Object.keys(allUsersData).forEach(uid => {
+       const u = allUsersData[uid];
+       const row = document.createElement('div');
+       row.className = "flex items-center justify-between p-2 hover:bg-white/5 rounded-xl";
+
+       const left = document.createElement('div');
+       left.className = "flex items-center space-x-3";
+       const img = document.createElement('img');
+       img.src = u.photo;
+       img.className = "w-10 h-10 rounded-full object-cover";
+       img.alt = '';
+       const uidLabel = document.createElement('span');
+       uidLabel.className = "text-xs font-mono text-gray-300";
+       uidLabel.textContent = uid.substring(0, 6) + '...';
+       left.appendChild(img); left.appendChild(uidLabel);
+
+       const delBtn = document.createElement('button');
+       delBtn.className = "bg-red-500/20 text-red-400 p-2 rounded-lg text-xs font-bold hover:bg-red-500/30";
+       delBtn.textContent = t('adminDeleteBtn');
+       delBtn.onclick = () => adminDeleteUser(uid);
+
+       row.appendChild(left); row.appendChild(delBtn);
+       adminUsersList.appendChild(row);
+     });
+
+     renderPhotoWall();
+   });
+
+   onValue(ref(db, `${basePath}/likes`), (snapshot) => {
+     currentLikesData = snapshot.val() || {};
+     renderPhotoWall();
+     
+     let matches = []; let likesRecus = 0; let totalLikesNetwork = 0;
+     let myLikes = currentLikesData[myUserId] || {};
+     currentLikesSentCount = Object.keys(myLikes).length;
+     
+     for (let userUid in currentLikesData) {
+       const userLikes = currentLikesData[userUid];
+       totalLikesNetwork += Object.keys(userLikes).length;
+       if (userLikes[myUserId]) {
+         likesRecus++; if (myLikes[userUid]) matches.push(userUid);
+       }
+     }
+     
+     document.getElementById('admin-total-likes').innerText = totalLikesNetwork;
+     
+     let totalMatchesNetwork = 0;
+     for (let uid1 in currentLikesData) {
+       for (let uid2 in currentLikesData[uid1]) {
+         if (currentLikesData[uid2] && currentLikesData[uid2][uid1]) totalMatchesNetwork++;
+       }
+     }
+     // Math.floor évite d'afficher un chiffre à virgule (ex: 1.5) pendant un état
+     // transitoire où une seule moitié d'un match vient d'être écrite en base.
+     document.getElementById('admin-total-matches').innerText = Math.floor(totalMatchesNetwork / 2);
+
+     if (prevLikesRecusCount !== null && likesRecus > prevLikesRecusCount) { showToastNotification(t('toastNewLike')); playNotificationSound(); }
+     if (prevMatchesCount !== null && matches.length > prevMatchesCount) {
+       showToastNotification(t('toastNewMatch')); playNotificationSound();
+       const newMatchUid = matches.find(uid => !prevMatchesList.includes(uid));
+       if (newMatchUid && allUsersData[newMatchUid]) launchFireworks(allUsersData[newMatchUid].photo);
+     }
+     prevLikesRecusCount = likesRecus; prevMatchesCount = matches.length; prevMatchesList = [...matches];
+     
+     lastMatches = matches;
+     renderMatches(matches);
+   });
+ }
+
+ // Extrait de loadApp() pour pouvoir re-rendre la liste des connexions (ex: au changement
+ // de langue) sans dupliquer la logique. Corrige aussi le XSS sur u.photo (voir renderPhotoWall).
+ function renderMatches(matches) {
+   matches = matches || lastMatches;
+   const list = document.getElementById('match-list');
+   list.innerHTML = '';
+
+   if (!matches.length) {
+     const empty = document.createElement('p');
+     empty.className = 'text-center text-gray-500 text-sm py-8';
+     empty.textContent = t('noMatches');
+     list.appendChild(empty);
+     return;
+   }
+
+   matches.forEach(uid => {
+     const roomID = [myUserId, uid].sort().join('-');
+     const u = allUsersData[uid];
+     if(!u) return;
+     const v = getVibe(u.vibe || 'flirt');
+
+     const div = document.createElement('div');
+     div.className = "glass p-4 rounded-2xl flex justify-between items-center animate-pop shadow-md";
+     div.style.borderLeft = `4px solid ${v.color}`;
+
+     const left = document.createElement('div');
+     left.className = "flex items-center space-x-4 cursor-pointer flex-1";
+     left.onclick = () => openChat(uid);
+
+     const avatarWrap = document.createElement('div');
+     avatarWrap.className = 'relative';
+     const img = document.createElement('img');
+     img.src = u.photo;
+     img.className = 'w-14 h-14 rounded-full object-cover border-2 border-white/20';
+     img.alt = '';
+     const vibeDot = document.createElement('div');
+     vibeDot.className = 'absolute -bottom-1 -right-1 text-xs bg-black rounded-full p-0.5';
+     vibeDot.textContent = v.icon;
+     avatarWrap.appendChild(img); avatarWrap.appendChild(vibeDot);
+
+     const nameCol = document.createElement('div');
+     nameCol.className = 'flex flex-col';
+     const nameLabel = document.createElement('span');
+     nameLabel.className = 'font-black text-white text-sm uppercase tracking-wider';
+     nameLabel.textContent = t('privateChat');
+     nameCol.appendChild(nameLabel);
+
+     const dot = document.createElement('div');
+     dot.id = `dot-${roomID}`;
+     dot.className = 'notification-dot hidden';
+
+     left.appendChild(avatarWrap); left.appendChild(nameCol); left.appendChild(dot);
+
+     const unmatchBtn = document.createElement('button');
+     unmatchBtn.className = 'ml-4 p-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-500 transition-colors';
+     unmatchBtn.textContent = '🗑️';
+     unmatchBtn.onclick = () => askUnmatch(uid);
+
+     div.appendChild(left); div.appendChild(unmatchBtn);
+     list.appendChild(div);
+     listenForNotifications(roomID);
+   });
+ }
+
+ function listenForNotifications(roomID) {
+   if (attachedNotificationListeners.has(roomID)) return;
+   attachedNotificationListeners.add(roomID);
+   onValue(ref(db, basePath + `/messages/${roomID}`), (snap) => {
+     const msgCount = Object.keys(snap.val() || {}).length;
+     const lastSeen = parseInt(localStorage.getItem(`lastSeen_${roomID}`) || "0");
+     const dot = document.getElementById(`dot-${roomID}`);
+     if (dot && msgCount > lastSeen && activeChatRoom !== roomID) dot.classList.remove('hidden');
+   });
+ }
+
+ // Met à jour le compteur "Messages : X / 10", affiche l'avertissement et désactive
+ // la saisie une fois la limite atteinte (jusque là ces éléments existaient dans le HTML
+ // mais n'étaient jamais mis à jour ni réellement appliqués).
+ function updateChatCounterDisplay() {
+   const counter = document.getElementById('chat-counter-display');
+   const warning = document.getElementById('chat-limit-warning');
+   const input = document.getElementById('chat-input');
+   const sendBtn = document.getElementById('send-msg-trigger');
+   if (!counter) return;
+   counter.textContent = t('messagesCounter')(currentChatMessagesSent);
+   const limitReached = currentChatMessagesSent >= CHAT_MESSAGE_LIMIT;
+   warning.classList.toggle('hidden', !limitReached);
+   input.disabled = limitReached;
+   sendBtn.disabled = limitReached;
+   sendBtn.classList.toggle('opacity-50', limitReached);
+ }
+
+ function openChat(targetUid) {
+   activeChatRoom = [myUserId, targetUid].sort().join('-');
+   const u = allUsersData[targetUid];
+   document.getElementById('chat-target-photo').src = u.photo;
+   document.getElementById('chat-target-vibe').innerText = getVibe(u.vibe || 'flirt').icon;
+   document.getElementById('chat-window').classList.remove('hidden');
+   const dot = document.getElementById(`dot-${activeChatRoom}`); if (dot) dot.classList.add('hidden');
+
+   // On se désabonne de l'ancien listener de messages avant d'en attacher un nouveau :
+   // sans ça, ouvrir/fermer un chat plusieurs fois accumule des listeners onValue qui
+   // ne sont jamais détachés (fuite mémoire + lectures Firebase inutiles).
+   if (activeChatUnsubscribe) { activeChatUnsubscribe(); activeChatUnsubscribe = null; }
+
+   activeChatUnsubscribe = onValue(ref(db, basePath + `/messages/${activeChatRoom}`), (snap) => {
+     const container = document.getElementById('chat-messages'); container.innerHTML = "";
+     currentChatMessagesSent = 0; const entries = Object.values(snap.val() || {});
+     entries.forEach(m => {
+       if(m.sender === myUserId) currentChatMessagesSent++;
+       const d = document.createElement('div'); d.className = `msg ${m.sender === myUserId ? 'msg-me' : 'msg-them'}`; d.innerText = m.text;
+       container.appendChild(d);
+     });
+     localStorage.setItem(`lastSeen_${activeChatRoom}`, entries.length);
+     updateChatCounterDisplay();
+     setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+   });
+ }
+ window.openChat = openChat;
+
+ async function sendChatMessage() {
+   const input = document.getElementById('chat-input');
+   const sendBtn = document.getElementById('send-msg-trigger');
+   const text = input.value.trim();
+   if(!text || !activeChatRoom) return;
+   if (currentChatMessagesSent >= CHAT_MESSAGE_LIMIT) { updateChatCounterDisplay(); return; }
+
+   // Désactivation le temps de l'envoi pour éviter un double-envoi (double-tap / double-clic).
+   sendBtn.disabled = true;
+   try {
+     await push(ref(db, `${basePath}/messages/${activeChatRoom}`), { sender: myUserId, text, time: serverTimestamp() });
+     input.value = "";
+   } catch (e) {
+     console.error(e);
+     showToastNotification(currentLang === 'fr' ? "Échec de l'envoi, réessaie ❌" : "Failed to send, try again ❌");
+   } finally {
+     if (currentChatMessagesSent < CHAT_MESSAGE_LIMIT) sendBtn.disabled = false;
+   }
+ }
+
+ document.getElementById('send-msg-trigger').onclick = sendChatMessage;
+
+ // Envoi du message avec la touche Entrée (comportement attendu, notamment sur mobile).
+ document.getElementById('chat-input').addEventListener('keydown', (e) => {
+   if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+ });
+
+ document.getElementById('close-chat-trigger').onclick = () => {
+   document.getElementById('chat-window').classList.add('hidden');
+   activeChatRoom = null;
+   if (activeChatUnsubscribe) { activeChatUnsubscribe(); activeChatUnsubscribe = null; }
+ };
+ </script>
+</body>
+</html>
