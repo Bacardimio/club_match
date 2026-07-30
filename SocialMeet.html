@@ -250,7 +250,7 @@
  </div>
 
  <!-- Unmatch Popup -->
- <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-5 backdrop-blur-md">
+ <div id="unmatch-popup" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-5 backdrop-blur-md">
    <div class="glass p-8 rounded-[2.5rem] text-center max-w-sm w-full animate-pop border-white/10 shadow-2xl">
      <p id="unmatch-title" class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6" data-i18n="unmatchTitle">Supprimer cette connexion ?</p>
      <div class="w-40 h-40 rounded-2xl overflow-hidden mx-auto mb-8 shadow-lg border border-white/20 border-red-500/50">
@@ -271,6 +271,31 @@
        <!-- Injected via JS -->
      </div>
      <button onclick="document.getElementById('vibe-change-popup').classList.add('hidden')" class="w-full glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest" data-i18n="close">Fermer</button>
+   </div>
+ </div>
+
+ <!-- Connexions -->
+ <div id="connections-popup" class="hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl max-h-[80vh] flex flex-col">
+     <h3 class="font-display text-white text-center text-xl font-semibold mb-5 shrink-0" data-i18n="matchesLabel">Tes Connexions 💬</h3>
+     <!-- #match-list garde son id : renderMatches() continue de viser cet élément, seul
+          son emplacement dans le document a changé. -->
+     <div id="match-list" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+     <button data-close-popup="connections-popup" class="mt-5 w-full glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest shrink-0" data-i18n="close">Fermer</button>
+   </div>
+ </div>
+
+ <!-- Invitations reçues -->
+ <div id="invites-popup" class="hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-5 backdrop-blur-md">
+   <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm animate-pop border-white/10 shadow-2xl max-h-[80vh] flex flex-col">
+     <h3 class="font-display text-white text-center text-xl font-semibold mb-1 shrink-0" data-i18n="invitesLabel">Ils veulent te rencontrer</h3>
+     <p class="text-[11px] text-gray-400 text-center mb-5 shrink-0" data-i18n="invitesHint">Touche une photo pour répondre.</p>
+     <!-- Passage d'un défilement horizontal à un enroulement : dans une popup, la largeur
+          est contrainte mais la hauteur ne l'est plus, donc les avatars se lisent tous
+          d'un coup au lieu d'être cachés hors écran à droite. -->
+     <div id="invites-row" class="flex flex-wrap gap-3 justify-center overflow-y-auto flex-1"></div>
+     <p id="invites-empty" class="hidden text-center text-gray-500 text-sm py-8" data-i18n="noInvites">Aucune invitation pour le moment.</p>
+     <button data-close-popup="invites-popup" class="mt-5 w-full glass py-4 rounded-2xl text-sm font-bold text-gray-400 uppercase tracking-widest shrink-0" data-i18n="close">Fermer</button>
    </div>
  </div>
 
@@ -349,28 +374,32 @@
             d'espace — sa taille de police est fluide (clamp) selon la largeur
             disponible, avec troncature en tout dernier recours sur un écran extrême. -->
        <button class="flex items-center gap-2 group min-w-0 flex-1" onclick="document.getElementById('vibe-change-popup').classList.remove('hidden')">
-         <span class="font-display font-extrabold uppercase tracking-tight leading-none truncate" id="my-vibe-text-header" style="font-size: clamp(1.05rem, 6vw, 1.5rem);" data-i18n="moodDefault">Ambiance</span>
-         <span class="text-sm opacity-40 group-active:opacity-80 transition-opacity shrink-0">✏️</span>
+         <span class="font-display font-extrabold uppercase tracking-tight leading-none truncate group-active:opacity-70 transition-opacity" id="my-vibe-text-header" style="font-size: clamp(1.05rem, 6vw, 1.5rem);" data-i18n="moodDefault">Ambiance</span>
        </button>
      </div>
    </header>
 
-   <!-- Invitations reçues : placées tout en haut car c'est l'information la plus
-        actionnable de l'écran. Masquée tant qu'il n'y a rien en attente. -->
-   <div id="invites-section" class="hidden glass rounded-[2rem] p-4 space-y-3 animate-pop" style="border-color: var(--accent);">
-     <div class="flex items-center justify-between">
-       <span id="invites-label" class="font-mood text-sm font-semibold text-white" data-i18n="invitesLabel">Ils veulent te rencontrer</span>
-       <span id="invites-count" class="text-[11px] font-black px-2.5 py-1 rounded-full bg-[var(--accent)] text-white">0</span>
-     </div>
-     <div id="invites-row" class="flex gap-3 overflow-x-auto hide-scrollbar pb-1"></div>
-     <p class="text-[11px] text-gray-400" data-i18n="invitesHint">Touche une photo pour répondre.</p>
+   <!-- Accès aux listes. Les connexions et les invitations ne s'étalent plus dans le
+        tableau de bord : elles vivent dans des popups (#connections-popup /
+        #invites-popup), ce qui rend le mur photo immédiatement visible sans défilement.
+        Le nombre en attente reste lisible sur le bouton, seul élément vraiment
+        actionnable à cet endroit. -->
+   <div class="grid grid-cols-2 gap-3 px-1">
+     <button id="btn-open-connections" class="glass rounded-2xl px-4 py-3.5 flex items-center justify-between gap-2 text-left active:scale-[0.98] transition-transform">
+       <span class="text-xs font-black uppercase tracking-wider text-[var(--accent)] leading-tight" data-i18n="matchesLabel">Tes Connexions 💬</span>
+       <span id="connections-count" class="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-full bg-white/15 text-gray-300">0</span>
+     </button>
+     <button id="btn-open-invites" class="glass rounded-2xl px-4 py-3.5 flex items-center justify-between gap-2 text-left active:scale-[0.98] transition-transform">
+       <span class="text-xs font-black uppercase tracking-wider text-white leading-tight" data-i18n="invitesLabel">Ils veulent te rencontrer</span>
+       <span id="invites-count" class="shrink-0 text-[11px] font-black px-2.5 py-1 rounded-full bg-white/15 text-gray-300">0</span>
+     </button>
    </div>
 
    <!-- Filter Bar (Grid layout for direct 2-line visibility) -->
    <div class="grid grid-cols-3 gap-2 px-1" id="vibe-filters">
      <!-- Injected via JS -->
    </div>
-   
+
    <p id="limit-warning" class="text-center text-orange-500 text-xs font-bold uppercase hidden bg-orange-500/10 py-3 rounded-xl border border-orange-500/20" data-i18n="inviteLimit">Limite d'invitations atteinte !</p>
 
    <!-- Live Photo Wall -->
@@ -380,15 +409,6 @@
        <div class="h-px flex-1 bg-white/10"></div>
      </div>
      <div id="photo-wall-grid" class="photo-grid glass p-4 rounded-[2rem]"></div>
-   </div>
-
-   <!-- Matches Section -->
-   <div id="match-section" class="space-y-4">
-     <div class="flex items-center space-x-3 px-2">
-       <span id="label-section-matches" class="text-sm font-black text-[var(--accent)] uppercase tracking-widest italic pl-3 border-l-4 border-[var(--accent)]" data-i18n="matchesLabel">Tes Connexions 💬</span>
-       <div class="h-px flex-1 bg-white/5"></div>
-     </div>
-     <div id="match-list" class="space-y-3 px-1"></div>
    </div>
  </div>
 
@@ -561,7 +581,6 @@
      unmatchTitle: "Supprimer cette connexion ?", unmatchConfirm: "Supprimer",
      cancelFlashTitle: "Annuler cette invitation ?",
      changeVibeTitle: "Change ton ambiance", close: "Fermer",
-     confirmChangeMood: (title) => `Changer ton ambiance pour ${title} ?`,
      // --- Changement de mood payant ---
      moodPaywallTitle: "Changer d'ambiance",
      moodPaywallDesc: (title, price) => `Ta première ambiance était offerte. Passer sur ${title} coûte ${price} — et reste débloquée pour toute la soirée.`,
@@ -613,6 +632,7 @@
      premiumFilter: "Tous (Premium)",
      invitesLabel: "Ils veulent te rencontrer",
      invitesHint: "Touche une photo pour répondre.",
+     noInvites: "Aucune invitation pour le moment.",
      inviteReceivedPrompt: "Cette personne t'a envoyé une invitation",
      acceptInvite: "Accepter ✨",
      declineInvite: "Refuser",
@@ -647,7 +667,6 @@
      unmatchTitle: "Remove this connection?", unmatchConfirm: "Remove",
      cancelFlashTitle: "Cancel this invite?",
      changeVibeTitle: "Change your vibe", close: "Close",
-     confirmChangeMood: (title) => `Switch your vibe to ${title}?`,
      // --- Paid vibe switch ---
      moodPaywallTitle: "Switch your vibe",
      moodPaywallDesc: (title, price) => `Your first vibe was on us. Switching to ${title} costs ${price} — and stays unlocked all night.`,
@@ -699,6 +718,7 @@
      premiumFilter: "All (Premium)",
      invitesLabel: "They want to meet you",
      invitesHint: "Tap a photo to reply.",
+     noInvites: "No invitations right now.",
      inviteReceivedPrompt: "This person sent you an invitation",
      acceptInvite: "Accept ✨",
      declineInvite: "Decline",
@@ -798,6 +818,25 @@
  };
 
  // --- GESTION DU PANNEAU D'ADMINISTRATION & MOT DE PASSE ---
+ // --- Popups de listes (connexions / invitations) ---
+ // Les listes ne sont plus rendues dans le flux du tableau de bord : les fonctions de
+ // rendu visent toujours #match-list et #invites-row, simplement déplacés dans ces popups.
+ function openListPopup(id) { document.getElementById(id).classList.remove('hidden'); }
+ function closeListPopup(id) { document.getElementById(id).classList.add('hidden'); }
+ window.closeListPopup = closeListPopup;
+
+ document.getElementById('btn-open-connections').onclick = () => openListPopup('connections-popup');
+ document.getElementById('btn-open-invites').onclick = () => openListPopup('invites-popup');
+
+ // Fermeture : bouton dédié, ou clic sur le fond assombri.
+ document.querySelectorAll('[data-close-popup]').forEach(btn => {
+   btn.onclick = () => closeListPopup(btn.dataset.closePopup);
+ });
+ ['connections-popup', 'invites-popup'].forEach(id => {
+   const el = document.getElementById(id);
+   el.onclick = (e) => { if (e.target === el) closeListPopup(id); };
+ });
+
  document.getElementById('admin-trigger').onclick = () => {
    const password = prompt("Entrez le mot de passe administrateur :");
    if (password === "2026") {
@@ -1119,8 +1158,10 @@
      return; // déjà ton mood, rien à changer
    }
    if (isMoodFree(vibeId)) {
-     const v = getVibe(vibeId);
-     if (confirm(t('confirmChangeMood')(v.title))) changeMyVibe(vibeId, { closePopup });
+     // Plus de confirm() : le changement est immédiat. Il est sans conséquence (aucune
+     // donnée perdue, on peut revenir en un clic), et le paywall sert déjà de garde-fou
+     // là où il y en a un besoin — confirmer par-dessus n'ajoutait qu'une étape.
+     changeMyVibe(vibeId, { closePopup });
      return;
    }
    openMoodPaywall(vibeId);
@@ -1647,21 +1688,31 @@
    document.getElementById('confirm-flash-popup').classList.remove('hidden');
  }
 
- // Rangée d'avatars en haut du tableau de bord : rend enfin visibles les invitations
- // reçues, qui n'étaient jusqu'ici signalées que par un toast éphémère.
+ // Alimente la popup d'invitations et le compteur de son bouton d'accès. La section
+ // inline d'origine se masquait quand il n'y avait rien ; le bouton, lui, reste toujours
+ // visible — c'est son compteur qui porte l'information, et il se met en évidence dès
+ // qu'une invitation est en attente.
  function renderInvites() {
-   const section = document.getElementById('invites-section');
    const row = document.getElementById('invites-row');
    const countEl = document.getElementById('invites-count');
-   if (!section || !row || !countEl) return;
+   const emptyEl = document.getElementById('invites-empty');
+   const btn = document.getElementById('btn-open-invites');
+   if (!row || !countEl || !btn) return;
 
    const invites = pendingInvites();
    updateAppBadge(invites.length);
 
-   if (!invites.length) { section.classList.add('hidden'); row.innerHTML = ''; return; }
-   section.classList.remove('hidden');
    countEl.textContent = invites.length;
+   // Accentuation visuelle uniquement quand il y a quelque chose à traiter : un badge
+   // coloré en permanence perdrait toute valeur de signal.
+   const active = invites.length > 0;
+   countEl.className = `shrink-0 text-[11px] font-black px-2.5 py-1 rounded-full ${active ? 'bg-[var(--accent)] text-white' : 'bg-white/15 text-gray-300'}`;
+   btn.style.borderColor = active ? 'var(--accent)' : '';
+   btn.classList.toggle('animate-pulse', active);
+
    row.innerHTML = '';
+   if (emptyEl) emptyEl.classList.toggle('hidden', active);
+   if (!active) return;
 
    invites.forEach(uid => {
      const u = allUsersData[uid];
@@ -1679,7 +1730,9 @@
      badge.textContent = v.icon;
 
      wrap.appendChild(img); wrap.appendChild(ping); wrap.appendChild(badge);
-     wrap.onclick = () => openInviteConfirm(uid);
+     // La popup de confirmation vit à un z-index inférieur : sans cette fermeture, elle
+     // s'ouvrirait derrière la liste.
+     wrap.onclick = () => { closeListPopup('invites-popup'); openInviteConfirm(uid); };
      row.appendChild(wrap);
    });
  }
@@ -2012,6 +2065,14 @@
    const list = document.getElementById('match-list');
    list.innerHTML = '';
 
+   // Le compteur du bouton d'accès suit la liste : c'est désormais le seul indicateur
+   // visible tant que la popup n'est pas ouverte.
+   const countEl = document.getElementById('connections-count');
+   if (countEl) {
+     countEl.textContent = matches.length;
+     countEl.className = `shrink-0 text-[11px] font-black px-2.5 py-1 rounded-full ${matches.length ? 'bg-[var(--accent)] text-white' : 'bg-white/15 text-gray-300'}`;
+   }
+
    if (!matches.length) {
      const empty = document.createElement('p');
      empty.className = 'text-center text-gray-500 text-sm py-8';
@@ -2110,6 +2171,9 @@
  }
 
  function openChat(targetUid) {
+   // La liste des connexions est une popup : la laisser ouverte derrière le chat
+   // ferait réapparaître la liste au retour, par-dessus le tableau de bord.
+   closeListPopup('connections-popup');
    activeChatRoom = [myUserId, targetUid].sort().join('-');
    const u = allUsersData[targetUid];
    document.getElementById('chat-target-photo').src = u.photo;
