@@ -483,74 +483,37 @@
  const basePath = `events/${eventID}`;
 
  // ===================================================================================
- // --- PAIEMENT DU CHANGEMENT DE MOOD (Mollie) -------------------------------------
+ // --- PAIEMENTS (Mollie via fonctions Vercel) --------------------------------------
  // ===================================================================================
  // Règle produit : le mood choisi À L'INSCRIPTION est GRATUIT. Ensuite, chaque NOUVEAU
- // mood coûte 1 € via un lien de paiement Mollie. Un mood payé reste débloqué : on peut
- // y revenir autant de fois qu'on veut sans repayer.
+ // mood coûte 1 €, et un pass à 2 € débloque tout. Un mood payé reste débloqué.
  //
- // ⚠️ À CONFIGURER (dans le dashboard Mollie) — deux liens totalement séparés :
+ // Le client ne connaît plus aucune URL Mollie : il demande à /api/create-payment de
+ // créer un paiement, et se contente de suivre l'URL de checkout renvoyée. Trois raisons
+ // de faire ainsi plutôt qu'avec des liens de paiement statiques :
+ //   1. les liens de paiement du dashboard Mollie sont à usage UNIQUE — le premier
+ //      participant qui paie les grille pour tous les suivants ;
+ //   2. l'URL de retour est construite à la volée, donc elle peut transporter l'événement
+ //      et le produit acheté sans dépendre du localStorage (perdu si le paiement passe
+ //      par une app bancaire qui rouvre un autre navigateur) ;
+ //   3. c'est le webhook Mollie — et lui seul — qui écrit le déblocage en base. Le client
+ //      ne s'auto-débloque JAMAIS : bricoler son localStorage ou son URL ne donne rien.
  //
- //   ┌ Lien A — 1,00 € — « Changer d'ambiance »
- //   │   URL du lien       → à coller dans MOLLIE_MOOD_LINK
- //   │   URL de redirection → https://tonsite.com/SocialMeet.html?mollie_return=mood
- //   │
- //   └ Lien B — 2,00 € — « Débloquer toutes les ambiances »
- //       URL du lien       → à coller dans MOLLIE_ALL_MOODS_LINK
- //       URL de redirection → https://tonsite.com/SocialMeet.html?mollie_return=all
- //
- // Les deux URL de retour sont distinctes À DESSEIN : le marqueur (`mood` / `all`) dit à
- // l'app quel produit vient d'être payé, sans qu'elle ait à faire confiance à sa mémoire
- // locale. C'est aussi ce qui permet de suivre les deux conversions séparément dans un
- // outil d'analytics, chaque achat ayant sa propre page de retour.
- // (inutile d'ajouter ?event=... aux URL de retour : l'app le restaure toute seule.)
- const MOLLIE_MOOD_LINK = 'https://payment-links.mollie.com/payment/ZN5ZwW4myUjfpFfWPWtHX';       // 1 € — un mood
- const MOLLIE_ALL_MOODS_LINK = 'https://payment-links.mollie.com/payment/eSHBhgM5y4MkLpusJLUU3'; // 2 € — tous les moods
+ // Le déblocage arrive donc tout seul par le listener Firebase déjà en place, même si
+ // l'utilisateur ferme l'onglet pendant le paiement.
+ const PAYMENT_API = '/api/create-payment';
  const MOOD_PRICE_LABEL = '1 €';
  const ALL_MOODS_PRICE_LABEL = '2 €';
 
- // Le mood demandé est mémorisé AVANT de partir chez Mollie, sous une clé volontairement
- // NON préfixée par l'événement : au retour, l'URL de redirection Mollie étant fixe, le
- // paramètre ?event=... a disparu. On stocke donc l'eventID dans l'intention elle-même
- // pour pouvoir reconstruire la bonne URL au retour.
- const PENDING_KEY = 'pendingMoodPurchase';
- const PURCHASE_TTL_MS = 45 * 60 * 1000; // au-delà, l'intention est considérée abandonnée
-
- function readPendingPurchase() {
-   try {
-     const raw = localStorage.getItem(PENDING_KEY);
-     if (!raw) return null;
-     const p = JSON.parse(raw);
-     // `kind` absent = ancienne intention (avant le pass complet) : on la traite comme un
-     // achat de mood à l'unité. `vibeId` n'est requis que dans ce cas.
-     const kind = p && p.kind ? p.kind : 'mood';
-     if (!p || !p.ts || Date.now() - p.ts > PURCHASE_TTL_MS) {
-       localStorage.removeItem(PENDING_KEY); return null;
-     }
-     if (kind === 'mood' && !p.vibeId) { localStorage.removeItem(PENDING_KEY); return null; }
-     return { ...p, kind };
-   } catch (e) { return null; }
- }
-
- // Moods déjà payés (donc rejouables gratuitement). Miroir local du champ
- // `unlockedVibes` stocké sur le profil Firebase : le localStorage répond instantanément
- // (avant même que la base ait répondu) et la base assure la persistance si l'utilisateur
- // vide son cache ou revient plus tard.
+ // Moods déjà payés. Source de vérité : le profil Firebase (`unlockedVibes` /
+ // `unlockedAll`), écrit uniquement par le webhook. Volontairement PAS mis en cache dans
+ // le localStorage : un cache local serait modifiable à la main et rouvrirait la porte
+ // que le webhook vient de fermer.
  let unlockedVibes = new Set();
- try {
-   const saved = JSON.parse(localStorage.getItem(`unlockedVibes_${eventID}`) || '[]');
-   if (Array.isArray(saved)) unlockedVibes = new Set(saved);
- } catch (e) {}
-
- // Pass complet à 2 € : il englobe le déblocage à l'unité (tous les changements de mood
- // deviennent libres) ET ouvre le filtre "Tous" du mur photo. C'est ce qui justifie son
- // prix face aux 1 € par mood : au 2e changement, le pass est déjà plus intéressant.
- let allMoodsUnlocked = localStorage.getItem(`allMoodsUnlocked_${eventID}`) === 'true';
-
- function persistUnlockedVibes() {
-   localStorage.setItem(`unlockedVibes_${eventID}`, JSON.stringify([...unlockedVibes]));
-   localStorage.setItem(`allMoodsUnlocked_${eventID}`, allMoodsUnlocked ? 'true' : 'false');
- }
+ let allMoodsUnlocked = false;
+ // Passe à true après la toute première lecture du profil : évite de fêter au chargement
+ // des déblocages achetés lors d'une session précédente.
+ let paymentFeedbackArmed = false;
 
  // Un mood est gratuit dans quatre cas : (1) je ne suis pas encore inscrit — c'est le
  // choix initial, offert ; (2) c'est déjà mon mood actuel ; (3) je l'ai déjà payé à
@@ -605,11 +568,12 @@
      moodPaywallPay: (price) => `Payer ${price} 💳`,
      moodPaywallLater: "Plus tard",
      moodPaywallRedirect: "Redirection vers le paiement sécurisé…",
-     moodPaywallMisconfigured: "Paiement non configuré : ajoute ton lien Mollie dans MOLLIE_MOOD_LINK ⚙️",
+     moodPaywallMisconfigured: "Connexion à l'événement en cours, réessaie dans un instant ⏳",
      moodUnlockedToast: (title) => `Ambiance ${title} débloquée ! 🔓`,
      moodAlreadyUnlocked: "Ambiance déjà débloquée ✅",
-     moodPaymentCancelled: "Paiement non finalisé — ton ambiance n'a pas changé.",
-     moodPaymentLost: "Paiement reçu, mais l'ambiance choisie a été perdue. Resélectionne-la, tu ne repaieras pas 🙏",
+     paymentStartFailed: "Impossible d'ouvrir le paiement, réessaie ❌",
+     paymentConfirming: "Paiement reçu, déblocage en cours… ⏳",
+     paymentPending: "La confirmation tarde. Ton déblocage s'appliquera tout seul dès réception 🙏",
      moodLockedBadge: "1 €",
      // --- Pass "toutes les ambiances" ---
      allMoodsTitle: "Voir tous les moods",
@@ -689,11 +653,12 @@
      moodPaywallPay: (price) => `Pay ${price} 💳`,
      moodPaywallLater: "Later",
      moodPaywallRedirect: "Redirecting to secure checkout…",
-     moodPaywallMisconfigured: "Payment not configured: set your Mollie link in MOLLIE_MOOD_LINK ⚙️",
+     moodPaywallMisconfigured: "Still connecting to the event, try again in a moment ⏳",
      moodUnlockedToast: (title) => `${title} vibe unlocked! 🔓`,
      moodAlreadyUnlocked: "Vibe already unlocked ✅",
-     moodPaymentCancelled: "Payment not completed — your vibe hasn't changed.",
-     moodPaymentLost: "Payment received, but we lost track of the vibe you picked. Pick it again — you won't be charged twice 🙏",
+     paymentStartFailed: "Couldn't open checkout, please try again ❌",
+     paymentConfirming: "Payment received, unlocking… ⏳",
+     paymentPending: "Confirmation is taking a while. Your unlock will apply automatically 🙏",
      moodLockedBadge: "€1",
      // --- "All vibes" pass ---
      allMoodsTitle: "See all vibes",
@@ -1163,134 +1128,68 @@
  }
  window.openMoodPaywall = openMoodPaywall;
 
- // Mémorise l'intention d'achat PUIS part chez Mollie. C'est cette intention, relue au
- // retour, qui dit à l'app CE QU'IL FAUT débloquer — les liens de paiement Mollie ayant
- // une URL de redirection fixe, ils ne peuvent pas nous transmettre cette information
- // eux-mêmes. `kind` vaut 'mood' (1 €, un mood précis) ou 'all' (2 €, pass complet).
- function startPayment({ kind, vibeId, link, btn }) {
-   if (!link || link.includes('REMPLACE_MOI')) {
-     showToastNotification(t('moodPaywallMisconfigured'));
-     return;
-   }
-   try {
-     localStorage.setItem(PENDING_KEY, JSON.stringify({
-       kind, vibeId: vibeId || null, eventId: eventID, uid: myUserId || null, ts: Date.now()
-     }));
-   } catch (e) { console.error(e); }
+ // Demande au backend (fonction Vercel) de créer un paiement Mollie, puis suit l'URL de
+ // checkout qu'il renvoie. Le montant, l'URL de retour et le webhook sont décidés côté
+ // serveur : le navigateur ne peut donc ni changer le prix, ni fabriquer un faux retour.
+ // `kind` vaut 'mood' (1 €, un mood précis) ou 'all' (2 €, pass complet).
+ async function startPayment({ kind, vibeId, btn }) {
+   if (!myUserId) { showToastNotification(t('moodPaywallMisconfigured')); return; }
 
+   const originalLabel = btn ? btn.textContent : null;
    if (btn) { btn.disabled = true; btn.textContent = t('moodPaywallRedirect'); }
-   window.location.href = link;
+
+   try {
+     const res = await fetch(PAYMENT_API, {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ kind, vibeId: vibeId || null, uid: myUserId, eventId: eventID })
+     });
+     const data = await res.json();
+     if (!res.ok || !data.checkoutUrl) throw new Error(data.error || 'create-payment a échoué');
+     window.location.href = data.checkoutUrl;
+   } catch (e) {
+     // Backend absent, clé Mollie manquante, réseau coupé… Dans tous les cas l'utilisateur
+     // doit retrouver un bouton cliquable plutôt qu'un "Redirection..." figé.
+     console.error(e);
+     if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+     showToastNotification(t('paymentStartFailed'));
+   }
  }
 
- function startMoodPayment(vibeId, btnPay) {
-   startPayment({ kind: 'mood', vibeId, link: MOLLIE_MOOD_LINK, btn: btnPay });
- }
+ function startMoodPayment(vibeId, btnPay) { startPayment({ kind: 'mood', vibeId, btn: btnPay }); }
+ function startAllMoodsPayment(btnPay) { startPayment({ kind: 'all', btn: btnPay }); }
 
- function startAllMoodsPayment(btnPay) {
-   startPayment({ kind: 'all', link: MOLLIE_ALL_MOODS_LINK, btn: btnPay });
- }
-
- // --- RETOUR AUTOMATIQUE DEPUIS MOLLIE ---
- // Appelée au démarrage. Chaque produit a désormais SA PROPRE URL de retour, ce qui rend
- // le retour auto-descriptif : l'app sait ce qui vient d'être acheté rien qu'en lisant
- // l'URL, sans dépendre du localStorage.
- //     lien 1 € → ...?mollie_return=mood
- //     lien 2 € → ...?mollie_return=all
- // Le pass complet est donc débloqué même si le navigateur a vidé son stockage pendant le
- // paiement (navigation privée, iOS agressif…). Pour l'achat à l'unité, l'intention locale
- // reste nécessaire : c'est elle seule qui dit QUEL mood a été payé.
- // Deux cas particuliers gérés ici :
- //   - l'URL de retour Mollie étant fixe, le ?event=... a disparu : on le restaure depuis
- //     l'intention en rechargeant la bonne URL (une seule fois, le marqueur est conservé) ;
- //   - le marqueur est retiré de la barre d'adresse après traitement, pour qu'un simple
- //     rafraîchissement ne rejoue pas le déblocage.
- let paidVibeToApply = null;
- let paidAllToApply = false;
-
+ // --- RETOUR DEPUIS MOLLIE ---
+ // Le déblocage lui-même n'est PAS fait ici : c'est le webhook Mollie qui écrit
+ // `unlockedVibes` / `unlockedAll` (et le nouveau mood) sur le profil Firebase. Le
+ // listener temps réel de loadApp() voit ce changement arriver et rafraîchit l'écran tout
+ // seul — y compris si l'utilisateur a fermé l'onglet pendant le paiement, ou s'il revient
+ // depuis un autre appareil.
+ //
+ // Ce retour ne sert donc qu'à une chose : dire à l'utilisateur ce qui est en train de se
+ // passer. Le webhook arrive en général en une poignée de secondes, mais rien ne garantit
+ // qu'il précède la redirection — d'où l'attente affichée plutôt qu'un succès annoncé trop
+ // tôt (Mollie recommande explicitement de ne pas se fier au retour navigateur seul).
  function consumeMollieReturn() {
    const marker = urlParams.get('mollie_return');
    if (!marker) return;
-
-   const pending = readPendingPurchase();
-   // '1' = ancien marqueur unique (compatibilité) : dans ce cas seule l'intention locale
-   // peut dire de quel produit il s'agit.
-   const kind = (marker === 'mood' || marker === 'all') ? marker : (pending && pending.kind);
-
-   if (!kind) {
-     // Retour non identifiable : ni marqueur explicite, ni intention exploitable
-     // (expirée, ou cache vidé entre-temps).
-     cleanReturnUrl();
-     showToastNotification(t('moodPaymentCancelled'));
-     return;
-   }
-
-   // Le paramètre `event` a été perdu dans la redirection : on recharge la bonne URL.
-   if (pending && pending.eventId && pending.eventId !== eventID) {
-     const url = new URL(window.location.href);
-     url.searchParams.set('event', pending.eventId);
-     url.searchParams.set('mollie_return', marker);
-     window.location.replace(url.toString());
-     return;
-   }
-
-   if (kind === 'all') {
-     paidAllToApply = true;
-   } else if (pending && pending.vibeId) {
-     paidVibeToApply = pending.vibeId;
-   } else {
-     // Achat d'un mood dont on a perdu la trace : on ne peut pas deviner lequel débloquer.
-     cleanReturnUrl();
-     showToastNotification(t('moodPaymentLost'));
-     return;
-   }
-
-   localStorage.removeItem(PENDING_KEY);
    cleanReturnUrl();
+
+   showToastNotification(t('paymentConfirming'));
+
+   // Filet : si au bout de 25 s rien n'est arrivé, on le dit franchement au lieu de
+   // laisser l'utilisateur devant un écran inchangé sans explication.
+   const before = { all: allMoodsUnlocked, count: unlockedVibes.size };
+   setTimeout(() => {
+     const nothingChanged = allMoodsUnlocked === before.all && unlockedVibes.size === before.count;
+     if (nothingChanged) showToastNotification(t('paymentPending'));
+   }, 25000);
  }
 
  function cleanReturnUrl() {
    const url = new URL(window.location.href);
    url.searchParams.delete('mollie_return');
    window.history.replaceState({}, '', url.toString());
- }
-
- // Applique le mood payé une fois Firebase prêt (myUserId disponible). Le déblocage est
- // écrit à la fois en local et sur le profil, pour survivre à un changement d'appareil.
- async function applyPaidMoodIfAny() {
-   // `isRegistered` est indispensable : sans profil existant, l'update créerait un nœud
-   // utilisateur sans photo ni joinedAt, qui apparaîtrait cassé sur le mur photo.
-   if (!myUserId || !isRegistered) return;
-
-   // Pass complet (2 €) : rien à changer côté mood, on ouvre simplement tout — les
-   // changements deviennent libres et le filtre "Tous" s'active immédiatement.
-   if (paidAllToApply) {
-     paidAllToApply = false;
-     allMoodsUnlocked = true;
-     persistUnlockedVibes();
-     try {
-       await update(ref(db, `${basePath}/users/${myUserId}`), { unlockedAll: true });
-     } catch (e) { console.error(e); }
-     currentFilter = 'all';
-     initVibesUI();
-     renderPhotoWall();
-     showToastNotification(t('allMoodsUnlockedToast'));
-     playNotificationSound('unlock');
-     return;
-   }
-
-   if (!paidVibeToApply) return;
-   const vibeId = paidVibeToApply;
-   paidVibeToApply = null;
-
-   unlockedVibes.add(vibeId);
-   persistUnlockedVibes();
-   try {
-     await update(ref(db, `${basePath}/users/${myUserId}/unlockedVibes`), { [vibeId]: true });
-   } catch (e) { console.error(e); }
-
-   await changeMyVibe(vibeId, { closePopup: true });
-   showToastNotification(t('moodUnlockedToast')(getVibe(vibeId).title));
-   playNotificationSound('unlock');
  }
 
  consumeMollieReturn();
@@ -1588,10 +1487,6 @@
      if (!config) { showUI('closed-screen'); return; }
      document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
      if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
-     // Retour de Mollie : le mood payé est appliqué tout seul, sans clic. Ce callback
-     // `onValue` se redéclenche à chaque modification de la config de l'événement —
-     // applyPaidMoodIfAny() se neutralise d'elle-même après le premier passage.
-     applyPaidMoodIfAny();
    });
  }
 
@@ -1815,16 +1710,34 @@
        localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return;
      }
      
-     // Moods déjà payés, relus depuis le profil : si le localStorage a été vidé (ou si
-     // l'utilisateur revient sur un autre navigateur avec le même compte anonyme), il ne
-     // doit pas repayer un mood déjà acheté.
+     // C'est ICI que le déblocage payé se matérialise : le webhook Mollie a écrit
+     // `unlockedVibes` / `unlockedAll` sur le profil, et ce listener temps réel le voit
+     // arriver. Aucun clic ni rechargement n'est nécessaire — l'écran se met à jour tout
+     // seul, même si le paiement a été finalisé depuis un autre appareil.
      const remoteUnlocked = allUsersData[myUserId].unlockedVibes || {};
-     let unlockedChanged = false;
+     const newlyUnlocked = [];
      Object.keys(remoteUnlocked).forEach(id => {
-       if (remoteUnlocked[id] && !unlockedVibes.has(id)) { unlockedVibes.add(id); unlockedChanged = true; }
+       if (remoteUnlocked[id] && !unlockedVibes.has(id)) { unlockedVibes.add(id); newlyUnlocked.push(id); }
      });
-     if (allUsersData[myUserId].unlockedAll && !allMoodsUnlocked) { allMoodsUnlocked = true; unlockedChanged = true; }
-     if (unlockedChanged) { persistUnlockedVibes(); initVibesUI(); }
+     const allJustUnlocked = !!allUsersData[myUserId].unlockedAll && !allMoodsUnlocked;
+     if (allJustUnlocked) allMoodsUnlocked = true;
+
+     if (newlyUnlocked.length || allJustUnlocked) {
+       initVibesUI();
+       // `appListenersAttached` distingue l'arrivée d'un NOUVEAU déblocage (à fêter) de la
+       // simple relecture des déblocages déjà acquis au chargement de l'app (silencieuse).
+       if (paymentFeedbackArmed) {
+         if (allJustUnlocked) {
+           currentFilter = 'all';
+           showToastNotification(t('allMoodsUnlockedToast'));
+         } else {
+           showToastNotification(t('moodUnlockedToast')(getVibe(newlyUnlocked[0]).title));
+         }
+         playNotificationSound('unlock');
+         vibrate(VIBRATE_DEFAULT);
+       }
+     }
+     paymentFeedbackArmed = true;
 
      const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
      const vInfo = getVibe(myCurrentVibe);
