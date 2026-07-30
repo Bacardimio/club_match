@@ -1144,15 +1144,31 @@
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({ kind, vibeId: vibeId || null, uid: myUserId, eventId: eventID })
      });
-     const data = await res.json();
-     if (!res.ok || !data.checkoutUrl) throw new Error(data.error || 'create-payment a échoué');
+
+     // Le corps n'est PAS forcément du JSON : un 404 Vercel (fonction non déployée) ou un
+     // 500 au démarrage renvoient du HTML. Tenter un .json() direct masquerait la vraie
+     // cause derrière un "Unexpected token <" incompréhensible.
+     const raw = await res.text();
+     let data = null;
+     try { data = JSON.parse(raw); } catch (_) {}
+
+     if (!res.ok || !data || !data.checkoutUrl) {
+       const detail = (data && data.error)
+         ? data.error
+         : (res.status === 404
+             ? "/api/create-payment introuvable — fonctions non déployées ?"
+             : raw.slice(0, 120));
+       throw new Error(`HTTP ${res.status} — ${detail}`);
+     }
+
      window.location.href = data.checkoutUrl;
    } catch (e) {
      // Backend absent, clé Mollie manquante, réseau coupé… Dans tous les cas l'utilisateur
-     // doit retrouver un bouton cliquable plutôt qu'un "Redirection..." figé.
-     console.error(e);
+     // doit retrouver un bouton cliquable plutôt qu'un "Redirection..." figé, et TOI le
+     // détail exact plutôt qu'un échec muet.
+     console.error('[SocialMeet paiement]', e);
      if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
-     showToastNotification(t('paymentStartFailed'));
+     showToastNotification(`${t('paymentStartFailed')}\n${e.message}`);
    }
  }
 
@@ -1364,11 +1380,15 @@
  function showToastNotification(message) {
    const container = document.getElementById('toast-container');
    const toast = document.createElement('div');
-   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider border-l-4 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent-2)] transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+   // Un message long est un message technique (détail d'une erreur de paiement) : en
+   // majuscules espacées il serait illisible, et 3,5 s ne suffisent pas à le lire.
+   const isLong = message.length > 60;
+   const caseClass = isLong ? 'normal-case tracking-normal font-semibold leading-snug' : 'uppercase tracking-wider font-black';
+   toast.className = `glass px-5 py-3 rounded-2xl shadow-2xl text-xs ${caseClass} border-l-4 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent-2)] transform translate-y-[-20px] opacity-0 transition-all duration-300`;
    toast.innerText = message;
    container.appendChild(toast);
    toast.offsetHeight; toast.classList.remove('translate-y-[-20px]', 'opacity-0');
-   setTimeout(() => { toast.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
+   setTimeout(() => { toast.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, isLong ? 9000 : 3500);
  }
 
  function showUI(id) {
