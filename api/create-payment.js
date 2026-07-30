@@ -35,15 +35,18 @@ function resolveReturn(req, returnPath) {
     ? claimed
     : (allowed[0] || `https://${req.headers.host}`);
 
-  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /index.html ou /).
+  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /app.html ou /).
   // On n'accepte qu'un chemin relatif simple : sans cette vérification, un `returnPath`
   // du genre `//evil.com` transformerait notre redirection en tremplin vers un site tiers.
+  // Le repli APP_PATH ne sert que si le client n'envoie rien (ancienne version en cache) —
+  // il ne doit surtout pas pointer sur la racine quand celle-ci est la page vitrine.
+  const fallbackPath = process.env.APP_PATH || '/SocialMeet.html';
   const path = (typeof returnPath === 'string'
     && returnPath.startsWith('/')
     && !returnPath.startsWith('//')
     && !returnPath.includes('..'))
       ? returnPath.split('?')[0]
-      : '/SocialMeet.html';
+      : fallbackPath;
 
   return { origin, path, allowed, claimed };
 }
