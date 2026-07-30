@@ -159,17 +159,17 @@ box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
  <p id="notif-blocked-msg" class="hidden text-center text-[9px] font-bold text-white/40 uppercase tracking-wide">Notifications bloquées dans les réglages du navigateur</p>
 
  <!-- ZONE PRINCIPALE DE SAISIE & BOUTON FLASHER -->
- <div class="glass p-4 rounded-3xl border-white/20 shadow-2xl space-y-3">
- <p id="enter-number-label" class="text-xs font-black text-white/80 uppercase tracking-widest text-center">Saisir un N° à flasher</p>
+ <div class="w-full space-y-3">
+   <p id="enter-number-label" class="text-xs font-black text-white/80 uppercase tracking-widest text-center">Saisir un N° à flasher</p>
  
-<div class="relative w-full">
- <input type="number" inputmode="numeric" pattern="\d*" autocomplete="off" id="target-badge" placeholder="N°" class="w-full bg-white border-4 border-gray-300 rounded-2xl py-4 px-3 text-center text-5xl font-black focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-gray-900 transition-all placeholder:text-gray-300 shadow-inner tracking-wider">
- <span id="target-status-icon" class="absolute right-3 top-1/2 -translate-y-1/2 hidden"></span>
- </div>
+   <div class="relative w-full">
+     <input type="number" inputmode="numeric" pattern="\d*" autocomplete="off" id="target-badge" placeholder="N°" class="w-full bg-white border-4 border-gray-300 rounded-2xl py-4 px-3 text-center text-5xl font-black focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-gray-900 transition-all placeholder:text-gray-300 shadow-inner tracking-wider">
+     <span id="target-status-icon" class="absolute right-3 top-1/2 -translate-y-1/2 hidden"></span>
+   </div>
  
-<p id="target-feedback" class="text-center text-xs font-bold uppercase hidden italic py-1.5 px-2 rounded-xl border transition-all"></p>
+   <p id="target-feedback" class="text-center text-xs font-bold uppercase hidden italic py-1.5 px-2 rounded-xl border transition-all"></p>
 
- <button id="btn-like-trigger" disabled class="w-full btn-main py-4 rounded-2xl font-black text-lg text-white uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(255,0,85,0.4)] disabled:opacity-30 disabled:grayscale disabled:shadow-none">Flasher</button>
+   <button id="btn-like-trigger" disabled class="w-full btn-main py-4 rounded-2xl font-black text-lg text-white uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(255,0,85,0.4)] disabled:opacity-30 disabled:grayscale disabled:shadow-none">Flasher</button>
  </div>
 
  <!-- BOUTONS POPUPS (Matches, Flashs Reçus, Flashs Envoyés) -->
