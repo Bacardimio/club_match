@@ -603,6 +603,7 @@
      toastNewLike: "Nouvelle invitation reçue ! 👀", toastNewMatch: "Connexion acceptée ! 🔥",
      toastInviteSent: "Invitation envoyée ! ✈️",
      wrongPassword: "Mot de passe incorrect ❌", userDeleted: "Utilisateur supprimé ❌",
+     userDeleteFailed: "Suppression incomplète — voir la console",
      adminDeleteBtn: "Supprimer ❌",
      confirmReset: "Voulez-vous vraiment vider toutes les données de cet événement ?",
      resetFailedDb: "Échec de la réinitialisation : la base de données a refusé la suppression (vérifie les règles Firebase). Rien n'a été modifié.",
@@ -688,6 +689,7 @@
      toastNewLike: "New invitation received! 👀", toastNewMatch: "Connection accepted! 🔥",
      toastInviteSent: "Invitation sent! ✈️",
      wrongPassword: "Incorrect password ❌", userDeleted: "User deleted ❌",
+     userDeleteFailed: "Deletion incomplete — check the console",
      adminDeleteBtn: "Delete ❌",
      confirmReset: "Do you really want to clear all data for this event?",
      resetFailedDb: "Reset failed: the database refused the deletion (check your Firebase rules). Nothing was changed.",
@@ -819,11 +821,22 @@
    // On ne touche jamais `${basePath}/config` : c'est la fiche de l'événement (nom,
    // mot de passe admin, statut ouvert/fermé) — c'est justement ce qu'on veut garder.
    let dbFailed = false;
+   let removedNodes = [];
    try {
-     await remove(ref(db, `${basePath}/users`));
-     await remove(ref(db, `${basePath}/likes`));
-     await remove(ref(db, `${basePath}/messages`));
-     await remove(ref(db, `${basePath}/declines`));
+     // Auparavant, quatre `remove()` en dur : users, likes, messages, declines. Une liste
+     // figée laisse fatalement des reliquats dès qu'un nœud apparaît ailleurs dans le code
+     // sans qu'on pense à l'ajouter ici. On énumère donc ce qui existe RÉELLEMENT sous
+     // l'événement et on supprime tout sauf la liste blanche : le reset reste exhaustif
+     // même après une évolution du schéma.
+     const KEEP = ['config'];
+     const snap = await get(ref(db, basePath));
+     const children = snap.exists() ? Object.keys(snap.val()) : [];
+     for (const key of children) {
+       if (KEEP.includes(key)) continue;
+       await remove(ref(db, `${basePath}/${key}`));
+       removedNodes.push(key);
+     }
+     console.log('[reset] nœuds supprimés :', removedNodes.join(', ') || 'aucun');
    } catch (e) {
      // Cause la plus probable : les règles Realtime Database exigent une autorisation
      // par enfant (ex. "users/{uid}" scopé à `auth.uid == uid`) plutôt qu'au niveau du
@@ -886,32 +899,82 @@
    // les clés propres à CET événement (les autres participants seront de toute façon
    // ramenés à l'écran d'inscription automatiquement, cf. `if (!allUsersData[myUserId])`
    // dans loadApp(), qui supprime au passage leur propre photo Storage en fallback).
-   localStorage.removeItem(`isRegistered_${eventID}`);
-   localStorage.removeItem(`myPhoto_${eventID}`);
+   //
+   // S'y ajoute un balayage par préfixe, car deux familles de clés survivaient au reset :
+   //   - `lastSeen_<roomID>` : les compteurs de lecture des conversations. Un roomID étant
+   //     dérivé des uid, et l'auth anonyme conservant l'uid d'un appareil, deux personnes
+   //     qui se rematchaient après une remise à zéro héritaient d'un compteur périmé — leur
+   //     pastille "message non lu" ne s'allumait plus jamais.
+   //   - `unlockedVibes_*` / `allMoodsUnlocked_*` : caches d'une version antérieure du
+   //     paywall. Ils ne sont plus écrits (les déblocages viennent de Firebase), mais
+   //     restent sur les appareils qui ont connu cette version.
+   const staleKeys = [];
+   for (let i = 0; i < localStorage.length; i++) {
+     const k = localStorage.key(i);
+     if (!k) continue;
+     if (k === `isRegistered_${eventID}` || k === `myPhoto_${eventID}`) staleKeys.push(k);
+     else if (k.startsWith('lastSeen_')) staleKeys.push(k);
+     else if (k.startsWith('unlockedVibes_') || k.startsWith('allMoodsUnlocked_')) staleKeys.push(k);
+   }
+   // `lastSeen_` n'est pas préfixé par l'événement, on ne peut donc pas cibler le seul
+   // événement courant. Les effacer tous est sans gravité : au pire une pastille de
+   // non-lu réapparaît sur une autre soirée.
+   staleKeys.forEach(k => localStorage.removeItem(k));
    location.reload();
  };
 
  // Fonction pour supprimer un utilisateur indésirable depuis l'admin
  window.adminDeleteUser = async (uid) => {
-   if (confirm(t('confirmDeleteUser'))) {
+   if (!confirm(t('confirmDeleteUser'))) return;
+   try {
      await remove(ref(db, `${basePath}/users/${uid}`));
      await remove(ref(db, `${basePath}/likes/${uid}`));
-     // Nettoyer ses likes reçus chez les autres
-     for (let otherUid in currentLikesData) {
-       if (currentLikesData[otherUid] && currentLikesData[otherUid][uid]) {
+
+     // Likes reçus chez les autres. On relit l'arbre depuis la base plutôt que de se fier
+     // au miroir local `currentLikesData` : celui-ci peut ne pas être encore chargé, et un
+     // like manqué ici resterait indéfiniment, pointant vers un profil inexistant.
+     const likesSnap = await get(ref(db, `${basePath}/likes`));
+     const likes = likesSnap.exists() ? likesSnap.val() : {};
+     for (const otherUid of Object.keys(likes)) {
+       if (likes[otherUid] && likes[otherUid][uid]) {
          await remove(ref(db, `${basePath}/likes/${otherUid}/${uid}`));
        }
      }
-     // Nettoie aussi les refus en attente le concernant (dans les deux sens), pour ne
-     // pas laisser un utilisateur supprimé recevoir ou déclencher une notification.
-     await remove(ref(db, `${basePath}/declines/${uid}`)).catch(() => {});
-     for (let otherUid in allUsersData) {
-       await remove(ref(db, `${basePath}/declines/${otherUid}/${uid}`)).catch(() => {});
+
+     // Refus en attente, dans les deux sens. Même correction : on balaie le nœud réel, et
+     // non `allUsersData`, qui ne contient que les participants encore présents — les
+     // refus laissés par un utilisateur déjà supprimé n'étaient jamais nettoyés.
+     const decSnap = await get(ref(db, `${basePath}/declines`));
+     const declines = decSnap.exists() ? decSnap.val() : {};
+     for (const otherUid of Object.keys(declines)) {
+       if (otherUid === uid) { await remove(ref(db, `${basePath}/declines/${uid}`)); continue; }
+       if (declines[otherUid] && declines[otherUid][uid]) {
+         await remove(ref(db, `${basePath}/declines/${otherUid}/${uid}`));
+       }
      }
+
+     // Les conversations étaient les grandes oubliées : un roomID vaut `uidA-uidB` (uid
+     // triés), donc supprimer un participant laissait tous ses fils de discussion en base,
+     // définitivement — plus aucun écran ne les affiche, donc plus rien ne les supprimera.
+     // Test par préfixe/suffixe plutôt que split('-') : un uid Firebase peut lui-même
+     // contenir un tiret, ce qui découperait le roomID au mauvais endroit.
+     const msgSnap = await get(ref(db, `${basePath}/messages`));
+     const rooms = msgSnap.exists() ? Object.keys(msgSnap.val()) : [];
+     for (const roomID of rooms) {
+       if (roomID.startsWith(`${uid}-`) || roomID.endsWith(`-${uid}`)) {
+         await remove(ref(db, `${basePath}/messages/${roomID}`));
+       }
+     }
+
      // Supprime aussi sa photo du Storage (best-effort : on ignore l'erreur si le
      // fichier n'existe déjà plus, pour ne pas bloquer le reste de la suppression).
      await deleteObject(storageRef(storage, photoStoragePath(uid))).catch(() => {});
      showToastNotification(t('userDeleted'));
+   } catch (e) {
+     // Sans ce try/catch, un refus des règles de sécurité laissait la suppression à
+     // moitié faite ET silencieuse : ni toast de succès, ni message d'erreur.
+     console.error('[admin] suppression utilisateur échouée :', e);
+     showToastNotification(`${t('userDeleteFailed')}\n${e.message}`);
    }
  };
 
