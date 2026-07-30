@@ -77,7 +77,11 @@ export default async function handler(req, res) {
       const creds = credentials();
       report.credentialsReadable = true;
       report.serviceAccountEmail = creds.clientEmail || creds.client_email || null;
-      await database().ref('__selftest').set({ at: Date.now() });
+      // Écriture PUIS suppression immédiate : l'autotest doit prouver qu'il sait écrire
+      // sans laisser de nœud `__selftest` traîner à la racine de la base.
+      const probe = database().ref('__selftest');
+      await probe.set({ at: Date.now() });
+      await probe.remove();
       report.firebaseWrite = true;
     } catch (e) {
       report.error = e.message;
