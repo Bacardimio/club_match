@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'MOLLIE_API_KEY absente des variables Vercel' });
   }
 
-  const { kind, vibeId, uid, eventId } = req.body || {};
+  const { kind, vibeId, uid, eventId, returnPath } = req.body || {};
 
   const product = PRODUCTS[kind];
   if (!product) return res.status(400).json({ error: 'kind invalide' });
@@ -34,16 +34,33 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'vibeId invalide' });
   }
 
-  // APP_URL évite de faire confiance à l'en-tête Host (falsifiable) pour construire les
-  // URL de retour et de webhook. Le fallback ne sert qu'en preview deployment.
-  const origin = process.env.APP_URL || `https://${req.headers.host}`;
+  // --- Où renvoyer l'utilisateur après le paiement ---
+  // Point crucial : le localStorage ET le compte anonyme Firebase sont liés à l'ORIGINE.
+  // Renvoyer quelqu'un parti de `mon-domaine.com` vers `mon-projet.vercel.app` en fait un
+  // parfait inconnu au retour — nouvel uid, aucune photo, aucun déblocage visible, et le
+  // mood qu'il vient de payer reste orphelin sur son ancien compte. On le ramène donc
+  // exactement d'où il vient, à condition que cette origine soit dans la liste blanche.
+  const allowed = (process.env.ALLOWED_ORIGINS || process.env.APP_URL || '')
+    .split(',').map(s => s.trim().replace(/\/$/, '')).filter(Boolean);
+  const claimed = (req.headers.origin || '').replace(/\/$/, '');
+  const origin = allowed.includes(claimed) ? claimed : (allowed[0] || `https://${req.headers.host}`);
+
+  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /index.html ou /).
+  // On n'accepte qu'un chemin relatif simple : sans cette vérification, un `returnPath`
+  // du genre `//evil.com` transformerait notre redirection en tremplin vers un site tiers.
+  const path = (typeof returnPath === 'string'
+    && returnPath.startsWith('/')
+    && !returnPath.startsWith('//')
+    && !returnPath.includes('..'))
+      ? returnPath.split('?')[0]
+      : '/SocialMeet.html';
 
   const payload = {
     amount: { currency: 'EUR', value: product.value },
     description: product.description,
     // Le retour porte l'événement : l'utilisateur retombe sur la bonne soirée même si
     // son navigateur a perdu tout stockage local pendant le paiement.
-    redirectUrl: `${origin}/SocialMeet.html?event=${encodeURIComponent(eventId)}&mollie_return=${kind}`,
+    redirectUrl: `${origin}${path}?event=${encodeURIComponent(eventId)}&mollie_return=${kind}`,
     webhookUrl: `${origin}/api/mollie-webhook`,
     // Mollie nous rendra ces métadonnées telles quelles dans le webhook : c'est ainsi
     // qu'on saura qui débloquer, sans base de données intermédiaire.
@@ -75,4 +92,3 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: 'Mollie injoignable' });
   }
 }
-
