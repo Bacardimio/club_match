@@ -4,10 +4,45 @@
 
 import admin from 'firebase-admin';
 
+// Deux façons de fournir les identifiants Firebase. La seconde existe parce que coller un
+// JSON multiligne dans le champ "Value" de Vercel est capricieux — trois valeurs d'une
+// seule ligne passent partout.
+//
+//   Option A (recommandée) : trois variables séparées
+//     FIREBASE_PROJECT_ID    → champ "project_id" du fichier JSON
+//     FIREBASE_CLIENT_EMAIL  → champ "client_email"
+//     FIREBASE_PRIVATE_KEY   → champ "private_key" (la longue chaîne avec des \n dedans)
+//
+//   Option B : FIREBASE_SERVICE_ACCOUNT contenant le JSON entier.
+//
+// Si les deux sont présentes, l'option A gagne.
+function credentials() {
+  const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } = process.env;
+
+  if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY) {
+    return {
+      projectId: FIREBASE_PROJECT_ID.trim(),
+      clientEmail: FIREBASE_CLIENT_EMAIL.trim(),
+      // Deux nettoyages indispensables : les guillemets que l'on copie souvent en même
+      // temps que la valeur depuis le JSON, et les \n qui arrivent en tant que deux
+      // caractères (antislash + n) alors qu'OpenSSL attend de vrais retours à la ligne.
+      privateKey: FIREBASE_PRIVATE_KEY.trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
+    };
+  }
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  }
+
+  throw new Error(
+    'Identifiants Firebase absents : renseigne FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY (ou FIREBASE_SERVICE_ACCOUNT)'
+  );
+}
+
 function database() {
   if (!admin.apps.length) {
     admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+      credential: admin.credential.cert(credentials()),
       databaseURL: process.env.FIREBASE_DB_URL,
     });
   }
@@ -24,16 +59,24 @@ export default async function handler(req, res) {
     const report = {
       MOLLIE_API_KEY: !!process.env.MOLLIE_API_KEY,
       FIREBASE_DB_URL: process.env.FIREBASE_DB_URL || null,
+      // Option A — trois variables séparées
+      FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+      FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+      FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
+      // La clé doit commencer par cet en-tête : si c'est false alors que la variable
+      // existe, c'est qu'on a copié autre chose que le champ private_key.
+      privateKeyLooksValid: (process.env.FIREBASE_PRIVATE_KEY || '').includes('BEGIN PRIVATE KEY'),
+      // Option B — JSON complet
       FIREBASE_SERVICE_ACCOUNT_present: !!process.env.FIREBASE_SERVICE_ACCOUNT,
-      FIREBASE_SERVICE_ACCOUNT_parsable: false,
+      credentialsReadable: false,
       serviceAccountEmail: null,
       firebaseWrite: false,
       error: null,
     };
     try {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      report.FIREBASE_SERVICE_ACCOUNT_parsable = true;
-      report.serviceAccountEmail = sa.client_email || null;
+      const creds = credentials();
+      report.credentialsReadable = true;
+      report.serviceAccountEmail = creds.clientEmail || creds.client_email || null;
       await database().ref('__selftest').set({ at: Date.now() });
       report.firebaseWrite = true;
     } catch (e) {
