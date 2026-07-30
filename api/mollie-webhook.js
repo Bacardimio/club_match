@@ -15,6 +15,33 @@ function database() {
 }
 
 export default async function handler(req, res) {
+  // --- AUTOTEST ---
+  // Ouvre https://ton-domaine/api/mollie-webhook?selftest=1 dans le navigateur pour
+  // vérifier, sans attendre un vrai paiement, que les variables Firebase sont présentes,
+  // lisibles, et qu'une écriture en base passe. Ne renvoie aucun secret : uniquement des
+  // booléens et le message d'erreur éventuel.
+  if (req.method === 'GET' && req.query && req.query.selftest) {
+    const report = {
+      MOLLIE_API_KEY: !!process.env.MOLLIE_API_KEY,
+      FIREBASE_DB_URL: process.env.FIREBASE_DB_URL || null,
+      FIREBASE_SERVICE_ACCOUNT_present: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+      FIREBASE_SERVICE_ACCOUNT_parsable: false,
+      serviceAccountEmail: null,
+      firebaseWrite: false,
+      error: null,
+    };
+    try {
+      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      report.FIREBASE_SERVICE_ACCOUNT_parsable = true;
+      report.serviceAccountEmail = sa.client_email || null;
+      await database().ref('__selftest').set({ at: Date.now() });
+      report.firebaseWrite = true;
+    } catch (e) {
+      report.error = e.message;
+    }
+    return res.status(200).json(report);
+  }
+
   if (req.method !== 'POST') return res.status(405).end();
 
   // Mollie envoie l'id en form-urlencoded. Le corps ne contient QUE cet id — et on ne lui
@@ -46,6 +73,7 @@ export default async function handler(req, res) {
     }
 
     const userRef = database().ref(`events/${eventId}/users/${uid}`);
+    console.log('[webhook] paiement', paymentId, 'confirmé →', `events/${eventId}/users/${uid}`, kind, vibeId || '');
 
     // Le SDK Admin écrit en contournant les règles de sécurité : celles-ci peuvent donc
     // interdire ces champs au client sans gêner le webhook.
