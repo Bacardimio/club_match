@@ -17,7 +17,59 @@ const PRODUCTS = {
 
 const VALID_VIBES = ['social', 'party', 'flirt', 'network'];
 
+// Décide vers quelle URL renvoyer l'utilisateur après le paiement.
+//
+// Point crucial : le localStorage ET le compte anonyme Firebase sont liés à l'ORIGINE.
+// Renvoyer quelqu'un parti de `mon-domaine.com` vers `mon-projet.vercel.app` en fait un
+// parfait inconnu au retour — nouvel uid, aucune photo, aucun déblocage visible, et le
+// mood qu'il vient de payer reste orphelin sur son ancien compte. On le ramène donc
+// exactement d'où il vient, à condition que cette origine soit dans la liste blanche.
+function resolveReturn(req, returnPath) {
+  const allowed = (process.env.ALLOWED_ORIGINS || process.env.APP_URL || '')
+    .split(',').map(s => s.trim().replace(/\/$/, '')).filter(Boolean);
+  const claimed = (req.headers.origin || '').replace(/\/$/, '');
+
+  // Dernier recours : l'hôte réellement appelé. Il vaut mieux que la liste blanche, mal
+  // renseignée, envoie tout le monde sur un domaine mort.
+  const origin = allowed.includes(claimed)
+    ? claimed
+    : (allowed[0] || `https://${req.headers.host}`);
+
+  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /index.html ou /).
+  // On n'accepte qu'un chemin relatif simple : sans cette vérification, un `returnPath`
+  // du genre `//evil.com` transformerait notre redirection en tremplin vers un site tiers.
+  const path = (typeof returnPath === 'string'
+    && returnPath.startsWith('/')
+    && !returnPath.startsWith('//')
+    && !returnPath.includes('..'))
+      ? returnPath.split('?')[0]
+      : '/SocialMeet.html';
+
+  return { origin, path, allowed, claimed };
+}
+
 export default async function handler(req, res) {
+  // --- AUTOTEST ---
+  // https://ton-domaine/api/create-payment?selftest=1&path=/SocialMeet.html
+  // Montre l'URL de retour que la fonction fabriquerait, sans créer de paiement. À noter :
+  // une navigation directe dans la barre d'adresse n'envoie pas d'en-tête Origin, donc le
+  // champ `claimedOrigin` sera vide ici alors qu'il est renseigné lors d'un vrai appel.
+  if (req.method === 'GET' && req.query && req.query.selftest) {
+    const { origin, path, allowed, claimed } = resolveReturn(req, req.query.path);
+    return res.status(200).json({
+      MOLLIE_API_KEY: !!process.env.MOLLIE_API_KEY,
+      APP_URL: process.env.APP_URL || null,
+      ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || null,
+      allowlistParsed: allowed,
+      hostHeader: req.headers.host || null,
+      claimedOrigin: claimed || null,
+      resolvedOrigin: origin,
+      resolvedPath: path,
+      exampleRedirectUrl: `${origin}${path}?event=default&mollie_return=mood`,
+      webhookUrl: `${origin}/api/mollie-webhook`,
+    });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -34,33 +86,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'vibeId invalide' });
   }
 
-  // --- Où renvoyer l'utilisateur après le paiement ---
-  // Point crucial : le localStorage ET le compte anonyme Firebase sont liés à l'ORIGINE.
-  // Renvoyer quelqu'un parti de `mon-domaine.com` vers `mon-projet.vercel.app` en fait un
-  // parfait inconnu au retour — nouvel uid, aucune photo, aucun déblocage visible, et le
-  // mood qu'il vient de payer reste orphelin sur son ancien compte. On le ramène donc
-  // exactement d'où il vient, à condition que cette origine soit dans la liste blanche.
-  const allowed = (process.env.ALLOWED_ORIGINS || process.env.APP_URL || '')
-    .split(',').map(s => s.trim().replace(/\/$/, '')).filter(Boolean);
-  const claimed = (req.headers.origin || '').replace(/\/$/, '');
-  const origin = allowed.includes(claimed) ? claimed : (allowed[0] || `https://${req.headers.host}`);
+  const { origin, path } = resolveReturn(req, returnPath);
+  const redirectUrl = `${origin}${path}?event=${encodeURIComponent(eventId)}&mollie_return=${kind}`;
 
-  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /index.html ou /).
-  // On n'accepte qu'un chemin relatif simple : sans cette vérification, un `returnPath`
-  // du genre `//evil.com` transformerait notre redirection en tremplin vers un site tiers.
-  const path = (typeof returnPath === 'string'
-    && returnPath.startsWith('/')
-    && !returnPath.startsWith('//')
-    && !returnPath.includes('..'))
-      ? returnPath.split('?')[0]
-      : '/SocialMeet.html';
+  // Journalisé pour que Vercel → Logs montre l'URL exacte en cas de 404 au retour.
+  console.log('[create-payment]', kind, vibeId || '', '→ redirect', redirectUrl);
 
   const payload = {
     amount: { currency: 'EUR', value: product.value },
     description: product.description,
-    // Le retour porte l'événement : l'utilisateur retombe sur la bonne soirée même si
-    // son navigateur a perdu tout stockage local pendant le paiement.
-    redirectUrl: `${origin}${path}?event=${encodeURIComponent(eventId)}&mollie_return=${kind}`,
+    redirectUrl,
     webhookUrl: `${origin}/api/mollie-webhook`,
     // Mollie nous rendra ces métadonnées telles quelles dans le webhook : c'est ainsi
     // qu'on saura qui débloquer, sans base de données intermédiaire.
