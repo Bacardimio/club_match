@@ -482,6 +482,86 @@
  const eventID = urlParams.get('event') || 'default';
  const basePath = `events/${eventID}`;
 
+ // ===================================================================================
+ // --- PAIEMENT DU CHANGEMENT DE MOOD (Mollie) -------------------------------------
+ // ===================================================================================
+ // Règle produit : le mood choisi À L'INSCRIPTION est GRATUIT. Ensuite, chaque NOUVEAU
+ // mood coûte 1 € via un lien de paiement Mollie. Un mood payé reste débloqué : on peut
+ // y revenir autant de fois qu'on veut sans repayer.
+ //
+ // ⚠️ À CONFIGURER (dans le dashboard Mollie) — deux liens totalement séparés :
+ //
+ //   ┌ Lien A — 1,00 € — « Changer d'ambiance »
+ //   │   URL du lien       → à coller dans MOLLIE_MOOD_LINK
+ //   │   URL de redirection → https://tonsite.com/SocialMeet.html?mollie_return=mood
+ //   │
+ //   └ Lien B — 2,00 € — « Débloquer toutes les ambiances »
+ //       URL du lien       → à coller dans MOLLIE_ALL_MOODS_LINK
+ //       URL de redirection → https://tonsite.com/SocialMeet.html?mollie_return=all
+ //
+ // Les deux URL de retour sont distinctes À DESSEIN : le marqueur (`mood` / `all`) dit à
+ // l'app quel produit vient d'être payé, sans qu'elle ait à faire confiance à sa mémoire
+ // locale. C'est aussi ce qui permet de suivre les deux conversions séparément dans un
+ // outil d'analytics, chaque achat ayant sa propre page de retour.
+ // (inutile d'ajouter ?event=... aux URL de retour : l'app le restaure toute seule.)
+ const MOLLIE_MOOD_LINK = 'https://payment-links.mollie.com/payment/ZN5ZwW4myUjfpFfWPWtHX';       // 1 € — un mood
+ const MOLLIE_ALL_MOODS_LINK = 'https://payment-links.mollie.com/payment/eSHBhgM5y4MkLpusJLUU3'; // 2 € — tous les moods
+ const MOOD_PRICE_LABEL = '1 €';
+ const ALL_MOODS_PRICE_LABEL = '2 €';
+
+ // Le mood demandé est mémorisé AVANT de partir chez Mollie, sous une clé volontairement
+ // NON préfixée par l'événement : au retour, l'URL de redirection Mollie étant fixe, le
+ // paramètre ?event=... a disparu. On stocke donc l'eventID dans l'intention elle-même
+ // pour pouvoir reconstruire la bonne URL au retour.
+ const PENDING_KEY = 'pendingMoodPurchase';
+ const PURCHASE_TTL_MS = 45 * 60 * 1000; // au-delà, l'intention est considérée abandonnée
+
+ function readPendingPurchase() {
+   try {
+     const raw = localStorage.getItem(PENDING_KEY);
+     if (!raw) return null;
+     const p = JSON.parse(raw);
+     // `kind` absent = ancienne intention (avant le pass complet) : on la traite comme un
+     // achat de mood à l'unité. `vibeId` n'est requis que dans ce cas.
+     const kind = p && p.kind ? p.kind : 'mood';
+     if (!p || !p.ts || Date.now() - p.ts > PURCHASE_TTL_MS) {
+       localStorage.removeItem(PENDING_KEY); return null;
+     }
+     if (kind === 'mood' && !p.vibeId) { localStorage.removeItem(PENDING_KEY); return null; }
+     return { ...p, kind };
+   } catch (e) { return null; }
+ }
+
+ // Moods déjà payés (donc rejouables gratuitement). Miroir local du champ
+ // `unlockedVibes` stocké sur le profil Firebase : le localStorage répond instantanément
+ // (avant même que la base ait répondu) et la base assure la persistance si l'utilisateur
+ // vide son cache ou revient plus tard.
+ let unlockedVibes = new Set();
+ try {
+   const saved = JSON.parse(localStorage.getItem(`unlockedVibes_${eventID}`) || '[]');
+   if (Array.isArray(saved)) unlockedVibes = new Set(saved);
+ } catch (e) {}
+
+ // Pass complet à 2 € : il englobe le déblocage à l'unité (tous les changements de mood
+ // deviennent libres) ET ouvre le filtre "Tous" du mur photo. C'est ce qui justifie son
+ // prix face aux 1 € par mood : au 2e changement, le pass est déjà plus intéressant.
+ let allMoodsUnlocked = localStorage.getItem(`allMoodsUnlocked_${eventID}`) === 'true';
+
+ function persistUnlockedVibes() {
+   localStorage.setItem(`unlockedVibes_${eventID}`, JSON.stringify([...unlockedVibes]));
+   localStorage.setItem(`allMoodsUnlocked_${eventID}`, allMoodsUnlocked ? 'true' : 'false');
+ }
+
+ // Un mood est gratuit dans quatre cas : (1) je ne suis pas encore inscrit — c'est le
+ // choix initial, offert ; (2) c'est déjà mon mood actuel ; (3) je l'ai déjà payé à
+ // l'unité ; (4) j'ai pris le pass complet.
+ function isMoodFree(vibeId) {
+   if (!isRegistered) return true;
+   if (allMoodsUnlocked) return true;
+   if (vibeId === myOwnVibeId) return true;
+   return unlockedVibes.has(vibeId);
+ }
+
  // Les photos ne sont plus stockées en base64 dans la Realtime Database (ce qui alourdissait
  // chaque synchro pour TOUS les participants) mais dans Firebase Storage. La DB ne garde
  // qu'une URL légère (quelques dizaines d'octets au lieu de ~20-40 Ko par photo).
@@ -519,6 +599,24 @@
      cancelFlashTitle: "Annuler cette invitation ?",
      changeVibeTitle: "Change ton ambiance", close: "Fermer",
      confirmChangeMood: (title) => `Changer ton ambiance pour ${title} ?`,
+     // --- Changement de mood payant ---
+     moodPaywallTitle: "Changer d'ambiance",
+     moodPaywallDesc: (title, price) => `Ta première ambiance était offerte. Passer sur ${title} coûte ${price} — et reste débloquée pour toute la soirée.`,
+     moodPaywallPay: (price) => `Payer ${price} 💳`,
+     moodPaywallLater: "Plus tard",
+     moodPaywallRedirect: "Redirection vers le paiement sécurisé…",
+     moodPaywallMisconfigured: "Paiement non configuré : ajoute ton lien Mollie dans MOLLIE_MOOD_LINK ⚙️",
+     moodUnlockedToast: (title) => `Ambiance ${title} débloquée ! 🔓`,
+     moodAlreadyUnlocked: "Ambiance déjà débloquée ✅",
+     moodPaymentCancelled: "Paiement non finalisé — ton ambiance n'a pas changé.",
+     moodPaymentLost: "Paiement reçu, mais l'ambiance choisie a été perdue. Resélectionne-la, tu ne repaieras pas 🙏",
+     moodLockedBadge: "1 €",
+     // --- Pass "toutes les ambiances" ---
+     allMoodsTitle: "Voir tous les moods",
+     allMoodsDesc: (price) => `Déverrouille la vue complète : consulte toutes les ambiances en un coup d'œil, et change d'ambiance autant de fois que tu veux. ${price} pour toute la soirée.`,
+     allMoodsPay: (price) => `Débloquer ${price} 🎯`,
+     allMoodsUnlockedToast: "Toutes les ambiances débloquées ! 🔓",
+     allMoodsActive: "Pass complet actif ✅",
      eventUnavailable: "Cet événement n'est plus disponible.",
      loginInstructions: "Prends un selfie pour rejoindre la soirée",
      retakeInstructions: "Prends une nouvelle photo",
@@ -585,6 +683,24 @@
      cancelFlashTitle: "Cancel this invite?",
      changeVibeTitle: "Change your vibe", close: "Close",
      confirmChangeMood: (title) => `Switch your vibe to ${title}?`,
+     // --- Paid vibe switch ---
+     moodPaywallTitle: "Switch your vibe",
+     moodPaywallDesc: (title, price) => `Your first vibe was on us. Switching to ${title} costs ${price} — and stays unlocked all night.`,
+     moodPaywallPay: (price) => `Pay ${price} 💳`,
+     moodPaywallLater: "Later",
+     moodPaywallRedirect: "Redirecting to secure checkout…",
+     moodPaywallMisconfigured: "Payment not configured: set your Mollie link in MOLLIE_MOOD_LINK ⚙️",
+     moodUnlockedToast: (title) => `${title} vibe unlocked! 🔓`,
+     moodAlreadyUnlocked: "Vibe already unlocked ✅",
+     moodPaymentCancelled: "Payment not completed — your vibe hasn't changed.",
+     moodPaymentLost: "Payment received, but we lost track of the vibe you picked. Pick it again — you won't be charged twice 🙏",
+     moodLockedBadge: "€1",
+     // --- "All vibes" pass ---
+     allMoodsTitle: "See all vibes",
+     allMoodsDesc: (price) => `Unlock the full view: see every vibe at a glance, and switch vibes as often as you like. ${price} for the whole night.`,
+     allMoodsPay: (price) => `Unlock ${price} 🎯`,
+     allMoodsUnlockedToast: "All vibes unlocked! 🔓",
+     allMoodsActive: "Full pass active ✅",
      eventUnavailable: "This event is no longer available.",
      loginInstructions: "Take a selfie to join the event",
      retakeInstructions: "Take a new photo",
@@ -895,14 +1011,17 @@
    // confirmation avant de basculer réellement dessus.
    const btnAll = document.createElement('button');
    btnAll.className = "filter-btn py-2.5 px-2 rounded-xl text-xs font-bold border border-transparent transition-all flex items-center justify-center space-x-1 relative";
-   btnAll.innerHTML = `🔓 <span class=\"truncate\">${t('premiumFilter')}</span>`;
+   btnAll.innerHTML = `${allMoodsUnlocked ? '🔓' : '🔒'} <span class=\"truncate\">${t('premiumFilter')}</span>`;
    btnAll.dataset.vibe = 'all';
    btnAll.style.background = 'linear-gradient(135deg, rgba(255,79,216,0.15), rgba(177,76,255,0.15))';
    btnAll.style.borderColor = 'rgba(255,79,216,0.35)';
    btnAll.style.borderWidth = '1px';
    setFilterActive(btnAll, currentFilter === 'all');
    btnAll.onclick = (e) => {
-     if (currentFilter !== 'all') {
+     // Tant que le pass 2 € n'est pas acheté, ce bouton ne filtre rien : il ouvre la
+     // popup de paiement. Une fois acheté, il redevient un filtre normal (on peut donc
+     // basculer librement entre "Tous" et son propre mood).
+     if (!allMoodsUnlocked) {
        e.preventDefault();
        openPremiumPopup();
        return;
@@ -919,7 +1038,7 @@
 
      const btnCap = document.createElement('div');
      btnCap.className = "cursor-pointer rounded-2xl p-3 border-2 border-white/10 text-center transition-all opacity-70 hover:opacity-100 flex flex-col items-center justify-center space-y-2 capture-vibe-btn";
-     btnCap.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display text-sm font-semibold" style="color:${v.color}">${v.title}</span>`;
+     btnCap.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display text-sm font-semibold" style="color:${v.color}">${v.title}</span>${!isMoodFree(v.id) ? `<span class="text-[0.6rem] font-black tracking-wider" style="color:#FF4FD8">🔒 ${t('moodLockedBadge')}</span>` : ''}`;
      btnCap.onclick = () => selectVibeForCapture(v.id, btnCap);
      if (selectedVibe === v.id) {
        btnCap.classList.remove('border-white/10', 'opacity-70');
@@ -928,28 +1047,59 @@
      }
      capContainer.appendChild(btnCap);
 
+     // Le mood initial est offert ; tout AUTRE mood est payant tant qu'il n'a pas été
+     // acheté. On l'annonce visuellement (cadenas + prix) plutôt que de laisser
+     // l'utilisateur découvrir le paywall seulement après avoir cliqué.
+     const locked = !isMoodFree(v.id);
      const btnChg = document.createElement('div');
      btnChg.className = "cursor-pointer rounded-2xl p-4 border border-white/10 flex items-center space-x-4 transition-all hover:bg-white/5";
-     btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display font-semibold flex-1 text-left text-base" style="color:${v.color}">${v.title}</span>`;
-     btnChg.onclick = () => changeMyVibe(v.id, { closePopup: true });
+     const chgBadge = locked
+       ? `<span class="text-[0.65rem] font-black uppercase tracking-wider px-2 py-1 rounded-full" style="background:rgba(255,79,216,0.15);color:#FF4FD8;border:1px solid rgba(255,79,216,0.35)">🔒 ${t('moodLockedBadge')}</span>`
+       : (v.id === myOwnVibeId ? '<span class="text-lg">✓</span>' : '<span class="text-lg opacity-60">🔓</span>');
+     btnChg.innerHTML = `<span class="text-3xl">${v.icon}</span><span class="font-display font-semibold flex-1 text-left text-base" style="color:${v.color}">${v.title}</span>${chgBadge}`;
+     btnChg.onclick = () => requestMoodChange(v.id, { closePopup: true });
      chgContainer.appendChild(btnChg);
 
      const btnFlt = document.createElement('button');
      btnFlt.className = "filter-btn glass py-2.5 px-2 rounded-xl text-xs font-bold opacity-60 hover:opacity-100 transition-all border-transparent flex items-center justify-center space-x-1";
-     btnFlt.innerHTML = `${v.icon} <span class=\"truncate\">${v.title}</span>`;
+     btnFlt.innerHTML = `${v.icon} <span class=\"truncate\">${v.title}</span>${locked ? ' <span class="text-[0.6rem]">🔒</span>' : ''}`;
      btnFlt.dataset.vibe = v.id;
      setFilterActive(btnFlt, currentFilter === v.id);
-     btnFlt.onclick = () => {
-       if (v.id === myOwnVibeId) return; // déjà ton mood, rien à confirmer
-       if (confirm(t('confirmChangeMood')(v.title))) changeMyVibe(v.id, { closePopup: false });
-     };
+     // Ces badges ne filtrent pas : ils servent de raccourci pour CHANGER de mood.
+     // requestMoodChange() décide seul s'il s'agit d'un changement offert ou payant.
+     btnFlt.onclick = () => requestMoodChange(v.id, { closePopup: false });
      fltContainer.appendChild(btnFlt);
    });
  }
 
- // Change réellement le mood de l'utilisateur en base, puis resynchronise le filtre du
- // mur photo dessus (voir la règle de visibilité dans renderPhotoWall). Partagée par le
- // popup "Change ton ambiance" et les badges de la barre de filtres.
+ // Point d'entrée UNIQUE de tout changement de mood demandé par l'utilisateur (popup
+ // "Change ton ambiance", badges de la barre de filtres, tuiles de l'écran de capture).
+ // Décide si le changement est offert (mood initial de l'inscription, ou mood déjà payé)
+ // ou s'il doit passer par le paiement Mollie.
+ function requestMoodChange(vibeId, { closePopup }) {
+   if (vibeId === myOwnVibeId) {
+     // Avec le pass complet, on peut être en vue "Tous" : un clic sur son propre mood
+     // sert alors à revenir à sa vue filtrée, plutôt que de ne rien faire du tout.
+     if (allMoodsUnlocked && currentFilter === 'all') {
+       currentFilter = vibeId;
+       initVibesUI();
+       renderPhotoWall();
+     }
+     return; // déjà ton mood, rien à changer
+   }
+   if (isMoodFree(vibeId)) {
+     const v = getVibe(vibeId);
+     if (confirm(t('confirmChangeMood')(v.title))) changeMyVibe(vibeId, { closePopup });
+     return;
+   }
+   openMoodPaywall(vibeId);
+ }
+ window.requestMoodChange = requestMoodChange;
+
+ // Écrit réellement le mood en base, puis resynchronise le filtre du mur photo dessus
+ // (voir la règle de visibilité dans renderPhotoWall). N'est jamais appelée directement
+ // par un clic : elle est toujours précédée de requestMoodChange(), qui garantit que le
+ // changement est légitime (offert ou payé).
  async function changeMyVibe(vibeId, { closePopup }) {
    await update(ref(db, `${basePath}/users/${myUserId}`), { vibe: vibeId });
    if (closePopup) document.getElementById('vibe-change-popup').classList.add('hidden');
@@ -959,6 +1109,191 @@
    initVibesUI();
    renderPhotoWall();
  }
+
+ // --- POPUP PAYANTE : changer d'ambiance (1 €) ---
+ function openMoodPaywall(vibeId) {
+   const v = getVibe(vibeId);
+
+   const popup = document.createElement('div');
+   popup.className = 'fixed inset-0 bg-black/80 z-[95] flex items-center justify-center p-5 backdrop-blur-md animate-pop';
+   popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
+
+   const card = document.createElement('div');
+   card.className = 'glass p-8 rounded-[2.5rem] text-center max-w-sm w-full border-white/10 shadow-2xl space-y-4';
+
+   const emoji = document.createElement('div');
+   emoji.textContent = v.icon;
+   emoji.className = 'text-5xl mb-2';
+   card.appendChild(emoji);
+
+   const title = document.createElement('h3');
+   title.className = 'font-display text-2xl font-semibold text-white mb-1';
+   title.textContent = t('moodPaywallTitle');
+   card.appendChild(title);
+
+   const target = document.createElement('p');
+   target.className = 'font-display text-lg font-bold';
+   target.style.color = v.color;
+   target.textContent = v.title;
+   card.appendChild(target);
+
+   const desc = document.createElement('p');
+   desc.className = 'text-sm text-gray-300 leading-relaxed mb-4';
+   desc.textContent = t('moodPaywallDesc')(v.title, MOOD_PRICE_LABEL);
+   card.appendChild(desc);
+
+   const btnGroup = document.createElement('div');
+   btnGroup.className = 'flex gap-3 mt-6';
+
+   const btnCancel = document.createElement('button');
+   btnCancel.className = 'flex-1 glass py-3 rounded-2xl text-sm font-semibold text-gray-400 uppercase tracking-wider';
+   btnCancel.textContent = t('moodPaywallLater');
+   btnCancel.onclick = () => popup.remove();
+   btnGroup.appendChild(btnCancel);
+
+   const btnPay = document.createElement('button');
+   btnPay.className = 'flex-1 btn-main py-3 rounded-2xl text-sm font-black text-white uppercase tracking-wider';
+   btnPay.textContent = t('moodPaywallPay')(MOOD_PRICE_LABEL);
+   btnPay.onclick = () => startMoodPayment(vibeId, btnPay);
+   btnGroup.appendChild(btnPay);
+
+   card.appendChild(btnGroup);
+   popup.appendChild(card);
+   document.body.appendChild(popup);
+ }
+ window.openMoodPaywall = openMoodPaywall;
+
+ // Mémorise l'intention d'achat PUIS part chez Mollie. C'est cette intention, relue au
+ // retour, qui dit à l'app CE QU'IL FAUT débloquer — les liens de paiement Mollie ayant
+ // une URL de redirection fixe, ils ne peuvent pas nous transmettre cette information
+ // eux-mêmes. `kind` vaut 'mood' (1 €, un mood précis) ou 'all' (2 €, pass complet).
+ function startPayment({ kind, vibeId, link, btn }) {
+   if (!link || link.includes('REMPLACE_MOI')) {
+     showToastNotification(t('moodPaywallMisconfigured'));
+     return;
+   }
+   try {
+     localStorage.setItem(PENDING_KEY, JSON.stringify({
+       kind, vibeId: vibeId || null, eventId: eventID, uid: myUserId || null, ts: Date.now()
+     }));
+   } catch (e) { console.error(e); }
+
+   if (btn) { btn.disabled = true; btn.textContent = t('moodPaywallRedirect'); }
+   window.location.href = link;
+ }
+
+ function startMoodPayment(vibeId, btnPay) {
+   startPayment({ kind: 'mood', vibeId, link: MOLLIE_MOOD_LINK, btn: btnPay });
+ }
+
+ function startAllMoodsPayment(btnPay) {
+   startPayment({ kind: 'all', link: MOLLIE_ALL_MOODS_LINK, btn: btnPay });
+ }
+
+ // --- RETOUR AUTOMATIQUE DEPUIS MOLLIE ---
+ // Appelée au démarrage. Chaque produit a désormais SA PROPRE URL de retour, ce qui rend
+ // le retour auto-descriptif : l'app sait ce qui vient d'être acheté rien qu'en lisant
+ // l'URL, sans dépendre du localStorage.
+ //     lien 1 € → ...?mollie_return=mood
+ //     lien 2 € → ...?mollie_return=all
+ // Le pass complet est donc débloqué même si le navigateur a vidé son stockage pendant le
+ // paiement (navigation privée, iOS agressif…). Pour l'achat à l'unité, l'intention locale
+ // reste nécessaire : c'est elle seule qui dit QUEL mood a été payé.
+ // Deux cas particuliers gérés ici :
+ //   - l'URL de retour Mollie étant fixe, le ?event=... a disparu : on le restaure depuis
+ //     l'intention en rechargeant la bonne URL (une seule fois, le marqueur est conservé) ;
+ //   - le marqueur est retiré de la barre d'adresse après traitement, pour qu'un simple
+ //     rafraîchissement ne rejoue pas le déblocage.
+ let paidVibeToApply = null;
+ let paidAllToApply = false;
+
+ function consumeMollieReturn() {
+   const marker = urlParams.get('mollie_return');
+   if (!marker) return;
+
+   const pending = readPendingPurchase();
+   // '1' = ancien marqueur unique (compatibilité) : dans ce cas seule l'intention locale
+   // peut dire de quel produit il s'agit.
+   const kind = (marker === 'mood' || marker === 'all') ? marker : (pending && pending.kind);
+
+   if (!kind) {
+     // Retour non identifiable : ni marqueur explicite, ni intention exploitable
+     // (expirée, ou cache vidé entre-temps).
+     cleanReturnUrl();
+     showToastNotification(t('moodPaymentCancelled'));
+     return;
+   }
+
+   // Le paramètre `event` a été perdu dans la redirection : on recharge la bonne URL.
+   if (pending && pending.eventId && pending.eventId !== eventID) {
+     const url = new URL(window.location.href);
+     url.searchParams.set('event', pending.eventId);
+     url.searchParams.set('mollie_return', marker);
+     window.location.replace(url.toString());
+     return;
+   }
+
+   if (kind === 'all') {
+     paidAllToApply = true;
+   } else if (pending && pending.vibeId) {
+     paidVibeToApply = pending.vibeId;
+   } else {
+     // Achat d'un mood dont on a perdu la trace : on ne peut pas deviner lequel débloquer.
+     cleanReturnUrl();
+     showToastNotification(t('moodPaymentLost'));
+     return;
+   }
+
+   localStorage.removeItem(PENDING_KEY);
+   cleanReturnUrl();
+ }
+
+ function cleanReturnUrl() {
+   const url = new URL(window.location.href);
+   url.searchParams.delete('mollie_return');
+   window.history.replaceState({}, '', url.toString());
+ }
+
+ // Applique le mood payé une fois Firebase prêt (myUserId disponible). Le déblocage est
+ // écrit à la fois en local et sur le profil, pour survivre à un changement d'appareil.
+ async function applyPaidMoodIfAny() {
+   // `isRegistered` est indispensable : sans profil existant, l'update créerait un nœud
+   // utilisateur sans photo ni joinedAt, qui apparaîtrait cassé sur le mur photo.
+   if (!myUserId || !isRegistered) return;
+
+   // Pass complet (2 €) : rien à changer côté mood, on ouvre simplement tout — les
+   // changements deviennent libres et le filtre "Tous" s'active immédiatement.
+   if (paidAllToApply) {
+     paidAllToApply = false;
+     allMoodsUnlocked = true;
+     persistUnlockedVibes();
+     try {
+       await update(ref(db, `${basePath}/users/${myUserId}`), { unlockedAll: true });
+     } catch (e) { console.error(e); }
+     currentFilter = 'all';
+     initVibesUI();
+     renderPhotoWall();
+     showToastNotification(t('allMoodsUnlockedToast'));
+     playNotificationSound('unlock');
+     return;
+   }
+
+   if (!paidVibeToApply) return;
+   const vibeId = paidVibeToApply;
+   paidVibeToApply = null;
+
+   unlockedVibes.add(vibeId);
+   persistUnlockedVibes();
+   try {
+     await update(ref(db, `${basePath}/users/${myUserId}/unlockedVibes`), { [vibeId]: true });
+   } catch (e) { console.error(e); }
+
+   await changeMyVibe(vibeId, { closePopup: true });
+   showToastNotification(t('moodUnlockedToast')(getVibe(vibeId).title));
+   playNotificationSound('unlock');
+ }
+
+ consumeMollieReturn();
 
  // Bascule l'aspect ET l'état réellement cliquable du bouton de validation. Séparée de
  // selectVibeForCapture() pour pouvoir être appelée aussi quand on pré-remplit le mood
@@ -976,6 +1311,12 @@
  }
 
  function selectVibeForCapture(vibeId, element) {
+   // Faille refermée : l'écran de capture est réutilisé tel quel pour REFAIRE sa photo
+   // (clic sur son propre profil). Un utilisateur déjà inscrit pouvait donc y sélectionner
+   // un autre mood puis valider — `btn-validate-join` écrit `vibe: selectedVibe` — et
+   // contourner entièrement le paiement. Le sélecteur reste libre à l'inscription
+   // (isRegistered === false), payant ensuite.
+   if (!isMoodFree(vibeId)) { openMoodPaywall(vibeId); return; }
    selectedVibe = vibeId;
    document.querySelectorAll('.capture-vibe-btn').forEach(b => {
      b.classList.remove('border-white', 'bg-white/10', 'opacity-100');
@@ -1075,6 +1416,9 @@
 
  // --- POPUP PAYANTE : déverrouille la vue complète des ambiances ---
  function openPremiumPopup() {
+   // Filet de sécurité : le pass est déjà payé (autre onglet, autre appareil, retour de
+   // paiement). On ne le revend pas une seconde fois.
+   if (allMoodsUnlocked) { showToastNotification(t('allMoodsActive')); return; }
    const popup = document.createElement('div');
    popup.className = 'fixed inset-0 bg-black/80 z-[95] flex items-center justify-center p-5 backdrop-blur-md animate-pop';
    popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
@@ -1089,14 +1433,12 @@
 
    const title = document.createElement('h3');
    title.className = 'font-display text-2xl font-semibold text-white mb-2';
-   title.textContent = currentLang === 'fr' ? 'Voir tous les moods' : 'See all vibes';
+   title.textContent = t('allMoodsTitle');
    card.appendChild(title);
 
    const desc = document.createElement('p');
    desc.className = 'text-sm text-gray-300 leading-relaxed mb-4';
-   desc.textContent = currentLang === 'fr'
-     ? "Déverrouille la vue complète : consulte toutes les ambiances en un coup d'œil, sans limite. Premium dès 2€."
-     : "Unlock the full view: see all vibes at a glance, no limits. Premium from just €2.";
+   desc.textContent = t('allMoodsDesc')(ALL_MOODS_PRICE_LABEL);
    card.appendChild(desc);
 
    const btnGroup = document.createElement('div');
@@ -1104,17 +1446,14 @@
 
    const btnCancel = document.createElement('button');
    btnCancel.className = 'flex-1 glass py-3 rounded-2xl text-sm font-semibold text-gray-400 uppercase tracking-wider';
-   btnCancel.textContent = currentLang === 'fr' ? 'Plus tard' : 'Later';
+   btnCancel.textContent = t('moodPaywallLater');
    btnCancel.onclick = () => popup.remove();
    btnGroup.appendChild(btnCancel);
 
    const btnPay = document.createElement('button');
    btnPay.className = 'flex-1 btn-main py-3 rounded-2xl text-sm font-black text-white uppercase tracking-wider';
-   btnPay.textContent = currentLang === 'fr' ? 'Débloquer 🎯' : 'Unlock 🎯';
-   btnPay.onclick = () => {
-     // Remplace par ton URL Mollie réelle (checkout link ou checkout page URL)
-     window.location.href = 'https://socialmeet.mollie.com/unlock-all-moods';
-   };
+   btnPay.textContent = t('allMoodsPay')(ALL_MOODS_PRICE_LABEL);
+   btnPay.onclick = () => startAllMoodsPayment(btnPay);
    btnGroup.appendChild(btnPay);
    card.appendChild(btnGroup);
 
@@ -1249,6 +1588,10 @@
      if (!config) { showUI('closed-screen'); return; }
      document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
      if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
+     // Retour de Mollie : le mood payé est appliqué tout seul, sans clic. Ce callback
+     // `onValue` se redéclenche à chaque modification de la config de l'événement —
+     // applyPaidMoodIfAny() se neutralise d'elle-même après le premier passage.
+     applyPaidMoodIfAny();
    });
  }
 
@@ -1338,12 +1681,12 @@
      const userVibeKey = user.vibe || 'flirt'; 
      const userVibeInfo = getVibe(userVibeKey);
 
-     // Règle stricte : hors mode "Tous" (premium), on ne voit QUE les utilisateurs qui
-     // partagent son propre mood — indépendamment de `currentFilter`, qui ne peut de
-     // toute façon plus être positionné sur un autre mood que le sien (voir initVibesUI).
-     // Ancré sur `myOwnVibeId` plutôt que sur `currentFilter` pour rester vrai même si
-     // ce dernier venait à être manipulé (ex. via la console du navigateur).
-     if (currentFilter !== 'all' && userVibeKey !== myOwnVibeId) return;
+     // Règle stricte : hors mode "Tous" (pass 2 € acheté), on ne voit QUE les utilisateurs
+     // qui partagent son propre mood. Ancré sur `allMoodsUnlocked` ET `myOwnVibeId` plutôt
+     // que sur le seul `currentFilter`, pour rester vrai même si ce dernier venait à être
+     // manipulé (ex. via la console du navigateur) sans que le pass ait été payé.
+     const seesEveryone = allMoodsUnlocked && currentFilter === 'all';
+     if (!seesEveryone && userVibeKey !== myOwnVibeId) return;
      
      const isMatched = myLikes[uid] && currentLikesData[uid] && currentLikesData[uid][myUserId];
      const hasLikedAlready = myLikes[uid];
@@ -1472,6 +1815,17 @@
        localStorage.removeItem(`isRegistered_${eventID}`); location.reload(); return;
      }
      
+     // Moods déjà payés, relus depuis le profil : si le localStorage a été vidé (ou si
+     // l'utilisateur revient sur un autre navigateur avec le même compte anonyme), il ne
+     // doit pas repayer un mood déjà acheté.
+     const remoteUnlocked = allUsersData[myUserId].unlockedVibes || {};
+     let unlockedChanged = false;
+     Object.keys(remoteUnlocked).forEach(id => {
+       if (remoteUnlocked[id] && !unlockedVibes.has(id)) { unlockedVibes.add(id); unlockedChanged = true; }
+     });
+     if (allUsersData[myUserId].unlockedAll && !allMoodsUnlocked) { allMoodsUnlocked = true; unlockedChanged = true; }
+     if (unlockedChanged) { persistUnlockedVibes(); initVibesUI(); }
+
      const myCurrentVibe = allUsersData[myUserId].vibe || 'flirt';
      const vInfo = getVibe(myCurrentVibe);
      document.getElementById('my-vibe-badge-header').innerText = vInfo.icon;
