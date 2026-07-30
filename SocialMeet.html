@@ -733,6 +733,9 @@
  let myUserId = null; 
  let videoStream = null; 
  let isRegistered = localStorage.getItem(`isRegistered_${eventID}`) === 'true';
+ // Le contrôle du profil en base ne doit avoir lieu qu'une fois : le listener sur /config
+ // se redéclenche à chaque modification de l'événement.
+ let registrationChecked = false;
  let myPhotoData = localStorage.getItem(`myPhoto_${eventID}`);
  let tempPhotoBase64 = null; 
  let selectedVibe = null;
@@ -1142,7 +1145,16 @@
      const res = await fetch(PAYMENT_API, {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ kind, vibeId: vibeId || null, uid: myUserId, eventId: eventID })
+       body: JSON.stringify({
+         kind,
+         vibeId: vibeId || null,
+         uid: myUserId,
+         eventId: eventID,
+         // Permet au backend de nous ramener sur CETTE page précise. Indispensable :
+         // localStorage et compte anonyme Firebase sont liés à l'origine, revenir
+         // ailleurs équivaut à revenir en inconnu.
+         returnPath: window.location.pathname
+       })
      });
 
      // Le corps n'est PAS forcément du JSON : un 404 Vercel (fonction non déployée) ou un
@@ -1502,10 +1514,43 @@
  signInAnonymously(auth).then(res => { myUserId = res.user.uid; initFirebaseStructure(); }).catch(e => console.error(e));
 
  function initFirebaseStructure() {
-   onValue(ref(db, `${basePath}/config`), snap => {
+   onValue(ref(db, `${basePath}/config`), async snap => {
      const config = snap.val();
      if (!config) { showUI('closed-screen'); return; }
      document.getElementById('event-name-display').innerText = config.name ? config.name.toUpperCase() : eventID.toUpperCase();
+
+     // `isRegistered` était déduit du seul localStorage. C'est un proxy fragile : au retour
+     // d'un paiement, le navigateur peut très bien avoir perdu son stockage (webview d'une
+     // app bancaire, navigation privée, iOS qui purge) alors que le profil, lui, existe
+     // toujours en base. L'utilisateur retombait alors sur l'écran d'inscription comme un
+     // inconnu, alors qu'il venait de payer.
+     //
+     // La vérité, c'est la base : si `users/<uid>` existe, cette personne est inscrite.
+     // Le compte anonyme Firebase survit indépendamment du localStorage, donc l'uid — et
+     // avec lui la photo, le mood et les déblocages payés — est retrouvé tel quel.
+     if (!registrationChecked) {
+       registrationChecked = true;
+       try {
+         const mySnap = await get(ref(db, `${basePath}/users/${myUserId}`));
+         const profile = mySnap.val();
+         if (profile && profile.photo) {
+           isRegistered = true;
+           // On répare au passage le localStorage, pour que les prochains démarrages
+           // n'aient pas à refaire cet aller-retour.
+           localStorage.setItem(`isRegistered_${eventID}`, 'true');
+           localStorage.setItem(`myPhoto_${eventID}`, profile.photo);
+           myPhotoData = profile.photo;
+         } else if (isRegistered) {
+           // Cas inverse : le localStorage prétend que oui, mais le profil a disparu
+           // (événement réinitialisé, utilisateur supprimé par l'admin). On repart propre
+           // plutôt que de charger une app vide.
+           isRegistered = false;
+           localStorage.removeItem(`isRegistered_${eventID}`);
+           localStorage.removeItem(`myPhoto_${eventID}`);
+         }
+       } catch (e) { console.error('[SocialMeet] vérification du profil impossible', e); }
+     }
+
      if (isRegistered) { loadApp(); } else { showUI('login-screen'); initCamera(); }
    });
  }
