@@ -1,64 +1,73 @@
 // api/create-payment.js
-// Crée un paiement Mollie et renvoie l'URL de checkout au navigateur.
+// Endpoint UNIQUE partagé par SocialMeet et ClubMatchPro.
 //
-// Pourquoi côté serveur plutôt qu'un lien de paiement statique :
-//   - les liens du dashboard Mollie sont à usage UNIQUE (le premier payeur les grille) ;
-//   - le prix est décidé ici, donc le navigateur ne peut pas le changer ;
-//   - l'URL de retour et le webhook sont construits à la volée, avec l'événement et le
-//     produit acheté dedans.
+// C'est le produit acheté qui détermine l'app : chaque entrée du catalogue porte un
+// champ `app`. Le client n'a donc rien à déclarer de plus qu'avant — le front SocialMeet
+// existant continue d'envoyer exactement le même corps de requête qu'aujourd'hui.
 
 // Le catalogue vit ICI et nulle part ailleurs. Un client qui posterait
 // { kind: 'all', price: '0.01' } n'obtiendrait rien : le prix n'est jamais lu du corps
 // de la requête.
 const PRODUCTS = {
-  mood: { value: '1.00', description: "SocialMeet — changement d'ambiance" },
-  all:  { value: '2.00', description: 'SocialMeet — toutes les ambiances' },
+  // --- SocialMeet ---
+  mood:   { app: 'socialmeet',   value: '1.00',           description: "SocialMeet — changement d'ambiance" },
+  all:    { app: 'socialmeet',   value: '2.00',           description: 'SocialMeet — toutes les ambiances' },
+  // --- ClubMatchPro ---
+  flash5: { app: 'clubmatchpro', value: '3.00', qty: 5,   description: 'ClubMatchPro — 5 flashs supplémentaires' },
+  msg10:  { app: 'clubmatchpro', value: '2.00', qty: 10,  description: 'ClubMatchPro — 10 messages supplémentaires' },
 };
 
 const VALID_VIBES = ['social', 'party', 'flirt', 'network'];
 
-// Décide vers quelle URL renvoyer l'utilisateur après le paiement.
+// Chemin de repli PAR APP. Il ne sert que si le client n'envoie pas de `returnPath`
+// (vieille version en cache, requête bricolée) — mais dans ce cas précis, un repli
+// unique renverrait un acheteur ClubMatchPro sur SocialMeet, ou l'inverse.
 //
-// Point crucial : le localStorage ET le compte anonyme Firebase sont liés à l'ORIGINE.
-// Renvoyer quelqu'un parti de `mon-domaine.com` vers `mon-projet.vercel.app` en fait un
-// parfait inconnu au retour — nouvel uid, aucune photo, aucun déblocage visible, et le
-// mood qu'il vient de payer reste orphelin sur son ancien compte. On le ramène donc
-// exactement d'où il vient, à condition que cette origine soit dans la liste blanche.
-function resolveReturn(req, returnPath) {
+// APP_PATH (sans suffixe) reste lu en dernier recours, pour ne pas casser la config
+// SocialMeet déjà en place.
+function fallbackPathFor(app) {
+  if (app === 'clubmatchpro') {
+    return process.env.APP_PATH_CLUBMATCHPRO || '/app.html';
+  }
+  return process.env.APP_PATH_SOCIALMEET || process.env.APP_PATH || '/SocialMeet.html';
+}
+
+// Le localStorage ET le compte anonyme Firebase sont liés à l'ORIGINE. Renvoyer
+// quelqu'un parti de `mon-domaine.com` vers `mon-projet.vercel.app` en fait un parfait
+// inconnu au retour. On le ramène exactement d'où il vient, si cette origine est dans
+// la liste blanche.
+function resolveReturn(req, returnPath, app) {
   const allowed = (process.env.ALLOWED_ORIGINS || process.env.APP_URL || '')
     .split(',').map(s => s.trim().replace(/\/$/, '')).filter(Boolean);
   const claimed = (req.headers.origin || '').replace(/\/$/, '');
 
-  // Dernier recours : l'hôte réellement appelé. Il vaut mieux que la liste blanche, mal
-  // renseignée, envoie tout le monde sur un domaine mort.
   const origin = allowed.includes(claimed)
     ? claimed
     : (allowed[0] || `https://${req.headers.host}`);
 
-  // Le chemin vient du client (l'app peut vivre à /SocialMeet.html, /app.html ou /).
-  // On n'accepte qu'un chemin relatif simple : sans cette vérification, un `returnPath`
-  // du genre `//evil.com` transformerait notre redirection en tremplin vers un site tiers.
-  // Le repli APP_PATH ne sert que si le client n'envoie rien (ancienne version en cache) —
-  // il ne doit surtout pas pointer sur la racine quand celle-ci est la page vitrine.
-  const fallbackPath = process.env.APP_PATH || '/SocialMeet.html';
+  // Sans cette vérification, un `returnPath` du genre `//evil.com` transformerait notre
+  // redirection en tremplin vers un site tiers.
   const path = (typeof returnPath === 'string'
     && returnPath.startsWith('/')
     && !returnPath.startsWith('//')
     && !returnPath.includes('..'))
       ? returnPath.split('?')[0]
-      : fallbackPath;
+      : fallbackPathFor(app);
 
   return { origin, path, allowed, claimed };
 }
 
 export default async function handler(req, res) {
   // --- AUTOTEST ---
-  // https://ton-domaine/api/create-payment?selftest=1&path=/SocialMeet.html
-  // Montre l'URL de retour que la fonction fabriquerait, sans créer de paiement. À noter :
-  // une navigation directe dans la barre d'adresse n'envoie pas d'en-tête Origin, donc le
-  // champ `claimedOrigin` sera vide ici alors qu'il est renseigné lors d'un vrai appel.
+  // https://ton-domaine/api/create-payment?selftest=1
+  // Ajoute &kind=flash5 (ou &kind=mood) pour voir le repli appliqué à cette app,
+  // et &path=/app.html pour simuler un returnPath envoyé par le client.
+  // Une navigation directe dans la barre d'adresse n'envoie pas d'en-tête Origin :
+  // `claimedOrigin` sera vide ici alors qu'il est renseigné lors d'un vrai appel.
   if (req.method === 'GET' && req.query && req.query.selftest) {
-    const { origin, path, allowed, claimed } = resolveReturn(req, req.query.path);
+    const kind = req.query.kind || 'mood';
+    const app = (PRODUCTS[kind] || {}).app || 'socialmeet';
+    const { origin, path, allowed, claimed } = resolveReturn(req, req.query.path, app);
     return res.status(200).json({
       MOLLIE_API_KEY: !!process.env.MOLLIE_API_KEY,
       APP_URL: process.env.APP_URL || null,
@@ -66,9 +75,18 @@ export default async function handler(req, res) {
       allowlistParsed: allowed,
       hostHeader: req.headers.host || null,
       claimedOrigin: claimed || null,
+      catalogue: Object.fromEntries(
+        Object.entries(PRODUCTS).map(([k, p]) => [k, `${p.app} — ${p.value} EUR`])
+      ),
+      fallbackPaths: {
+        socialmeet: fallbackPathFor('socialmeet'),
+        clubmatchpro: fallbackPathFor('clubmatchpro'),
+      },
+      testedKind: kind,
+      testedApp: app,
       resolvedOrigin: origin,
       resolvedPath: path,
-      exampleRedirectUrl: `${origin}${path}?event=default&mollie_return=mood`,
+      exampleRedirectUrl: `${origin}${path}?event=default&mollie_return=${kind}`,
       webhookUrl: `${origin}/api/mollie-webhook`,
     });
   }
@@ -80,20 +98,47 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'MOLLIE_API_KEY absente des variables Vercel' });
   }
 
-  const { kind, vibeId, uid, eventId, returnPath } = req.body || {};
+  const { kind, vibeId, uid, badge, peer, eventId, returnPath } = req.body || {};
 
   const product = PRODUCTS[kind];
   if (!product) return res.status(400).json({ error: 'kind invalide' });
-  if (!uid || !eventId) return res.status(400).json({ error: 'uid ou eventId manquant' });
-  if (kind === 'mood' && !VALID_VIBES.includes(vibeId)) {
-    return res.status(400).json({ error: 'vibeId invalide' });
+  if (!eventId) return res.status(400).json({ error: 'eventId manquant' });
+
+  // Chaque app a sa propre notion d'identité : uid Firebase pour SocialMeet,
+  // numéro de badge pour ClubMatchPro.
+  let metadata;
+
+  if (product.app === 'socialmeet') {
+    if (!uid) return res.status(400).json({ error: 'uid manquant' });
+    if (kind === 'mood' && !VALID_VIBES.includes(vibeId)) {
+      return res.status(400).json({ error: 'vibeId invalide' });
+    }
+    metadata = { app: 'socialmeet', kind, vibeId: vibeId || null, uid, eventId };
+  } else {
+    // Les badges sont des nombres 0–200 : on refuse tout le reste, ces valeurs
+    // deviendront des clés Firebase.
+    const ok = v => /^\d{1,3}$/.test(String(v)) && Number(v) <= 200;
+    if (!badge) return res.status(400).json({ error: 'badge manquant' });
+    if (!ok(badge)) return res.status(400).json({ error: 'badge invalide' });
+    // Un pack de messages est attaché à UNE conversation : il faut le badge d'en face.
+    if (kind === 'msg10' && !ok(peer)) {
+      return res.status(400).json({ error: 'peer invalide' });
+    }
+    metadata = {
+      app: 'clubmatchpro',
+      kind,
+      qty: String(product.qty),
+      badge: String(badge),
+      peer: peer ? String(peer) : null,
+      eventId,
+    };
   }
 
-  const { origin, path } = resolveReturn(req, returnPath);
+  const { origin, path } = resolveReturn(req, returnPath, product.app);
   const redirectUrl = `${origin}${path}?event=${encodeURIComponent(eventId)}&mollie_return=${kind}`;
 
   // Journalisé pour que Vercel → Logs montre l'URL exacte en cas de 404 au retour.
-  console.log('[create-payment]', kind, vibeId || '', '→ redirect', redirectUrl);
+  console.log('[create-payment]', product.app, kind, vibeId || badge || '', '→ redirect', redirectUrl);
 
   const payload = {
     amount: { currency: 'EUR', value: product.value },
@@ -101,8 +146,8 @@ export default async function handler(req, res) {
     redirectUrl,
     webhookUrl: `${origin}/api/mollie-webhook`,
     // Mollie nous rendra ces métadonnées telles quelles dans le webhook : c'est ainsi
-    // qu'on saura qui débloquer, sans base de données intermédiaire.
-    metadata: { kind, vibeId: vibeId || null, uid, eventId },
+    // qu'on saura quoi débloquer, et dans quelle app, sans base intermédiaire.
+    metadata,
   };
 
   try {
