@@ -42,6 +42,32 @@
    overscroll-behavior-y: contain;
    min-height: 100dvh;
  }
+ /* --- Header sticky du tableau de bord (photo + ambiance) -------------------------
+    Il colle sous #top-bar pendant le defilement, mais il n'avait AUCUN fond : le reste
+    de la page (boutons connexions/invitations, badges d'ambiance, mur photo) defilait
+    donc VISIBLEMENT au travers, et sur smartphone on voyait les ambiances se
+    superposer a la photo de profil. Un simple z-index n'y change rien : le probleme
+    n'est pas l'ordre d'empilement, c'est la transparence.
+
+    Le fond est pose en ::before plutot qu'en background sur le header lui-meme, pour
+    deux raisons :
+      - il deborde lateralement (left/right negatifs) afin de couvrir aussi les marges
+        laterales du body, sinon un liseré de contenu restait visible de chaque cote ;
+      - il se termine par un degrade vers le transparent, pour que le contenu
+        disparaisse en fondu sous le header au lieu d'etre coupe net.
+    z-index:-1 reste confine au header (position:sticky + z-index:30 creent deja un
+    contexte d'empilement), il ne peut donc pas masquer le fond de la page. --- */
+ .dashboard-header::before {
+   content: ""; position: absolute; z-index: -1; pointer-events: none;
+   top: -0.75rem; bottom: -1.1rem; left: -1.5rem; right: -1.5rem;
+   background: linear-gradient(to bottom,
+     rgba(11,10,18,0.97) 0%,
+     rgba(11,10,18,0.97) 62%,
+     rgba(11,10,18,0.86) 82%,
+     rgba(11,10,18,0) 100%);
+   backdrop-filter: blur(16px) saturate(140%);
+   -webkit-backdrop-filter: blur(16px) saturate(140%);
+ }
  .font-display { font-family: 'Unbounded', ui-sans-serif, sans-serif; }
  .text-holo {
    background: linear-gradient(90deg, var(--accent-2), var(--accent-3) 50%, var(--accent));
@@ -357,7 +383,7 @@
 
  <!-- Main App Dashboard -->
  <div id="main-app" class="hidden w-full max-w-md space-y-5 pt-2 pb-12 mx-auto">
-   <header class="flex items-center justify-between py-3 px-5 sticky top-[var(--topbar-h)] z-30">
+   <header class="dashboard-header flex items-center justify-between py-3 px-5 sticky top-[var(--topbar-h)] z-30">
      <div class="flex items-center space-x-4 min-w-0">
        <!-- shrink-0 : la photo garde toujours ses 76px, quelle que soit la longueur du
             nom du mood affiché à côté (ex. "Networking" vs "Affinités"). Avant, aucun
@@ -531,17 +557,30 @@
  // que le webhook vient de fermer.
  let unlockedVibes = new Set();
  let allMoodsUnlocked = false;
+ // Mood choisi à l'inscription : celui-là est offert, et il le reste. Stocké sur le
+ // profil Firebase (`initialVibe`) et donc effacé par le reset de l'événement, comme
+ // tous les autres déblocages.
+ //
+ // Sans ce champ, l'accès offert était adossé à `myOwnVibeId`, c'est-à-dire au mood
+ // COURANT : dès qu'on payait pour passer sur un autre mood, le mood d'origine
+ // redevenait payant, et on ne pouvait plus faire l'aller-retour sans repayer. Un mood
+ // acquis (offert ou payé) doit rester acquis pour toute la durée de l'événement.
+ let initialVibeId = null;
  // Passe à true après la toute première lecture du profil : évite de fêter au chargement
  // des déblocages achetés lors d'une session précédente.
  let paymentFeedbackArmed = false;
+ // Évite de retenter en boucle la reprise des profils antérieurs à `initialVibe`.
+ let initialVibeBackfilled = false;
 
- // Un mood est gratuit dans quatre cas : (1) je ne suis pas encore inscrit — c'est le
- // choix initial, offert ; (2) c'est déjà mon mood actuel ; (3) je l'ai déjà payé à
- // l'unité ; (4) j'ai pris le pass complet.
+ // Un mood est gratuit dans cinq cas : (1) je ne suis pas encore inscrit — c'est le
+ // choix initial, offert ; (2) c'est déjà mon mood actuel ; (3) c'est le mood que j'ai
+ // choisi à l'inscription, offert une fois pour toutes ; (4) je l'ai déjà payé à
+ // l'unité ; (5) j'ai pris le pass complet.
  function isMoodFree(vibeId) {
    if (!isRegistered) return true;
    if (allMoodsUnlocked) return true;
    if (vibeId === myOwnVibeId) return true;
+   if (initialVibeId && vibeId === initialVibeId) return true;
    return unlockedVibes.has(vibeId);
  }
 
@@ -1590,8 +1629,16 @@
      // premier enregistrement.
      label.innerText = t('creatingProfile');
      const payload = { photo: downloadURL, vibe: selectedVibe };
-     if (!wasAlreadyRegistered) payload.joinedAt = serverTimestamp();
+     if (!wasAlreadyRegistered) {
+       payload.joinedAt = serverTimestamp();
+       // Le mood offert est gravé ici, une seule fois, au moment de l'inscription. On ne
+       // le réécrit JAMAIS ensuite (ni lors d'un changement de photo, ni lors d'un
+       // changement de mood) : sinon il suffirait de repasser par l'écran de capture
+       // pour se réoffrir un mood et court-circuiter le paywall.
+       payload.initialVibe = selectedVibe;
+     }
      await update(ref(db, `${basePath}/users/${myUserId}`), payload);
+     if (!wasAlreadyRegistered) { initialVibeId = selectedVibe; initialVibeBackfilled = true; }
 
      myPhotoData = downloadURL;
      localStorage.setItem(`myPhoto_${eventID}`, downloadURL);
@@ -1639,6 +1686,9 @@
          const profile = mySnap.val();
          if (profile && profile.photo) {
            isRegistered = true;
+           // Récupéré AVANT le premier rendu de la barre d'ambiances, pour que le mood
+           // offert n'apparaisse jamais cadenassé le temps d'un aller-retour réseau.
+           if (profile.initialVibe) { initialVibeId = profile.initialVibe; initialVibeBackfilled = true; }
            // On répare au passage le localStorage, pour que les prochains démarrages
            // n'aient pas à refaire cet aller-retour.
            localStorage.setItem(`isRegistered_${eventID}`, 'true');
@@ -1895,6 +1945,26 @@
      // `unlockedVibes` / `unlockedAll` sur le profil, et ce listener temps réel le voit
      // arriver. Aucun clic ni rechargement n'est nécessaire — l'écran se met à jour tout
      // seul, même si le paiement a été finalisé depuis un autre appareil.
+     // Le mood offert de l'inscription vit lui aussi sur le profil : il se recharge donc
+     // sur n'importe quel appareil, et disparaît avec le profil lors d'un reset.
+     const remoteInitial = allUsersData[myUserId].initialVibe;
+     let initialJustLearned = false;
+     if (remoteInitial) {
+       initialJustLearned = initialVibeId !== remoteInitial;
+       initialVibeId = remoteInitial;
+       initialVibeBackfilled = true;
+     } else if (!initialVibeBackfilled) {
+       // Profils créés avant l'introduction du champ : on adopte leur mood courant comme
+       // mood offert, une seule fois. Ils ne perdent donc pas l'accès qu'ils avaient.
+       initialVibeBackfilled = true;
+       const fallback = allUsersData[myUserId].vibe || null;
+       if (fallback) {
+         initialJustLearned = initialVibeId !== fallback;
+         initialVibeId = fallback;
+         update(ref(db, `${basePath}/users/${myUserId}`), { initialVibe: fallback }).catch(() => {});
+       }
+     }
+
      const remoteUnlocked = allUsersData[myUserId].unlockedVibes || {};
      const newlyUnlocked = [];
      Object.keys(remoteUnlocked).forEach(id => {
@@ -1903,11 +1973,13 @@
      const allJustUnlocked = !!allUsersData[myUserId].unlockedAll && !allMoodsUnlocked;
      if (allJustUnlocked) allMoodsUnlocked = true;
 
-     if (newlyUnlocked.length || allJustUnlocked) {
+     if (newlyUnlocked.length || allJustUnlocked || initialJustLearned) {
        initVibesUI();
        // `appListenersAttached` distingue l'arrivée d'un NOUVEAU déblocage (à fêter) de la
        // simple relecture des déblocages déjà acquis au chargement de l'app (silencieuse).
-       if (paymentFeedbackArmed) {
+       // `initialJustLearned` seul ne se fête pas : c'est une simple lecture du mood
+       // offert, pas un achat.
+       if (paymentFeedbackArmed && (newlyUnlocked.length || allJustUnlocked)) {
          if (allJustUnlocked) {
            currentFilter = 'all';
            showToastNotification(t('allMoodsUnlockedToast'));
